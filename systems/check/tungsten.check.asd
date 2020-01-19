@@ -13,20 +13,20 @@
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 (defsystem "tungsten.check"
-    :description "A simple test framework."
-    :author "Nicolas Martyanoff <khaelin@gmail.com>"
-    :licence "ISC"
-    :serial t
-    :pathname "src"
-    :components ((:file "package")
-                 (:file "test")
-                 (:file "tests")
-                 (:file "reporter")
-                 (:file "text-reporter")
-                 (:file "execution")
-                 (:file "assertions")
-                 (:file "systems"))
-    :in-order-to ((test-op (test-op "tungsten.check/test"))))
+  :description "A simple test framework."
+  :author "Nicolas Martyanoff <khaelin@gmail.com>"
+  :licence "ISC"
+  :serial t
+  :pathname "src"
+  :components ((:file "package")
+               (:file "test")
+               (:file "tests")
+               (:file "reporter")
+               (:file "text-reporter")
+               (:file "execution")
+               (:file "assertions")
+               (:file "systems"))
+  :in-order-to ((test-op (test-op "tungsten.check/test"))))
 
 (defsystem "tungsten.check/test"
   :description "Tests for the tungsten.check system."

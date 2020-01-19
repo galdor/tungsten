@@ -13,28 +13,28 @@
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 (defsystem "tungsten.json"
-    :description "A parser and serializer for the JSON data format."
-    :author "Nicolas Martyanoff <khaelin@gmail.com>"
-    :licence "ISC"
-    :pathname "src"
-    :serial t
-    :components ((:file "package")
-                 (:file "serialization")
-                 (:file "parser"))
-    :in-order-to ((test-op (test-op "tungsten.json/test"))))
+  :description "A parser and serializer for the JSON data format."
+  :author "Nicolas Martyanoff <khaelin@gmail.com>"
+  :licence "ISC"
+  :pathname "src"
+  :serial t
+  :components ((:file "package")
+               (:file "serialization")
+               (:file "parser"))
+  :in-order-to ((test-op (test-op "tungsten.json/test"))))
 
 (defsystem "tungsten.json/test"
-    :description "Tests for the tungsten.json system."
-    :author "Nicolas Martyanoff <khaelin@gmail.com>"
-    :licence "ISC"
-    :depends-on ("tungsten.check"
-                 "tungsten.json")
-    :pathname "t"
-    :serial t
-    :components ((:file "package")
-                 (:file "valid-values")
-                 (:file "invalid-values")
-                 (:file "parser"))
-    :perform (test-op (op system)
-                      (symbol-call :tungsten.check :run
-                                   :package :tungsten.json-test)))
+  :description "Tests for the tungsten.json system."
+  :author "Nicolas Martyanoff <khaelin@gmail.com>"
+  :licence "ISC"
+  :depends-on ("tungsten.check"
+               "tungsten.json")
+  :pathname "t"
+  :serial t
+  :components ((:file "package")
+               (:file "valid-values")
+               (:file "invalid-values")
+               (:file "parser"))
+  :perform (test-op (op system)
+                    (symbol-call :tungsten.check :run
+                                 :package :tungsten.json-test)))

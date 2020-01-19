@@ -13,12 +13,12 @@
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 (defsystem "tungsten"
-    :description "Common Lisp tools and systems."
-    :author "Nicolas Martyanoff <khaelin@gmail.com>"
-    :licence "ISC"
-    :depends-on ("tungsten.check"
-                 "tungsten.json")
-    :in-order-to ((test-op (test-op "tungsten/test"))))
+  :description "Common Lisp tools and systems."
+  :author "Nicolas Martyanoff <khaelin@gmail.com>"
+  :licence "ISC"
+  :depends-on ("tungsten.check"
+               "tungsten.json")
+  :in-order-to ((test-op (test-op "tungsten/test"))))
 
 (defsystem "tungsten/test"
   :description "Tests for the tungsten system."
