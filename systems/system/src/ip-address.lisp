@@ -36,11 +36,11 @@ is a simple vector, create a new IP address based on its content."
     ((simple-vector 8)
      (make-array 8 :element-type '(unsigned-byte 16) :initial-contents value))))
 
-(defun print-ip-address (address stream)
-  "Print the string representation of ADDRESS to STREAM."
+(defun ip-address-to-string (address)
+  "Return the textual representation of ADDRESS as a string."
   (etypecase address
     (ipv4-address
-     (format stream "~D.~D.~D.~D"
+     (format nil "~D.~D.~D.~D"
              (aref address 0)
              (aref address 1)
              (aref address 2)
@@ -63,26 +63,22 @@ is a simple vector, create a new IP address based on its content."
                 (setf i end)))
              (t
               (incf i))))
-       (cond
-         ((and (eql start 0)
-               (eql end (length address)))
-          (write-string "::" stream))
-         (t
-          (do ((i 0))
-              ((>= i (length address)))
-            (unless (zerop i)
-              (write-char #\: stream))
-            (cond
-              ((eql i start)
-               (when (or (eql start 0)
-                         (eql end (length address)))
-                 (write-char #\: stream))
-               (setf i end))
-              (t
-               (format stream "~(~X~)" (aref address i))
-               (incf i))))))))))
-
-(defun print-ip-address-to-string (address)
-  "Return the textual representation of ADDRESS as a string."
-  (with-output-to-string (stream)
-    (print-ip-address address stream)))
+       (with-output-to-string (stream)
+         (cond
+           ((and (eql start 0)
+                 (eql end (length address)))
+            (write-string "::" stream))
+           (t
+            (do ((i 0))
+                ((>= i (length address)))
+              (unless (zerop i)
+                (write-char #\: stream))
+              (cond
+                ((eql i start)
+                 (when (or (eql start 0)
+                           (eql end (length address)))
+                   (write-char #\: stream))
+                 (setf i end))
+                (t
+                 (format stream "~(~X~)" (aref address i))
+                 (incf i)))))))))))

@@ -29,5 +29,4 @@
    :ip-address
    :ipv4-address
    :ipv6-address
-   :print-ip-address
-   :print-ip-address-to-string))
+   :ip-address-to-string))
