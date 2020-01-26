@@ -21,7 +21,8 @@
   :pathname "src"
   :serial t
   :components ((:file "package")
-               (:cffi-grovel-file "grovel"))
+               (:cffi-grovel-file "grovel")
+               (:file "locales"))
   :in-order-to ((test-op (test-op "tungsten.system/test"))))
 
 (defsystem "tungsten.system/test"

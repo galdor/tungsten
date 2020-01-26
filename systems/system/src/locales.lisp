@@ -12,18 +12,7 @@
 ;;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(include "locale.h")
-
 (in-package :tungsten.system)
 
-;; Locales
-(ctype locale-t "locale_t")
-
-(constantenum locale-category
-              ((:lc-all "LC_ALL"))
-              ((:lc-collate "LC_COLLATE"))
-              ((:lc-ctype "LC_CTYPE"))
-              ((:lc-messages "LC_MESSAGES"))
-              ((:lc-monetary "LC_MONETARY"))
-              ((:lc-numeric "LC_NUMERIC"))
-              ((:lc-time "LC_TIME")))
+(cffi:defcfun (%uselocale "uselocale") locale-t
+  (locale locale-t))
