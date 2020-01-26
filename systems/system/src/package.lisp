@@ -15,6 +15,11 @@
 (defpackage :tungsten.system
   (:use :cl)
   (:export
+   :errno
+   :%errno
+   :errno-value
+   :errno-description)
+  (:export
    :foreign-error
    :foreign-error-function
    :foreign-error-value
@@ -23,4 +28,6 @@
   (:export
    :ip-address
    :ipv4-address
-   :ipv6-address))
+   :ipv6-address
+   :print-ip-address
+   :print-ip-address-to-string))

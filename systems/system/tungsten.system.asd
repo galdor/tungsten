@@ -24,7 +24,8 @@
                (:cffi-grovel-file "grovel")
                (:file "errno")
                (:file "ffi")
-               (:file "locales"))
+               (:file "locales")
+               (:file "ip-address"))
   :in-order-to ((test-op (test-op "tungsten.system/test"))))
 
 (defsystem "tungsten.system/test"
@@ -34,7 +35,9 @@
   :depends-on ("tungsten.check")
   :pathname "t"
   :serial t
-  :components ((:file "package"))
+  :components ((:file "package")
+               (:file "errno")
+               (:file "ip-address"))
   :perform (test-op (op system)
                     (symbol-call :tungsten.check :run
                                  :package :tungsten.system-test)))

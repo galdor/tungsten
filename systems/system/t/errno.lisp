@@ -12,7 +12,9 @@
 ;;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(defpackage :tungsten.system-test
-  (:use :cl :tungsten.check)
-  (:local-nicknames (:system :tungsten.system))
-  (:export))
+(in-package :tungsten.system-test)
+
+(deftest errno-value ()
+  (check-eql (cffi:foreign-enum-value 'system:errno :eperm)
+             (system:errno-value :eperm))
+  (check-eql 1 (system:errno-value 1)))
