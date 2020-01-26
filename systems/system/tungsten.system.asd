@@ -22,6 +22,8 @@
   :serial t
   :components ((:file "package")
                (:cffi-grovel-file "grovel")
+               (:file "errno")
+               (:file "ffi")
                (:file "locales"))
   :in-order-to ((test-op (test-op "tungsten.system/test"))))
 

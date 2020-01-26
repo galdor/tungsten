@@ -15,6 +15,12 @@
 (defpackage :tungsten.system
   (:use :cl)
   (:export
+   :foreign-error
+   :foreign-error-function
+   :foreign-error-value
+   :foreign-error-description
+   :interrupted-system-call)
+  (:export
    :ip-address
    :ipv4-address
    :ipv6-address))
