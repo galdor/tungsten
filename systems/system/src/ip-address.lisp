@@ -51,7 +51,9 @@ is a simple vector, create a new IP address based on its content."
               (start nil)
               (max-length 0))
              ((>= i (length address))
-              (values start (+ start max-length)))
+              (if (zerop max-length)
+                  (values nil nil)
+                  (values start (+ start max-length))))
            (cond
              ((zerop (aref address i))
               (let* ((end (or (position-if-not #'zerop address :start (1+ i))
