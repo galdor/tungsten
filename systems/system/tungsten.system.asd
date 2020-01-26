@@ -12,21 +12,26 @@
 ;;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(defsystem "tungsten"
-  :description "Common Lisp tools and systems."
+(defsystem "tungsten.system"
+  :description "Tools to interact with the operating system."
   :author "Nicolas Martyanoff <khaelin@gmail.com>"
   :licence "ISC"
-  :depends-on ("tungsten.check"
-               "tungsten.json"
-               "tungsten.system")
-  :in-order-to ((test-op (test-op "tungsten/test"))))
+  :defsystem-depends-on ("cffi-grovel")
+  :depends-on ("cffi")
+  :pathname "src"
+  :serial t
+  :components ((:file "package")
+               (:cffi-grovel-file "grovel"))
+  :in-order-to ((test-op (test-op "tungsten.system/test"))))
 
-(defsystem "tungsten/test"
-  :description "Tests for the tungsten system."
+(defsystem "tungsten.system/test"
+  :description "Tests for the tungsten.system system."
   :author "Nicolas Martyanoff <khaelin@gmail.com>"
   :licence "ISC"
-  :depends-on ("tungsten.check/test"
-               "tungsten.json/test"
-               "tungsten.system/test")
+  :depends-on ("tungsten.check")
+  :pathname "t"
+  :serial t
+  :components ((:file "package"))
   :perform (test-op (op system)
-                    (symbol-call :tungsten.check :run)))
+                    (symbol-call :tungsten.check :run
+                                 :package :tungsten.system-test)))

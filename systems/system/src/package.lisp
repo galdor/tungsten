@@ -12,21 +12,9 @@
 ;;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(defsystem "tungsten"
-  :description "Common Lisp tools and systems."
-  :author "Nicolas Martyanoff <khaelin@gmail.com>"
-  :licence "ISC"
-  :depends-on ("tungsten.check"
-               "tungsten.json"
-               "tungsten.system")
-  :in-order-to ((test-op (test-op "tungsten/test"))))
-
-(defsystem "tungsten/test"
-  :description "Tests for the tungsten system."
-  :author "Nicolas Martyanoff <khaelin@gmail.com>"
-  :licence "ISC"
-  :depends-on ("tungsten.check/test"
-               "tungsten.json/test"
-               "tungsten.system/test")
-  :perform (test-op (op system)
-                    (symbol-call :tungsten.check :run)))
+(defpackage :tungsten.system
+  (:use :cl)
+  (:export
+   :ip-address
+   :ipv4-address
+   :ipv6-address))
