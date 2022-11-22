@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -eu
+
+root=$(realpath $(dirname "$0")/..)
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <git-ref>" >&2
+    exit 1
+fi
+
+ref=$1
+
+git -C $root/asdf fetch origin
+git -C $root/asdf reset --hard $ref
+
+make -C $root/asdf
+cp $root/asdf/build/asdf.lisp $root/

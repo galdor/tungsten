@@ -1,0 +1,3 @@
+[submodule "asdf"]
+	path = asdf
+	url = https://gitlab.common-lisp.net/asdf/asdf.git
