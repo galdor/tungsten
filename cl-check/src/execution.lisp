@@ -27,7 +27,8 @@
 (defun fail (format &rest args)
   "Signal a test failure error."
   (error 'test-failure :test *test*
-                       :message (format nil "~?" format args)))
+                       :message (let ((*print-pretty* nil))
+                                  (format nil "~?" format args))))
 
 (defun run-test (test)
   "Run a test."
