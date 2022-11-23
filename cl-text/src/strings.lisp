@@ -1,14 +1,19 @@
 (in-package :text)
 
-(defun encode-string (string &key (encoding *default-encoding*) start end)
+(defun encode-string (string &key (encoding *default-encoding*) start end
+                                  add-null-byte-p)
   (declare (type simple-string string)
            (type (or index null) end))
   (let* ((encoding (encoding encoding))
          (nb-octets
-           (funcall (encoding-encoded-string-length-function encoding)
-                    string start end))
+           (+ (funcall (encoding-encoded-string-length-function encoding)
+                       string start end)
+              (if add-null-byte-p 1 0)))
          (octets (make-array nb-octets :element-type 'octet)))
-    (funcall (encoding-encoding-function encoding) string start end octets 0)))
+    (funcall (encoding-encoding-function encoding) string start end octets 0)
+    (when add-null-byte-p
+      (setf (aref octets (1- nb-octets)) 0))
+    octets))
 
 (defun decode-string (octets &key (encoding *default-encoding*) start end)
   (declare (type octet-vector octets)
