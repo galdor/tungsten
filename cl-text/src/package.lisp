@@ -1,6 +1,7 @@
 (defpackage :text
   (:use :cl)
   (:export
+   :*default-encoding*
    :encoding
    :encoding-name
    :encoding-encoding-function
