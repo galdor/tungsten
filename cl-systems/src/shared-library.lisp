@@ -83,17 +83,17 @@ files it is build from."))
         (path (car (asdf:input-files op library))))
     (ffi:use-foreign-library name path)))
 
-(defmethod asdf:input-files ((op asdf:compile-op) (component shared-library))
+(defmethod asdf:input-files ((op asdf:compile-op) (library shared-library))
   (let* ((parent-directory
-           (asdf:component-pathname (asdf:component-parent component)))
+           (asdf:component-pathname (asdf:component-parent library)))
          (directory
            (make-pathname
             :directory (append (pathname-directory parent-directory)
-                               (list (asdf:component-name component))))))
-    (with-slots (source-files header-files) component
+                               (list (asdf:component-name library))))))
+    (with-slots (source-files header-files) library
       (mapcar (lambda (filename)
                 (merge-pathnames filename directory))
               (append source-files header-files)))))
 
-(defmethod asdf:output-files ((op asdf:compile-op) (component shared-library))
-  (list (shared-library-filename component)))
+(defmethod asdf:output-files ((op asdf:compile-op) (library shared-library))
+  (list (shared-library-filename library)))
