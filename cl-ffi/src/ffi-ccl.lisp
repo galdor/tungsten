@@ -73,8 +73,52 @@
        (t
         (error "Unsupported foreign type ~A.~%" type))))))
 
-(defmacro %foreign-type-size (type)
-  `(ccl::foreign-size ,(%translate-to-foreign-type type) :bytes))
+(defun %foreign-type-size (type)
+  (/ (ccl::foreign-type-bits
+      (ccl::parse-foreign-type
+       (%translate-to-foreign-type type)))
+     8))
+
+(defun %foreign-type-ref-function (type)
+  (case type
+    ((:void)
+     (error "Cannot reference foreign void values."))
+    ((:char :int8)
+     'ccl:%get-signed-byte)
+    ((:unsigned-char :uint8)
+     'ccl:%get-unsigned-byte)
+    ((:short :int16)
+     'ccl:%get-signed-word)
+    ((:unsigned-short :uint16)
+     'ccl:%get-unsigned-word)
+    ((:int :int32)
+     'ccl:%get-signed-long)
+    ((:unsigned-int :uint32)
+     'ccl:%get-unsigned-long)
+    ((:long)
+     #+32-bit-target '%get-signed-long
+     #+64-bit-target '%get-signed-long-long)
+    ((:unsigned-long)
+     #+32-bit-target '%get-unsigned-long
+     #+64-bit-target '%get-unsigned-long-long)
+    ((:long-long :int64)
+     'ccl::%get-signed-long-long)
+    ((:unsigned-long-long :uint64)
+     'ccl::%get-unsigned-long-long)
+    ((:float)
+     'ccl:%get-single-float)
+    ((:double)
+     'ccl:%get-double-float)
+    ((:pointer)
+     'ccl:%get-ptr)
+    (t
+     (cond
+       ((and (listp type)
+             (= (length type) 2)
+             (eq (car type) :pointer))
+        'ccl:%get-ptr)
+       (t
+        (error "Cannot reference foreign values of type ~A." type))))))
 
 ;;;
 ;;; Memory

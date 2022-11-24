@@ -28,6 +28,15 @@
       `(progn
          ,@body)))
 
+(defmacro foreign-value-ref (ptr type &optional (offset 0))
+  (if (constantp offset)
+      `(,(%foreign-type-ref-function type)
+        ,ptr
+        ,(* (%foreign-type-size type) offset))
+      `(,(%foreign-type-ref-function type)
+        ,ptr
+        (* (%foreign-type-size ,type) ,offset))))
+
 ;;;
 ;;; Foreign calls
 ;;;

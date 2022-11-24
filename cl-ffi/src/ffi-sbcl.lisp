@@ -13,6 +13,7 @@
 ;;;
 ;;; Types
 ;;;
+
 (defun %translate-to-foreign-type (type)
   (case type
     ((:void)
@@ -78,6 +79,49 @@
       (sb-alien-internals:parse-alien-type
        (%translate-to-foreign-type type) nil))
      8))
+
+(defun %foreign-type-ref-function (type)
+  (flet ((integer-ref-function (type signedp)
+           (let ((size (%foreign-type-size type)))
+             (ecase size
+               (1
+                (if signedp
+                    'sb-sys:signed-sap-ref-8
+                    'sb-sys:sap-ref-8))
+               (2
+                (if signedp
+                    'sb-sys:signed-sap-ref-16
+                    'sb-sys:sap-ref-16))
+               (4
+                (if signedp
+                    'sb-sys:signed-sap-ref-32
+                    'sb-sys:sap-ref-32))
+               (8
+                (if signedp
+                    'sb-sys:signed-sap-ref-64
+                    'sb-sys:sap-ref-64))))))
+    (case type
+      ((:void)
+       (error "Cannot reference foreign void values."))
+      ((:char :short :int :long :long-long :int8 :int16 :int32 :int64)
+       (integer-ref-function type t))
+      ((:unsigned-char :unsigned-short :unsigned-int :unsigned-long
+        :unsigned-long-long :uint8 :uint16 :uint32 :uint64)
+       (integer-ref-function type nil))
+      ((:float)
+       'sb-sys:sap-ref-single)
+      ((:double)
+       'sb-sys:sap-ref-double)
+      ((:pointer)
+       'sb-sys:sap-ref-sap)
+      (t
+       (cond
+         ((and (listp type)
+               (= (length type) 2)
+               (eq (car type) :pointer))
+          'sb-sys:sap-ref-sap)
+         (t
+          (error "Cannot reference foreign values of type ~A." type)))))))
 
 ;;;
 ;;; Memory

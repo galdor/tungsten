@@ -9,4 +9,6 @@
    :with-foreign-value
    :with-foreign-values
    :with-foreign-memory
+   :foreign-value-ref
+
    :foreign-funcall))
