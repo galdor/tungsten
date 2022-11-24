@@ -73,7 +73,7 @@
        (t
         (error "Unsupported foreign type ~A.~%" type))))))
 
-(defun %foreign-type-size (type)
+(defmacro %foreign-type-size (type)
   `(ccl::foreign-size ,(%translate-to-foreign-type type) :bytes))
 
 ;;;
