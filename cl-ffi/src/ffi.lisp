@@ -41,5 +41,5 @@
 ;;; Foreign calls
 ;;;
 
-(defmacro foreign-funcall (name (&rest arg-types) return-type &rest args)
-  `(%foreign-funcall ,name (,@arg-types) ,return-type ,@args))
+(defmacro foreign-funcall (name ((&rest arg-types) return-type) &rest args)
+  `(%foreign-funcall ,name ((,@arg-types) ,return-type) ,@args))

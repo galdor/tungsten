@@ -147,7 +147,7 @@
 ;;; Foreign calls
 ;;;
 
-(defmacro %foreign-funcall (name (&rest arg-types) return-type &rest args)
+(defmacro %foreign-funcall (name ((&rest arg-types) return-type) &rest args)
   `(sb-alien:alien-funcall
     (sb-alien:extern-alien
      ,name

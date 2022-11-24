@@ -139,7 +139,7 @@
 ;;; Foreign calls
 ;;;
 
-(defmacro %foreign-funcall (name (&rest arg-types) return-type &rest args)
+(defmacro %foreign-funcall (name ((&rest arg-types) return-type) &rest args)
   `(ccl:external-call
     ,name
     ,@(apply #'append (mapcar #'list arg-types args))
