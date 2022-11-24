@@ -13,6 +13,7 @@
 ;;;
 ;;; Types
 ;;;
+
 (defun %translate-to-foreign-type (type)
   (case type
     ((:void)
@@ -44,9 +45,9 @@
     ((:int16)
      :signed-halfword)
     ((:uint16)
-     :unsigned-halfworld)
+     :unsigned-halfword)
     ((:int32)
-     :signed-fullworld)
+     :signed-fullword)
     ((:uint32)
      :unsigned-fullword)
     ((:int64)
