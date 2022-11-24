@@ -5,7 +5,8 @@
 ;;;
 
 (defun %load-foreign-library (path)
-  (ccl:open-shared-library path))
+  ;; CCL:OPEN-SHARED-LIBRARY does not support pathnames
+  (ccl:open-shared-library (namestring path)))
 
 (defun %unload-foreign-library (handle)
   (ccl:close-shared-library handle))
