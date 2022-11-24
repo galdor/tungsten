@@ -72,7 +72,7 @@
         `(sb-alien:array ,(%translate-to-foreign-type (second type))
                          ,(third type)))
        (t
-        (error "Unsupported foreign type ~A.~%" type))))))
+        (error "unsupported foreign type ~A" type))))))
 
 (defun %foreign-type-size (type)
   (/ (sb-alien-internals:alien-type-bits
@@ -102,7 +102,7 @@
                     'sb-sys:sap-ref-64))))))
     (case type
       ((:void)
-       (error "Cannot reference foreign void values."))
+       (error "cannot reference foreign void values"))
       ((:char :short :int :long :long-long :int8 :int16 :int32 :int64)
        (integer-ref-function type t))
       ((:unsigned-char :unsigned-short :unsigned-int :unsigned-long
@@ -121,7 +121,7 @@
                (eq (car type) :pointer))
           'sb-sys:sap-ref-sap)
          (t
-          (error "Cannot reference foreign values of type ~A." type)))))))
+          (error "cannot reference foreign values of type ~A" type)))))))
 
 ;;;
 ;;; Memory

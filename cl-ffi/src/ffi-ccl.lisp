@@ -71,7 +71,7 @@
              (eq (first type) :array))
         `(:array ,(%translate-to-foreign-type (second type)) ,(third type)))
        (t
-        (error "Unsupported foreign type ~A.~%" type))))))
+        (error "unsupported foreign type ~A" type))))))
 
 (defun %foreign-type-size (type)
   (/ (ccl::foreign-type-bits
@@ -82,7 +82,7 @@
 (defun %foreign-type-ref-function (type)
   (case type
     ((:void)
-     (error "Cannot reference foreign void values."))
+     (error "cannot reference foreign void values"))
     ((:char :int8)
      'ccl:%get-signed-byte)
     ((:unsigned-char :uint8)
@@ -118,7 +118,7 @@
              (eq (car type) :pointer))
         'ccl:%get-ptr)
        (t
-        (error "Cannot reference foreign values of type ~A." type))))))
+        (error "cannot reference foreign values of type ~A" type))))))
 
 ;;;
 ;;; Memory

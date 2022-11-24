@@ -1,9 +1,10 @@
 (in-package :ffi)
 
 (defvar *foreign-libraries* (make-hash-table :test #'equal)
-  "The table containing all loaded shared libraries. Keys are symbols
-identifying libraries. Values are cons cells containing the path of the
-library and the handle returned by the low-level library loading function.")
+  "The table containing all loaded shared libraries. Keys are objects comparable
+with EQUAL which identify libraries. Values are cons cells containing the path
+of the library and the handle returned by the low-level library loading
+function.")
 
 (defun use-foreign-library (name path)
   "Load the shared library at PATH if it is not already loaded and associate it
