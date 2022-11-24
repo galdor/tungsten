@@ -5,4 +5,5 @@
   :serial t
   :components
   ((:file "package")
-   (:file "systems")))
+   (:file "systems")
+   (:file "shared-library")))
