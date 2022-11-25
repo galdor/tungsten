@@ -1,30 +1,25 @@
 (in-package :text)
 
 (defun encoded-string-length (string &key (encoding *default-encoding*)
-                                          start end add-null-byte-p)
+                                          start end)
   (declare (type simple-string string)
            (type (or index null) end))
   (let ((encoding (encoding encoding)))
-    (+ (funcall (encoding-encoded-string-length-function encoding)
-                string start end)
-       (if add-null-byte-p 1 0))))
+    (funcall (encoding-encoded-string-length-function encoding)
+             string start end)))
 
 (defun encode-string (string &key (encoding *default-encoding*) start end
-                                  octets (offset 0)
-                                  add-null-byte-p)
+                                  octets (offset 0))
   (declare (type simple-string string)
            (type (or index null) end))
   (let* ((encoding (encoding encoding))
          (nb-octets
-           (+ (funcall (encoding-encoded-string-length-function encoding)
-                       string start end)
-              (if add-null-byte-p 1 0))))
+           (funcall (encoding-encoded-string-length-function encoding)
+                    string start end)))
     (unless octets
       (setf octets (make-array nb-octets :element-type 'octet)))
     (funcall (encoding-encoding-function encoding) string start end
              octets offset)
-    (when add-null-byte-p
-      (setf (aref octets (1- nb-octets)) 0))
     octets))
 
 (defun decoded-string-length (octets &key (encoding *default-encoding*)

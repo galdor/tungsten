@@ -14,3 +14,12 @@
     (ffi:foreign-funcall "ffi_test_add2_int_ptr"
                          ((:int :int :pointer) :void) 40 2 ptr)
     (check= 42 (ffi:foreign-value-ref ptr :int))))
+
+(deftest foreign-funcall/strings ()
+  (ffi:with-foreign-strings ((a "foo")
+                             (b "bar"))
+    (let ((ab (ffi:foreign-funcall "ffi_test_concat"
+                                   ((:pointer :pointer) :pointer) a b)))
+      (unwind-protect
+           (check-string= "foobar" (ffi:decode-foreign-string ab))
+        (ffi:free-foreign-memory ab)))))

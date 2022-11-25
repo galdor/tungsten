@@ -132,9 +132,14 @@
 ;;;
 
 (defmacro %foreign-funcall (name ((&rest arg-types) return-type) &rest args)
-  `(sb-alien:alien-funcall
-    (sb-alien:extern-alien
-     ,name
-     (function ,(%translate-to-foreign-type return-type)
-               ,@(mapcar #'%translate-to-foreign-type arg-types)))
-    ,@args))
+  (let ((value (gensym "VALUE-")))
+    `(let ((,value
+             (sb-alien:alien-funcall
+              (sb-alien:extern-alien
+               ,name
+               (function ,(%translate-to-foreign-type return-type)
+                         ,@(mapcar #'%translate-to-foreign-type arg-types)))
+              ,@args)))
+       (if (eq ,return-type :pointer)
+           (sb-alien:alien-sap ,value)
+           ,value))))

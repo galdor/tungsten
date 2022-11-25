@@ -4,5 +4,6 @@
 void ffi_test_void(void);
 int ffi_test_add2_int(int, int);
 void ffi_test_add2_int_ptr(int, int, int *);
+char *ffi_test_concat(const char *, const char *);
 
 #endif
