@@ -97,11 +97,11 @@
     ((:unsigned-int :uint32)
      'ccl:%get-unsigned-long)
     ((:long)
-     #+32-bit-target '%get-signed-long
-     #+64-bit-target '%get-signed-long-long)
+     #+32-bit-target 'ccl:%get-signed-long
+     #+64-bit-target 'ccl::%get-signed-long-long)
     ((:unsigned-long)
-     #+32-bit-target '%get-unsigned-long
-     #+64-bit-target '%get-unsigned-long-long)
+     #+32-bit-target 'ccl:%get-unsigned-long
+     #+64-bit-target 'ccl::%get-unsigned-long-long)
     ((:long-long :int64)
      'ccl::%get-signed-long-long)
     ((:unsigned-long-long :uint64)
