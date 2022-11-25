@@ -142,5 +142,8 @@
 (defmacro %foreign-funcall (name ((&rest arg-types) return-type) &rest args)
   `(ccl:external-call
     ,name
-    ,@(apply #'append (mapcar #'list arg-types args))
+    ,@(apply #'append
+             (mapcar #'list
+                     (mapcar #'%translate-to-foreign-type arg-types)
+                     args))
     ,(%translate-to-foreign-type return-type)))
