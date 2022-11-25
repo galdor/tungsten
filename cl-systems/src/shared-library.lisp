@@ -79,9 +79,7 @@ files it is build from."))
     library-file))
 
 (defmethod asdf:perform ((op asdf:load-op) (library shared-library))
-  (let ((name (asdf:component-name library))
-        (path (car (asdf:input-files op library))))
-    (ffi:use-foreign-library name path)))
+  nil)
 
 (defmethod asdf:input-files ((op asdf:compile-op) (library shared-library))
   (let* ((parent-directory

@@ -21,3 +21,16 @@ different path, unload the old version and load the new one."
        (%unload-foreign-library (cdr info))
        (setf (gethash name *foreign-libraries*)
              (cons path (%load-foreign-library path)))))))
+
+(defun use-asdf-shared-library (name system-name component-name)
+  "Load the shared library built by a SYSTEMS:SHARED-LIBRARY ASDF component. The
+function behaves the same way as USE-FOREIGN-LIBRARY."
+  (let ((system (asdf:find-system system-name)))
+    (unless system
+      (error "unknown ASDF system ~S" system-name))
+    (let ((component (asdf:find-component system component-name)))
+      (unless component
+        (error "unknown ASDF component ~S in system ~S"
+               component-name system-name))
+      (let ((path (asdf:output-file 'asdf:compile-op component)))
+        (ffi:use-foreign-library name path)))))

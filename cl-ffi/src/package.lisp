@@ -2,7 +2,7 @@
   (:use :cl)
   (:export
    :use-foreign-library
-   :foreign-funcall
+   :use-asdf-shared-library
 
    :allocate-foreign-value
    :free-foreign-value
