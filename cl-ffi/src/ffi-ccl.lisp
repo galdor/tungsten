@@ -62,17 +62,7 @@
     ((:pointer)
      '(:* t))
     (t
-     (cond
-       ((and (listp type)
-             (= (length type) 2)
-             (eq (car type) :pointer))
-        `(:* ,(%translate-to-foreign-type (cadr type))))
-       ((and (listp type)
-             (= (length type) 3)
-             (eq (first type) :array))
-        `(:array ,(%translate-to-foreign-type (second type)) ,(third type)))
-       (t
-        (error "unsupported foreign type ~A" type))))))
+     (error "unsupported foreign type ~A" type))))
 
 (defun %foreign-type-size (type)
   (/ (ccl::foreign-type-bits
@@ -113,13 +103,7 @@
     ((:pointer)
      'ccl:%get-ptr)
     (t
-     (cond
-       ((and (listp type)
-             (= (length type) 2)
-             (eq (car type) :pointer))
-        'ccl:%get-ptr)
-       (t
-        (error "cannot reference foreign values of type ~A" type))))))
+     (error "unsupported foreign type ~A" type))))
 
 ;;;
 ;;; Memory
@@ -131,8 +115,8 @@
 (defun %free-foreign-memory (ptr)
   (ccl::free ptr))
 
-(defmacro %with-foreign-value ((ptr-var type) &body body)
-  `(ccl:%stack-block ((,ptr-var ,(%foreign-type-size type)))
+(defmacro %with-foreign-value ((ptr-var type &key (count 1)) &body body)
+  `(ccl:%stack-block ((,ptr-var ,(* (%foreign-type-size type) count)))
      ,@body))
 
 ;;;

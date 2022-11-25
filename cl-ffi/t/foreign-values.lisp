@@ -91,14 +91,14 @@
 (deftest foreign-values/pointer ()
   (ffi:with-foreign-value (i :int)
     (setf (ffi:foreign-value-ref i :int) 42)
-    (ffi:with-foreign-value (ptr (:pointer :int))
+    (ffi:with-foreign-value (ptr :pointer)
       (setf (ffi:foreign-value-ref ptr :pointer) i)
       (check= 42 (ffi:foreign-value-ref
                   (ffi:foreign-value-ref ptr :pointer)
                   :int)))))
 
 (deftest foreign-values/array ()
-  (ffi:with-foreign-value (ptr (:array :int 3))
+  (ffi:with-foreign-value (ptr :int :count 3)
     (setf (ffi:foreign-value-ref ptr :int 0) 1
           (ffi:foreign-value-ref ptr :int 1) 2
           (ffi:foreign-value-ref ptr :int 2) 3)

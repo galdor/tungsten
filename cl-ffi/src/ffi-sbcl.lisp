@@ -61,18 +61,7 @@
     ((:pointer)
      '(sb-alien:* t))
     (t
-     (cond
-       ((and (listp type)
-             (= (length type) 2)
-             (eq (car type) :pointer))
-        `(sb-alien:* ,(%translate-to-foreign-type (cadr type))))
-       ((and (listp type)
-             (= (length type) 3)
-             (eq (first type) :array))
-        `(sb-alien:array ,(%translate-to-foreign-type (second type))
-                         ,(third type)))
-       (t
-        (error "unsupported foreign type ~A" type))))))
+     (error "unsupported foreign type ~A" type))))
 
 (defun %foreign-type-size (type)
   (/ (sb-alien-internals:alien-type-bits
@@ -115,13 +104,7 @@
       ((:pointer)
        'sb-sys:sap-ref-sap)
       (t
-       (cond
-         ((and (listp type)
-               (= (length type) 2)
-               (eq (car type) :pointer))
-          'sb-sys:sap-ref-sap)
-         (t
-          (error "cannot reference foreign values of type ~A" type)))))))
+       (error "unsupported foreign type ~A" type)))))
 
 ;;;
 ;;; Memory
@@ -135,11 +118,12 @@
   (sb-alien:free-alien
    (sb-alien:sap-alien ptr (sb-alien:* (sb-alien:unsigned 8)))))
 
-(defmacro %with-foreign-value ((ptr-var type) &body body)
+(defmacro %with-foreign-value ((ptr-var type &key (count 1)) &body body)
   (let ((alien-var (gensym "ALIEN-")))
     `(sb-alien:with-alien
          ((,alien-var
-           (sb-alien:array (sb-alien:unsigned 8) ,(%foreign-type-size type))))
+           (sb-alien:array (sb-alien:unsigned 8)
+                           ,(* (%foreign-type-size type) count))))
        (let ((,ptr-var (sb-alien:alien-sap ,alien-var)))
          ,@body))))
 

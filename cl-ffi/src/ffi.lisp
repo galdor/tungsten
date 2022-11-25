@@ -4,12 +4,12 @@
 ;;; Memory
 ;;;
 
-(defmacro with-foreign-value ((ptr-var type) &body body)
-  (if (or (constantp type)
-          (and (listp type) (every #'constantp type)))
-      `(%with-foreign-value (,ptr-var ,type)
+(defmacro with-foreign-value ((ptr-var type &key (count 1)) &body body)
+  (if (and (constantp type) (constantp count))
+      `(%with-foreign-value (,ptr-var ,type :count ,count)
          ,@body)
-      `(let ((,ptr-var (%allocate-foreign-memory (%foreign-type-size ',type))))
+      `(let ((,ptr-var (%allocate-foreign-memory
+                        (* (%foreign-type-size ,type) ,count))))
          (unwind-protect
               (progn ,@body)
            (%free-foreign-memory ,ptr-var)))))
