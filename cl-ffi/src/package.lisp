@@ -6,8 +6,6 @@
 
    :foreign-type-size
 
-   :allocate-foreign-value
-   :free-foreign-value
    :with-foreign-value
    :with-foreign-values
    :with-foreign-memory

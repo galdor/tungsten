@@ -4,12 +4,6 @@
 ;;; Memory
 ;;;
 
-(defmacro allocate-foreign-value (type)
-  `(%allocate-foreign-value ,type))
-
-(defmacro free-foreign-value (ptr type)
-  `(%free-foreign-value ,ptr ,type))
-
 (defmacro with-foreign-value ((ptr-var type) &body body)
   (if (or (constantp type)
           (and (listp type) (every #'constantp type)))
