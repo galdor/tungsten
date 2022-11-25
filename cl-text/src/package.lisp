@@ -10,7 +10,9 @@
    :unregister-encoding
    :define-encoding
 
+   :encoded-string-length
    :encode-string
+   :decoded-string-length
    :decode-string
 
    :utf8-decoding-error
