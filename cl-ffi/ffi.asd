@@ -28,6 +28,7 @@
     :header-files ("ffi-test.h")
     :cflags ("std=c99" "Wall" "Wextra" "Werror" "Wsign-conversion"))
    (:file "package")
-   (:file "foreign-values"))
+   (:file "foreign-values")
+   (:file "foreign-funcall"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :ffi-test)))
