@@ -46,7 +46,6 @@
       `(progn
          ,@body)))
 
-(declaim (inline read-foreign-value))
 (defun read-foreign-value (ptr type-name offset)
   (let* ((type (gethash type-name *foreign-types*))
          (base-type (if type (foreign-type-base-type type) type-name))
