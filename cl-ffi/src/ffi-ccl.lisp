@@ -15,9 +15,12 @@
 ;;; Types
 ;;;
 
-(define-foreign-type
-    :size #+32-bit-target :uint32
-          #+64-bit-target :uint64)
+(define-foreign-type-alias
+    :size
+  #+32-bit-target :uint32
+  #+64-bit-target :uint64
+  #-(or 32-bit-target 64-bit-target)
+  (error "missing 32-BIT-TARGET or 64-BIT-TARGET in *FEATURES*"))
 
 (defun %translate-to-foreign-type (type)
   (case type
@@ -66,7 +69,7 @@
     ((:pointer)
      '(:* t))
     (t
-     (%translate-to-foreign-type (resolve-foreign-type type)))))
+     (error 'unknown-foreign-type :name type))))
 
 (defun %foreign-type-size (type)
   (/ (ccl::foreign-type-bits
@@ -74,7 +77,7 @@
        (%translate-to-foreign-type type)))
      8))
 
-(defun %foreign-type-ref-function (type)
+(defun %foreign-type-read-function (type)
   (case type
     ((:void)
      (error "cannot reference foreign void values"))
@@ -107,7 +110,50 @@
     ((:pointer)
      'ccl:%get-ptr)
     (t
-     (%foreign-type-ref-function (resolve-foreign-type type)))))
+     (error 'unknown-foreign-type :name type))))
+
+(defun %foreign-type-write-function (type)
+  (case type
+    ((:void)
+     (error "cannot reference foreign void values"))
+    ((:char :int8)
+     'ccl::%set-byte)
+    ((:unsigned-char :uint8)
+     'ccl::%set-unsigned-byte)
+    ((:short :int16)
+     'ccl::%set-word)
+    ((:unsigned-short :uint16)
+     'ccl::%set-unsigned-word)
+    ((:int :int32)
+     'ccl::%set-long)
+    ((:unsigned-int :uint32)
+     'ccl::%set-unsigned-long)
+    ((:long)
+     #+32-bit-target 'ccl::%set-long
+     #+64-bit-target 'ccl::%set-signed-long-long)
+    ((:unsigned-long)
+     #+32-bit-target 'ccl::%set-unsigned-long
+     #+64-bit-target 'ccl::%set-unsigned-long-long)
+    ((:long-long :int64)
+     'ccl::%set-signed-long-long)
+    ((:unsigned-long-long :uint64)
+     'ccl::%set-unsigned-long-long)
+    ((:float)
+     'ccl::%set-single-float)
+    ((:double)
+     'ccl::%set-double-float)
+    ((:pointer)
+     'ccl::%set-ptr)
+    (t
+     (error 'unknown-foreign-type :name type))))
+
+(defun %write-foreign-type (ptr type offset value)
+  (funcall (%foreign-type-write-function type) ptr offset value))
+
+(define-compiler-macro %write-foreign-type (&whole form ptr type offset value)
+  (if (constantp type)
+      `(,(%foreign-type-write-function type) ,ptr ,offset ,value)
+      form))
 
 ;;;
 ;;; Memory

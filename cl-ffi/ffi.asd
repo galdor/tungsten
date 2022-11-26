@@ -31,7 +31,6 @@
     :cflags ("std=c99" "Wall" "Wextra" "Werror" "Wsign-conversion"))
    (:file "package")
    (:file "foreign-values")
-   (:file "foreign-strings")
    (:file "foreign-funcall")
    (:file "errno"))
   :perform (test-op (op system)

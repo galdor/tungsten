@@ -14,10 +14,10 @@
 ;;; Types
 ;;;
 
-(define-foreign-type
-    :size (ecase (sb-alien:alien-size sb-alien:size-t)
-            (32 :uint32)
-            (64 :uint64)))
+(define-foreign-type-alias :size
+    (ecase (sb-alien:alien-size sb-alien:size-t)
+      (32 :uint32)
+      (64 :uint64)))
 
 (defun %translate-to-foreign-type (type)
   (case type
@@ -66,7 +66,7 @@
     ((:pointer)
      '(sb-alien:* t))
     (t
-     (%translate-to-foreign-type (resolve-foreign-type type)))))
+     (error 'unknown-foreign-type :name type))))
 
 (defun %foreign-type-size (type)
   (/ (sb-alien-internals:alien-type-bits
@@ -74,8 +74,8 @@
        (%translate-to-foreign-type type) nil))
      8))
 
-(defun %foreign-type-ref-function (type)
-  (flet ((integer-ref-function (type signedp)
+(defun %foreign-type-read-function (type)
+  (flet ((integer-function (type signedp)
            (let ((size (%foreign-type-size type)))
              (ecase size
                (1
@@ -98,10 +98,10 @@
       ((:void)
        (error "cannot reference foreign void values"))
       ((:char :short :int :long :long-long :int8 :int16 :int32 :int64)
-       (integer-ref-function type t))
+       (integer-function type t))
       ((:unsigned-char :unsigned-short :unsigned-int :unsigned-long
         :unsigned-long-long :uint8 :uint16 :uint32 :uint64)
-       (integer-ref-function type nil))
+       (integer-function type nil))
       ((:float)
        'sb-sys:sap-ref-single)
       ((:double)
@@ -109,7 +109,16 @@
       ((:pointer)
        'sb-sys:sap-ref-sap)
       (t
-       (%foreign-type-ref-function (resolve-foreign-type type))))))
+       (error 'unknown-foreign-type :name type)))))
+
+(defun %write-foreign-type (ptr type offset value)
+  (funcall (fdefinition `(setf ,(%foreign-type-read-function type)))
+           value ptr offset))
+
+(define-compiler-macro %write-foreign-type (&whole form ptr type offset value)
+  (if (constantp type)
+      `(setf (,(%foreign-type-read-function type) ,ptr ,offset) ,value)
+      form))
 
 ;;;
 ;;; Memory

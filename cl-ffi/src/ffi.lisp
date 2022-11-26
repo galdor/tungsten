@@ -4,8 +4,11 @@
 ;;; Types
 ;;;
 
-(defun foreign-type-size (type)
-  (%foreign-type-size type))
+(defun foreign-type-size (type-name)
+  (let ((type (gethash type-name *foreign-types*)))
+    (if type
+        (foreign-type-size type)
+        (%foreign-type-size type-name))))
 
 ;;;
 ;;; Memory
@@ -24,11 +27,13 @@
   (%free-foreign-memory size))
 
 (defmacro with-foreign-value ((ptr-var type &key (count 1)) &body body)
-  (if (and (constantp type) (constantp count))
+  (if (and (constantp type)
+           (base-type-p type)
+           (constantp count))
       `(%with-foreign-value (,ptr-var ,type :count ,count)
          ,@body)
       `(let ((,ptr-var (%allocate-foreign-memory
-                        (* (%foreign-type-size ,type) ,count))))
+                        (* (foreign-type-size ,type) ,count))))
          (unwind-protect
               (progn ,@body)
            (%free-foreign-memory ,ptr-var)))))
@@ -41,14 +46,70 @@
       `(progn
          ,@body)))
 
-(defmacro foreign-value-ref (ptr type &optional (offset 0))
-  (if (constantp offset)
-      `(,(%foreign-type-ref-function type)
-        ,ptr
-        ,(* (%foreign-type-size type) offset))
-      `(,(%foreign-type-ref-function type)
-        ,ptr
-        (* (%foreign-type-size ,type) ,offset))))
+(declaim (inline read-foreign-value))
+(defun read-foreign-value (ptr type-name offset)
+  (let* ((type (gethash type-name *foreign-types*))
+         (base-type (if type (foreign-type-base-type type) type-name))
+         (read-function (%foreign-type-read-function base-type))
+         (type-size (%foreign-type-size base-type))
+         (value (funcall read-function ptr (* type-size offset))))
+    (if (and type (slot-boundp type 'decoder))
+        (funcall (foreign-type-decoder type) type value)
+        value)))
+
+(define-compiler-macro read-foreign-value (&whole form ptr type-name offset)
+  (if (constantp type-name)
+      (let* ((type (gethash type-name *foreign-types*))
+             (base-type (if type (foreign-type-base-type type) type-name))
+             (offset-form
+               (if (constantp offset)
+                   (* (%foreign-type-size base-type) offset)
+                   `(* ,(%foreign-type-size base-type) ,offset))))
+        (if (and type (slot-boundp type 'decoder))
+            `(,(foreign-type-decoder type)
+              type
+              `(,(%foreign-type-read-function base-type) ,ptr ,offset-form))
+            `(,(%foreign-type-read-function base-type) ,ptr ,offset-form)))
+      form))
+
+(defun write-foreign-value (ptr type-name offset value)
+  (let* ((type (gethash type-name *foreign-types*))
+         (base-type (if type (foreign-type-base-type type) type-name))
+         (type-size (%foreign-type-size base-type))
+         (encoded-value
+           (if (and type (slot-boundp type 'encoder))
+               (funcall (foreign-type-encoder type) type value)
+               value)))
+    (%write-foreign-type ptr base-type (* type-size offset) encoded-value)
+    value))
+
+(define-compiler-macro write-foreign-value (&whole form
+                                                   ptr type-name offset value)
+  (if (constantp type-name)
+      (let* ((type (gethash type-name *foreign-types*))
+             (base-type (if type (foreign-type-base-type type) type-name))
+             (offset-form
+               (if (constantp offset)
+                   (* (%foreign-type-size base-type) offset)
+                   `(* ,(%foreign-type-size base-type) ,offset))))
+        `(%write-foreign-type
+          ,ptr
+          ,base-type
+          ,offset-form
+          ,(if (and type (slot-boundp type 'encoder))
+               `(,(foreign-type-encoder type) ,type ,value)
+               value)))
+      form))
+
+(defun foreign-value-ref (ptr type-name &optional (offset 0))
+  (read-foreign-value ptr type-name offset))
+
+(define-compiler-macro foreign-value-ref (ptr type-name &optional (offset 0))
+  `(read-foreign-value ,ptr ,type-name ,offset))
+
+(defsetf foreign-value-ref (ptr type-name &optional (offset 0))
+    (value)
+  `(write-foreign-value ,ptr ,type-name ,offset ,value))
 
 ;;;
 ;;; Strings
@@ -113,4 +174,7 @@
 ;;;
 
 (defmacro foreign-funcall (name ((&rest arg-types) return-type) &rest args)
-  `(%foreign-funcall ,name ((,@arg-types) ,return-type) ,@args))
+  `(%foreign-funcall ,name
+                     (,(mapcar #'foreign-base-type arg-types)
+                      ,(foreign-base-type return-type))
+                     ,@args))
