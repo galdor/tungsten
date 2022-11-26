@@ -21,4 +21,6 @@
    :foreign-string-length
    :decode-foreign-string
 
-   :foreign-funcall))
+   :foreign-funcall
+
+   :errno))

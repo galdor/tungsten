@@ -12,7 +12,8 @@
    (:file "ffi-ccl" :if-feature :ccl)
    (:file "ffi-sbcl" :if-feature :sbcl)
    (:file "libraries")
-   (:file "ffi"))
+   (:file "ffi")
+   (:file "errno"))
   :in-order-to ((test-op (test-op "ffi/test"))))
 
 (defsystem "ffi/test"
@@ -31,6 +32,7 @@
    (:file "package")
    (:file "foreign-values")
    (:file "foreign-strings")
-   (:file "foreign-funcall"))
+   (:file "foreign-funcall")
+   (:file "errno"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :ffi-test)))

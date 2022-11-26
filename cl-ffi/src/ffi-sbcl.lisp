@@ -148,3 +148,10 @@
        (if (eq ,return-type :pointer)
            (sb-alien:alien-sap ,value)
            ,value))))
+
+;;;
+;;; Errno
+;;;
+
+(defun %errno ()
+  (sb-alien:get-errno))

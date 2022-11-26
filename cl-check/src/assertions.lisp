@@ -20,6 +20,9 @@
 (defmacro check= (expected-expr value-expr &key label)
   `(check-is '= ,expected-expr ,value-expr :label ,label))
 
+(defmacro check/= (expected-expr value-expr &key label)
+  `(check-is '/= ,expected-expr ,value-expr :label ,label))
+
 (defmacro check-eq (expected-expr value-expr &key label)
   `(check-is 'eq ,expected-expr ,value-expr :label ,label))
 

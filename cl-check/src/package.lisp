@@ -22,6 +22,7 @@
    :check-false
    :check-is
    :check=
+   :check/=
    :check-eq
    :check-eql
    :check-equal

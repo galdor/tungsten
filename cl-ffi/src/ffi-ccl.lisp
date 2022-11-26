@@ -135,3 +135,10 @@
                      (mapcar #'%translate-to-foreign-type arg-types)
                      args))
     ,(%translate-to-foreign-type return-type)))
+
+;;;
+;;; Errno
+;;;
+
+(defun %errno ()
+  (ccl:get-errno))
