@@ -1,7 +1,6 @@
 (defsystem "ffi"
   :description "A foreign function interface."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :license "ISC"
   :depends-on ("text")
   :pathname "src"
   :serial t

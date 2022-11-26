@@ -7,7 +7,7 @@
 (defun foreign-type-size (type-name)
   (let ((type (gethash type-name *foreign-types*)))
     (if type
-        (foreign-type-size type)
+        (foreign-type-size (foreign-type-base-type type))
         (%foreign-type-size type-name))))
 
 ;;;
