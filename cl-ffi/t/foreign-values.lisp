@@ -88,6 +88,13 @@
                            most-positive-double-float
                            least-positive-double-float))
 
+(deftest foreign-values/size ()
+  (check-foreign-value-ref :size
+                           0
+                           #.(ecase (ffi:foreign-type-size :size)
+                             (4 4294967295)
+                             (8 18446744073709551615))))
+
 (deftest foreign-values/pointer ()
   (ffi:with-foreign-value (i :int)
     (setf (ffi:foreign-value-ref i :int) 42)
