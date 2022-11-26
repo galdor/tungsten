@@ -2,7 +2,7 @@
   :description "A foreign function interface."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :license "ISC"
-  :depends-on ("systems" "text")
+  :depends-on ("text")
   :pathname "src"
   :serial t
   :components
@@ -24,7 +24,7 @@
   :pathname "t"
   :serial t
   :components
-  ((systems:shared-library
+  (("asdf-utils:shared-library"
     "ffi-test"
     :source-files ("ffi-test.c")
     :header-files ("ffi-test.h")
