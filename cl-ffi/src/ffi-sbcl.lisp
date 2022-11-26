@@ -115,6 +115,12 @@
 ;;; Memory
 ;;;
 
+(defun %null-pointer ()
+  (sb-sys:int-sap 0))
+
+(defun %null-pointer-p (ptr)
+  (zerop (sb-sys:sap-int ptr)))
+
 (defun %allocate-foreign-memory (size)
   (sb-alien:alien-sap
    (sb-alien:make-alien (sb-alien:unsigned 8) size)))

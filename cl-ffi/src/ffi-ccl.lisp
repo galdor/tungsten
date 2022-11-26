@@ -113,6 +113,12 @@
 ;;; Memory
 ;;;
 
+(defun %null-pointer ()
+  (ccl:%null-ptr))
+
+(defun %null-pointer-p (ptr)
+  (ccl:%null-ptr-p ptr))
+
 (defun %allocate-foreign-memory (size)
   (ccl::malloc size))
 

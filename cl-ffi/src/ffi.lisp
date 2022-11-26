@@ -11,6 +11,12 @@
 ;;; Memory
 ;;;
 
+(defun null-pointer ()
+  (%null-pointer))
+
+(defun null-pointer-p (ptr)
+  (%null-pointer-p ptr))
+
 (defun allocate-foreign-memory (size)
   (%allocate-foreign-memory size))
 

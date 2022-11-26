@@ -7,6 +7,8 @@
    :define-foreign-type
    :foreign-type-size
 
+   :null-pointer
+   :null-pointer-p
    :allocate-foreign-memory
    :free-foreign-memory
    :with-foreign-value
