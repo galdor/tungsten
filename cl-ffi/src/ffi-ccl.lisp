@@ -15,6 +15,10 @@
 ;;; Types
 ;;;
 
+(define-foreign-type
+    :size #+32-bit-target :uint32
+          #+64-bit-target :uint64)
+
 (defun %translate-to-foreign-type (type)
   (case type
     ((:void)
@@ -62,7 +66,7 @@
     ((:pointer)
      '(:* t))
     (t
-     (error "unsupported foreign type ~A" type))))
+     (%translate-to-foreign-type (resolve-foreign-type type)))))
 
 (defun %foreign-type-size (type)
   (/ (ccl::foreign-type-bits
@@ -103,7 +107,7 @@
     ((:pointer)
      'ccl:%get-ptr)
     (t
-     (error "unsupported foreign type ~A" type))))
+     (%foreign-type-ref-function (resolve-foreign-type type)))))
 
 ;;;
 ;;; Memory

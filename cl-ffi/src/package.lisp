@@ -4,6 +4,7 @@
    :use-foreign-library
    :use-asdf-shared-library
 
+   :define-foreign-type
    :foreign-type-size
 
    :allocate-foreign-memory

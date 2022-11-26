@@ -8,10 +8,10 @@
   :components
   ((:file "package")
    (:file "utils")
+   (:file "types")
    (:file "ffi-ccl" :if-feature :ccl)
    (:file "ffi-sbcl" :if-feature :sbcl)
    (:file "libraries")
-   (:file "types")
    (:file "ffi"))
   :in-order-to ((test-op (test-op "ffi/test"))))
 

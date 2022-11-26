@@ -1,6 +1,13 @@
 (in-package :ffi)
 
 ;;;
+;;; Types
+;;;
+
+(defun foreign-type-size (type)
+  (%foreign-type-size type))
+
+;;;
 ;;; Memory
 ;;;
 

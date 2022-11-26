@@ -14,6 +14,11 @@
 ;;; Types
 ;;;
 
+(define-foreign-type
+    :size (ecase (sb-alien:alien-size sb-alien:size-t)
+            (32 :uint32)
+            (64 :uint64)))
+
 (defun %translate-to-foreign-type (type)
   (case type
     ((:void)
@@ -61,7 +66,7 @@
     ((:pointer)
      '(sb-alien:* t))
     (t
-     (error "unsupported foreign type ~A" type))))
+     (%translate-to-foreign-type (resolve-foreign-type type)))))
 
 (defun %foreign-type-size (type)
   (/ (sb-alien-internals:alien-type-bits
@@ -104,7 +109,7 @@
       ((:pointer)
        'sb-sys:sap-ref-sap)
       (t
-       (error "unsupported foreign type ~A" type)))))
+       (%foreign-type-ref-function (resolve-foreign-type type))))))
 
 ;;;
 ;;; Memory
