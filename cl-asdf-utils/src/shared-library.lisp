@@ -72,7 +72,6 @@ files it is build from."))
                            (list "-o" (namestring library-file))
                            (mapcar #'namestring c-source-files)
                            (shared-library-libs-arguments library))))
-      (format t "~{~A~^ ~}~%" command)
       (uiop:run-program command :force-shell t
                                 :output *standard-output*
                                 :error-output *error-output*))
