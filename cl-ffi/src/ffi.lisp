@@ -1,14 +1,21 @@
 (in-package :ffi)
 
+;;; Note that in several macros and compiler macros, We cannot expand when the
+;;; type passed as argument is a symbol. For example, (FOREIGN-TYPE-SIZE
+;;; 'FOO:BAR) is read as (FOREIGN-TYPE-SIZE (QUOTE FOO::BAR)) during macro
+;;; expansion. So we do not expand the expression when the type argument is a
+;;; list.
+;;;
+;;; There must be a smart way to handle it though.
+
 ;;;
 ;;; Types
 ;;;
 
-(defun foreign-type-size (type-name)
-  (let ((type (gethash type-name *foreign-types*)))
-    (if type
-        (foreign-type-size (foreign-type-base-type type))
-        (%foreign-type-size type-name))))
+(defmacro foreign-type-size (type-name)
+  (if (and (constantp type-name) (not (listp type-name)))
+      (%foreign-type-size (foreign-base-type type-name))
+      `(%foreign-type-size (foreign-base-type ,type-name))))
 
 ;;;
 ;;; Memory
@@ -28,6 +35,7 @@
 
 (defmacro with-foreign-value ((ptr-var type-name &key (count 1)) &body body)
   (if (and (constantp type-name)
+           (not (listp type-name))
            (constantp count))
       `(%with-foreign-value (,ptr-var ,(foreign-base-type type-name)
                                       :count ,count)
@@ -57,7 +65,8 @@
         value)))
 
 (define-compiler-macro read-foreign-value (&whole form ptr type-name offset)
-  (if (constantp type-name)
+  (if (and (constantp type-name)
+           (not (listp type-name)))
       (let* ((type (gethash type-name *foreign-types*))
              (base-type (if type (foreign-type-base-type type) type-name))
              (offset-form
@@ -84,7 +93,8 @@
 
 (define-compiler-macro write-foreign-value (&whole form
                                                    ptr type-name offset value)
-  (if (constantp type-name)
+  (if (and (constantp type-name)
+           (not (listp type-name)))
       (let* ((type (gethash type-name *foreign-types*))
              (base-type (if type (foreign-type-base-type type) type-name))
              (offset-form
