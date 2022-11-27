@@ -5,14 +5,18 @@
   :pathname "src"
   :serial t
   :components
-  ((:file "package")
-   (:file "utils")
-   (:file "types")
-   (:file "ffi-ccl" :if-feature :ccl)
-   (:file "ffi-sbcl" :if-feature :sbcl)
-   (:file "libraries")
-   (:file "ffi")
-   (:file "errno"))
+  ((:module
+    "ffi"
+    :serial t
+    :components
+    ((:file "package")
+     (:file "utils")
+     (:file "types")
+     (:file "ffi-ccl" :if-feature :ccl)
+     (:file "ffi-sbcl" :if-feature :sbcl)
+     (:file "libraries")
+     (:file "ffi")
+     (:file "errno"))))
   :in-order-to ((test-op (test-op "ffi/test"))))
 
 (defsystem "ffi/test"
