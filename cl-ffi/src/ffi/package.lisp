@@ -23,7 +23,7 @@
    :foreign-string-length
    :decode-foreign-string
 
-   :define-enumeration
+   :define-enum
 
    :foreign-funcall
 
