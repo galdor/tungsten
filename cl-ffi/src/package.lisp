@@ -23,6 +23,8 @@
    :foreign-string-length
    :decode-foreign-string
 
+   :define-enumeration
+
    :foreign-funcall
 
    :errno))

@@ -29,6 +29,7 @@
     :header-files ("ffi-test.h")
     :cflags ("std=c99" "Wall" "Wextra" "Werror" "Wsign-conversion"))
    (:file "package")
+   (:file "shared-library")
    (:file "foreign-values")
    (:file "foreign-funcall")
    (:file "errno"))

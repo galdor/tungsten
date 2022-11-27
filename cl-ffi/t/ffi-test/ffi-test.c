@@ -41,3 +41,12 @@ ffi_test_concat(const char *a, const char *b) {
 
         return ab;
 }
+
+enum ffi_test_enum
+ffi_test_enum_max(enum ffi_test_enum a, enum ffi_test_enum b) {
+        if (a >= b) {
+                return a;
+        } else {
+                return b;
+        }
+}

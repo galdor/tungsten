@@ -1,7 +1,5 @@
 (in-package :ffi-test)
 
-(ffi:use-asdf-shared-library 'ffi-test "ffi/test" "ffi-test")
-
 (deftest foreign-funcall/void ()
   (ffi:foreign-funcall "ffi_test_void" (() :void)))
 
