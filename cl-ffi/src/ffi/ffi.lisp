@@ -9,15 +9,6 @@
 ;;; There must be a smart way to handle it though.
 
 ;;;
-;;; Types
-;;;
-
-(defmacro foreign-type-size (type-name)
-  (if (and (constantp type-name) (not (listp type-name)))
-      (%foreign-type-size (foreign-base-type type-name))
-      `(%foreign-type-size (foreign-base-type ,type-name))))
-
-;;;
 ;;; Memory
 ;;;
 

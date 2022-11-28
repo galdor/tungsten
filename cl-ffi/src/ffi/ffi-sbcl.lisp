@@ -74,6 +74,12 @@
        (%translate-to-foreign-type type) nil))
      8))
 
+(defun %foreign-type-alignment (type)
+  (/ (sb-alien-internals:alien-type-alignment
+      (sb-alien-internals:parse-alien-type
+       (%translate-to-foreign-type type) nil))
+     8))
+
 (defun %foreign-type-read-function (type)
   (flet ((integer-function (type signedp)
            (let ((size (%foreign-type-size type)))

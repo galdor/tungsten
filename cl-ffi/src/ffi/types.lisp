@@ -56,6 +56,16 @@
       name
       (foreign-type-base-type (foreign-type name))))
 
+(defmacro foreign-type-size (type-name)
+  (if (and (constantp type-name) (not (listp type-name)))
+      (%foreign-type-size (foreign-base-type type-name))
+      `(%foreign-type-size (foreign-base-type ,type-name))))
+
+(defmacro foreign-type-alignment (type-name)
+  (if (and (constantp type-name) (not (listp type-name)))
+      (%foreign-type-alignment (foreign-base-type type-name))
+      `(%foreign-type-alignment (foreign-base-type ,type-name))))
+
 ;;;
 ;;; Type aliases
 ;;;

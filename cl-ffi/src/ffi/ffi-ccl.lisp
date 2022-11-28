@@ -77,6 +77,12 @@
        (%translate-to-foreign-type type)))
      8))
 
+(defun %foreign-type-alignment (type)
+  (/ (ccl::foreign-type-alignment
+      (ccl::parse-foreign-type
+       (%translate-to-foreign-type type)))
+     8))
+
 (defun %foreign-type-read-function (type)
   (case type
     ((:void)
