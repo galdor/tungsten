@@ -14,7 +14,7 @@
    :with-foreign-value
    :with-foreign-values
    :with-foreign-memory
-   :foreign-value-ref
+   :foreign-value
 
    :*default-string-encoding*
    :allocate-foreign-string
@@ -24,6 +24,10 @@
    :decode-foreign-string
 
    :define-enum
+
+   :define-struct
+   :struct-member
+   :struct-member-pointer
 
    :foreign-funcall
 

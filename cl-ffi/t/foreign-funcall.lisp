@@ -11,7 +11,7 @@
   (ffi:with-foreign-value (ptr :int)
     (ffi:foreign-funcall "ffi_test_add2_int_ptr"
                          ((:int :int :pointer) :void) 40 2 ptr)
-    (check= 42 (ffi:foreign-value-ref ptr :int))))
+    (check= 42 (ffi:foreign-value ptr :int))))
 
 (deftest foreign-funcall/strings ()
   (ffi:with-foreign-strings ((a "foo")

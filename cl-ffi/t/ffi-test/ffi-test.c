@@ -50,3 +50,37 @@ ffi_test_enum_max(enum ffi_test_enum a, enum ffi_test_enum b) {
                 return b;
         }
 }
+
+void
+ffi_test_struct_packed_x2(struct ffi_test_struct_packed *s) {
+        s->a *= 2;
+        s->b *= 2;
+        s->c *= 2;
+}
+
+void
+ffi_test_struct_padding_x2(struct ffi_test_struct_padding *s) {
+        s->a *= 2;
+        s->b *= 2;
+        s->c *= 2;
+}
+
+void
+ffi_test_struct_arrays_x2(struct ffi_test_struct_arrays *s) {
+        s->a[0] *= 2;
+        s->a[1] *= 2;
+
+        s->b[0] *= 2;
+        s->b[1] *= 2;
+        s->b[2] *= 2;
+}
+
+void
+ffi_test_struct_nested_x2(struct ffi_test_struct_nested *s) {
+        ffi_test_struct_packed_x2(&s->s);
+
+        ffi_test_struct_padding_x2(&s->s2[0]);
+        ffi_test_struct_padding_x2(&s->s2[1]);
+
+        ffi_test_struct_packed_x2(s->ps);
+}

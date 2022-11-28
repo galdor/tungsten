@@ -16,24 +16,6 @@
 
 (defvar *foreign-types* (make-hash-table :test #'eq))
 
-(defclass foreign-type ()
-  ((name
-     :type symbol
-     :initarg :name
-     :reader foreign-type-name)
-   (base-type
-    :type symbol
-    :initarg :base-type
-    :reader foreign-type-base-type)
-   (encoder
-    :type symbol
-    :initarg :encoder
-    :accessor foreign-type-encoder)
-   (decoder
-    :type symbol
-    :initarg :decoder
-    :accessor foreign-type-decoder)))
-
 (define-condition unknown-foreign-type (error)
   ((name
     :type symbol
@@ -44,77 +26,73 @@
      (with-slots (name) condition
        (format stream "Unknown foreign type ~S." name)))))
 
+(defclass foreign-type ()
+  ((name
+     :type symbol
+     :initarg :name
+     :reader foreign-type-name)
+   (base-type
+    :type symbol
+    :initarg :base-type
+    :reader foreign-type-base-type)
+   (size
+    :type integer)
+   (alignment
+    :type integer)
+   (encoder
+    :type symbol
+    :initarg :encoder
+    :reader foreign-type-encoder)
+   (decoder
+    :type symbol
+    :initarg :decoder
+    :reader foreign-type-decoder)))
+
+(defmethod initialize-instance :after ((type foreign-type) &key)
+  (let ((base-type (foreign-type-base-type type)))
+    (setf (slot-value type 'size) (%foreign-type-size base-type)
+          (slot-value type 'alignment) (%foreign-type-alignment base-type))))
+
 (defun register-foreign-type (type)
   (setf (gethash (foreign-type-name type) *foreign-types*) type))
 
-(defun foreign-type (name)
-  (or (gethash name *foreign-types*)
-      (error 'unknown-foreign-type :name name)))
+(defun foreign-type (type-or-name)
+  (etypecase type-or-name
+    (foreign-type
+     type-or-name)
+    (t
+     (or (gethash type-or-name *foreign-types*)
+         (error 'unknown-foreign-type :name type-or-name)))))
 
 (defun foreign-base-type (name)
   (if (base-type-p name)
       name
       (foreign-type-base-type (foreign-type name))))
 
-(defmacro foreign-type-size (type-name)
-  (if (and (constantp type-name) (not (listp type-name)))
-      (%foreign-type-size (foreign-base-type type-name))
-      `(%foreign-type-size (foreign-base-type ,type-name))))
+(defmacro foreign-type-size (type)
+  (cond
+    ((base-type-p type)
+     (%foreign-type-size type))
+    (t
+     (let ((type-var (gensym "TYPE-")))
+       `(let ((,type-var ,type))
+          (if (base-type-p ,type-var)
+              (%foreign-type-size ,type-var)
+              (slot-value (foreign-type ,type-var) 'size)))))))
 
-(defmacro foreign-type-alignment (type-name)
-  (if (and (constantp type-name) (not (listp type-name)))
-      (%foreign-type-alignment (foreign-base-type type-name))
-      `(%foreign-type-alignment (foreign-base-type ,type-name))))
-
-;;;
-;;; Type aliases
-;;;
+(defmacro foreign-type-alignment (type)
+  (cond
+    ((base-type-p type)
+     (%foreign-type-alignment type))
+    (t
+     (let ((type-var (gensym "TYPE-")))
+       `(let ((,type-var ,type))
+          (if (base-type-p ,type-var)
+              (%foreign-type-alignment ,type-var)
+              (slot-value (foreign-type ,type-var) 'alignment)))))))
 
 (defmacro define-foreign-type-alias (name base-type)
   (let ((type (gensym "TYPE-")))
     `(let ((,type (make-instance 'foreign-type
                                  :name ,name :base-type ,base-type)))
        (register-foreign-type ,type))))
-
-;;;
-;;; Enums
-;;;
-
-(defclass enum (foreign-type)
-  ((constants
-    :type list
-    :initarg :constants
-    :accessor enum-constants))
-  (:default-initargs
-   :base-type :int
-   :encoder 'encode-enum-value
-   :decoder 'decode-enum-value))
-
-(defun encode-enum-value (enum constant-or-value)
-  (declare (type (or symbol integer) constant-or-value))
-  (etypecase constant-or-value
-    (symbol
-     (with-slots (name constants) enum
-       (or (cdr (assoc constant-or-value constants))
-           (error "unknown constant ~S for enum ~S"
-                  constant-or-value name))))
-    (integer
-     constant-or-value)))
-
-(defun decode-enum-value (enum value)
-  (declare (type integer value))
-  (with-slots (name constants) enum
-    (or (car (find value constants :key #'cdr))
-        value)))
-
-(defmacro define-enum ((name &key (base-type :int)) (&rest constants))
-  (let ((constant-pairs
-          (mapcar
-           (lambda (def)
-             (destructuring-bind (constant value) def
-               (cons constant value)))
-           constants)))
-    `(register-foreign-type
-      (make-instance 'enum :name ',name
-                           :base-type ,base-type
-                           :constants ',constant-pairs))))

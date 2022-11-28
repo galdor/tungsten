@@ -14,11 +14,6 @@
 ;;; Types
 ;;;
 
-(define-foreign-type-alias :size
-    (ecase (sb-alien:alien-size sb-alien:size-t)
-      (32 :uint32)
-      (64 :uint64)))
-
 (defun %translate-to-foreign-type (type)
   (case type
     ((:void)
@@ -126,9 +121,20 @@
       `(setf (,(%foreign-type-read-function type) ,ptr ,offset) ,value)
       form))
 
+(define-foreign-type-alias :size
+    (ecase (sb-alien:alien-size sb-alien:size-t)
+      (32 :uint32)
+      (64 :uint64)))
+
 ;;;
 ;;; Memory
 ;;;
+
+(deftype %pointer ()
+  'sb-sys:system-area-pointer)
+
+(defun %pointer+ (ptr offset)
+  (sb-sys:sap+ ptr offset))
 
 (defun %null-pointer ()
   (sb-sys:int-sap 0))

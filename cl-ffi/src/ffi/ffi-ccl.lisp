@@ -15,13 +15,6 @@
 ;;; Types
 ;;;
 
-(define-foreign-type-alias
-    :size
-  #+32-bit-target :uint32
-  #+64-bit-target :uint64
-  #-(or 32-bit-target 64-bit-target)
-  (error "missing 32-BIT-TARGET or 64-BIT-TARGET in *FEATURES*"))
-
 (defun %translate-to-foreign-type (type)
   (case type
     ((:void)
@@ -161,9 +154,22 @@
       `(,(%foreign-type-write-function type) ,ptr ,offset ,value)
       form))
 
+(define-foreign-type-alias
+    :size
+  #+32-bit-target :uint32
+  #+64-bit-target :uint64
+  #-(or 32-bit-target 64-bit-target)
+  (error "missing 32-BIT-TARGET or 64-BIT-TARGET in *FEATURES*"))
+
 ;;;
 ;;; Memory
 ;;;
+
+(deftype %pointer ()
+  'ccl:macptr)
+
+(defun %pointer+ (ptr offset)
+  (ccl:%inc-ptr ptr offset))
 
 (defun %null-pointer ()
   (ccl:%null-ptr))

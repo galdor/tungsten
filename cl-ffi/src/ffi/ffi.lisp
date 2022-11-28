@@ -101,13 +101,13 @@
                value)))
       form))
 
-(defun foreign-value-ref (ptr type-name &optional (offset 0))
+(defun foreign-value (ptr type-name &optional (offset 0))
   (read-foreign-value ptr type-name offset))
 
-(define-compiler-macro foreign-value-ref (ptr type-name &optional (offset 0))
+(define-compiler-macro foreign-value (ptr type-name &optional (offset 0))
   `(read-foreign-value ,ptr ,type-name ,offset))
 
-(defsetf foreign-value-ref (ptr type-name &optional (offset 0))
+(defsetf foreign-value (ptr type-name &optional (offset 0))
     (value)
   `(write-foreign-value ,ptr ,type-name ,offset ,value))
 
@@ -127,8 +127,8 @@
     (with-cleanup
         (progn
           (dotimes (i nb-octets)
-            (setf (foreign-value-ref ptr :uint8 i) (aref octets i)))
-          (setf (foreign-value-ref ptr :uint8 nb-octets) 0)
+            (setf (foreign-value ptr :uint8 i) (aref octets i)))
+          (setf (foreign-value ptr :uint8 nb-octets) 0)
           (values ptr nb-octets))
       (free-foreign-memory ptr))))
 
@@ -157,7 +157,7 @@
 
 (defun foreign-string-length (ptr &key (offset 0))
   (do ((i offset (1+ i)))
-      ((zerop (foreign-value-ref ptr :uint8 i))
+      ((zerop (foreign-value ptr :uint8 i))
        (- i offset))))
 
 (defun decode-foreign-string (ptr &key (encoding *default-string-encoding*)
@@ -166,7 +166,7 @@
     (setf length (foreign-string-length ptr :offset offset)))
   (let ((octets (make-array length :element-type '(unsigned-byte 8))))
     (dotimes (i length)
-      (setf (aref octets i) (foreign-value-ref ptr :uint8 (+ offset i))))
+      (setf (aref octets i) (foreign-value ptr :uint8 (+ offset i))))
     (text:decode-string octets :encoding encoding)))
 
 ;;;
