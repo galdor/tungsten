@@ -18,7 +18,16 @@
      (:file "enumerations")
      (:file "structures")
      (:file "libraries")
-     (:file "errno"))))
+     (:file "errno")))
+   (:module "ffi-extractor"
+    :depends-on ("ffi")
+    :serial t
+    :components
+    ((:file "package")
+     (:file "manifest")
+     (:file "generation")
+     (:file "extraction")
+     (:file "asdf-manifest"))))
   :in-order-to ((test-op (test-op "ffi/test"))))
 
 (defsystem "ffi/test"
