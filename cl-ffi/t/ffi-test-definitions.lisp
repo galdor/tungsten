@@ -1,6 +1,7 @@
 (in-package :ffi-test)
 
-(ffi:use-asdf-shared-library 'ffi-test "ffi/test" "ffi-test")
+(ffi:use-asdf-shared-library 'ffi-test "ffi/test" "ffi-test"
+                             :reload t)
 
 (ffi:define-enum (test-enum)
     ((:test-enum-min -2147483648)
