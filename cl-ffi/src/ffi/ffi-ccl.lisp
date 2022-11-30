@@ -154,7 +154,7 @@
       `(,(%foreign-type-write-function type) ,ptr ,offset ,value)
       form))
 
-(define-foreign-type-alias
+(define-type-alias
     :size
   #+32-bit-target :uint32
   #+64-bit-target :uint64

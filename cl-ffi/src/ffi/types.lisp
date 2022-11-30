@@ -91,8 +91,9 @@
               (%foreign-type-alignment ,type-var)
               (slot-value (foreign-type ,type-var) 'alignment)))))))
 
-(defmacro define-foreign-type-alias (name base-type)
-  (let ((type (gensym "TYPE-")))
-    `(let ((,type (make-instance 'foreign-type
-                                 :name ,name :base-type ,base-type)))
-       (register-foreign-type ,type))))
+(defmacro define-type-alias (name original-type)
+  (let ((base-type (gensym "BASE-TYPE-")))
+    `(let ((,base-type (foreign-base-type ,original-type)))
+       (register-foreign-type
+        (make-instance 'foreign-type
+                       :name ,name :base-type ,base-type)))))

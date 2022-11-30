@@ -121,7 +121,7 @@
       `(setf (,(%foreign-type-read-function type) ,ptr ,offset) ,value)
       form))
 
-(define-foreign-type-alias :size
+(define-type-alias :size
     (ecase (sb-alien:alien-size sb-alien:size-t)
       (32 :uint32)
       (64 :uint64)))

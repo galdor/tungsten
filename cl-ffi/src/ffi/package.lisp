@@ -6,6 +6,7 @@
 
    :define-foreign-type
    :foreign-type-size
+   :define-type-alias
 
    :null-pointer
    :null-pointer-p
