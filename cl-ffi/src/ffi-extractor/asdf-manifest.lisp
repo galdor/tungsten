@@ -1,7 +1,12 @@
 (in-package :ffi-extractor)
 
 (defclass manifest (asdf:cl-source-file)
-  ((compiler
+  ((package
+    :type keyword
+    :initarg :package
+    :initform :cl-user
+    :accessor manifest-package)
+   (compiler
     :type (or string pathname)
     :initarg :compiler
     :initform "cc"
@@ -54,8 +59,9 @@
 (defmethod asdf:perform ((op process-manifest) (manifest manifest))
   (let ((ffim-path (car (asdf:input-files op manifest)))
         (lisp-path (asdf:output-file op manifest)))
-    (with-slots (compiler cflags ldflags libs) manifest
+    (with-slots (package compiler cflags ldflags libs) manifest
       (extract ffim-path :output-path lisp-path
+                         :package package
                          :compiler compiler
                          :cflags cflags
                          :ldflags ldflags

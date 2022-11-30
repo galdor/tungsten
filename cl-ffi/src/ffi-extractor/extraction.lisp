@@ -3,6 +3,7 @@
 (defparameter *cflags* '("Wall" "Werror"))
 
 (defun extract (manifest-path &key output-path
+                                   (package :cl-user)
                                    (compiler "cc") cflags ldflags libs)
   (unless output-path
     (setf output-path (make-pathname :defaults manifest-path :type "lisp")))
@@ -20,7 +21,7 @@
     (with-open-file (output c-program-path :direction :output
                                            :if-exists :supersede
                                            :if-does-not-exist :create)
-      (generate-c-program manifest :stream output))
+      (generate-c-program manifest :stream output :package package))
     ;; Execute the compiler to build the program
     (let ((command (append (list compiler)
                            cflags-args
