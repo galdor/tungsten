@@ -101,22 +101,37 @@
 
 (define-compiler-macro write-foreign-value (&whole form
                                                    ptr type-name offset value)
-  (if (and (constantp type-name)
-           (not (listp type-name)))
-      (let* ((type (gethash type-name *foreign-types*))
-             (base-type (if type (foreign-type-base-type type) type-name))
-             (offset-form
-               (if (constantp offset)
-                   (* (%foreign-type-size base-type) offset)
-                   `(* ,(%foreign-type-size base-type) ,offset))))
-        `(%write-foreign-type
-          ,ptr
-          ,base-type
-          ,offset-form
-          ,(if (and type (slot-boundp type 'encoder))
-               `(,(foreign-type-encoder type) ,type ,value)
-               value)))
-      form))
+  (cond
+    ((and (constantp type-name)
+          (base-type-p type-name))
+     `(%write-foreign-type
+       ,ptr
+       ,type-name
+       ,(if (constantp offset)
+            (* (%foreign-type-size type-name) offset)
+            `(* ,(%foreign-type-size type-name) ,offset))
+       ,value))
+    ((and (listp type-name)
+          (eq (car type-name) 'cl:quote)
+          (symbolp (cadr type-name)))
+     (let* ((type (foreign-type (cadr type-name)))
+            (type-size (slot-value type 'size))
+            (base-type (foreign-type-base-type type)))
+       `(%write-foreign-type
+         ,ptr
+         ,base-type
+         ,(if (constantp offset)
+              (* type-size offset)
+              `(* ,type-size ,offset))
+         ,(if (slot-boundp type 'encoder)
+              (if (constantp value)
+                  (funcall (foreign-type-encoder type) type value)
+                  `(,(foreign-type-encoder type)
+                    (foreign-type ',(cadr type-name))
+                    ,value))
+              value))))
+    (t
+     form)))
 
 (defun foreign-value (ptr type-name &optional (offset 0))
   (read-foreign-value ptr type-name offset))
