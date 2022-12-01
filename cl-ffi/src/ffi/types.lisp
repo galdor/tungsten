@@ -69,24 +69,34 @@
       name
       (foreign-type-base-type (foreign-type name))))
 
-(defmacro foreign-type-size (type)
+(defmacro foreign-type-size (type-name)
   (cond
-    ((base-type-p type)
-     (%foreign-type-size type))
+    ((and (constantp type-name)
+          (base-type-p type-name))
+     (%foreign-type-size type-name))
+    ((and (listp type-name)
+          (eq (car type-name) 'cl:quote)
+          (symbolp (cadr type-name)))
+     (slot-value (foreign-type (cadr type-name)) 'size))
     (t
      (let ((type-var (gensym "TYPE-")))
-       `(let ((,type-var ,type))
+       `(let ((,type-var ,type-name))
           (if (base-type-p ,type-var)
-              (%foreign-type-size ,type-var)
+              (%foreign-type-alignment ,type-var)
               (slot-value (foreign-type ,type-var) 'size)))))))
 
-(defmacro foreign-type-alignment (type)
+(defmacro foreign-type-alignment (type-name)
   (cond
-    ((base-type-p type)
-     (%foreign-type-alignment type))
+    ((and (constantp type-name)
+          (base-type-p type-name))
+     (%foreign-type-size type-name))
+    ((and (listp type-name)
+          (eq (car type-name) 'cl:quote)
+          (symbolp (cadr type-name)))
+     (slot-value (foreign-type (cadr type-name)) 'alignment))
     (t
      (let ((type-var (gensym "TYPE-")))
-       `(let ((,type-var ,type))
+       `(let ((,type-var ,type-name))
           (if (base-type-p ,type-var)
               (%foreign-type-alignment ,type-var)
               (slot-value (foreign-type ,type-var) 'alignment)))))))
