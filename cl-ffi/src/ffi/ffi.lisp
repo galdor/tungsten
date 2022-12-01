@@ -25,17 +25,24 @@
   (%free-foreign-memory size))
 
 (defmacro with-foreign-value ((ptr-var type-name &key (count 1)) &body body)
-  (if (and (constantp type-name)
-           (not (listp type-name))
-           (constantp count))
-      `(%with-foreign-value (,ptr-var ,(foreign-base-type type-name)
-                                      :count ,count)
-         ,@body)
-      `(let ((,ptr-var (%allocate-foreign-memory
+  (cond
+    ((and (constantp type-name)
+          (base-type-p type-name))
+     `(%with-foreign-value (,ptr-var ,(foreign-base-type type-name)
+                                     :count ,count)
+        ,@body))
+    ((and (listp type-name)
+          (eq (car type-name) 'cl:quote)
+          (symbolp (cadr type-name)))
+     `(%with-foreign-value (,ptr-var ,(foreign-base-type (cadr type-name))
+                                     :count ,count)
+        ,@body))
+    (t
+     `(let ((,ptr-var (%allocate-foreign-memory
                         (* (foreign-type-size ,type-name) ,count))))
          (unwind-protect
               (progn ,@body)
-           (%free-foreign-memory ,ptr-var)))))
+           (%free-foreign-memory ,ptr-var))))))
 
 (defmacro with-foreign-values ((&rest bindings) &body body)
   (if bindings
