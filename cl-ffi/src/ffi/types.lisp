@@ -96,4 +96,4 @@
     `(let ((,base-type (foreign-base-type ,original-type)))
        (register-foreign-type
         (make-instance 'foreign-type
-                       :name ,name :base-type ,base-type)))))
+                       :name ',name :base-type ,base-type)))))
