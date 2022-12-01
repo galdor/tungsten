@@ -21,7 +21,3 @@
       (unwind-protect
            (check-string= "foobar" (ffi:decode-foreign-string ab))
         (ffi:free-foreign-memory ab)))))
-
-(deftest foreign-funcall/size ()
-  (ffi:with-foreign-string (s "hello")
-    (check= 5 (ffi:foreign-funcall "strlen" ((:pointer) :size) s))))

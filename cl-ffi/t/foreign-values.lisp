@@ -95,13 +95,6 @@
                         most-positive-double-float
                         least-positive-double-float)))
 
-(deftest foreign-values/size ()
-  (check-foreign-value :size
-                       (0
-                        #.(ecase (ffi:foreign-type-size :size)
-                            (4 4294967295)
-                            (8 18446744073709551615)))))
-
 (deftest foreign-values/enum ()
   (check-foreign-value 'test-enum
                        (:test-enum-min

@@ -121,11 +121,6 @@
       `(setf (,(%foreign-type-read-function type) ,ptr ,offset) ,value)
       form))
 
-(define-type-alias :size
-    (ecase (sb-alien:alien-size sb-alien:size-t)
-      (32 :uint32)
-      (64 :uint64)))
-
 ;;;
 ;;; Memory
 ;;;
