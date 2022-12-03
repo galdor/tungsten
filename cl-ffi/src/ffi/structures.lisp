@@ -37,23 +37,23 @@
     ;; Compute the offset of each member
     (dolist (member (struct-members struct))
       (with-slots (name type count) member
-        (cond
-          ((slot-boundp member 'offset)
-           (let ((member-offset (struct-member-offset member)))
-             (when (< member-offset offset)
-               (error "invalid offset ~D for member ~S" member-offset name))
-             (setf offset member-offset)))
-          (t
-           (let ((alignment (foreign-type-alignment type)))
-             (setf max-alignment (max max-alignment alignment))
+        (let ((alignment (foreign-type-alignment type)))
+          (setf max-alignment (max max-alignment alignment))
+          (cond
+            ((slot-boundp member 'offset)
+             (let ((member-offset (struct-member-offset member)))
+               (when (< member-offset offset)
+                 (error "invalid offset ~D for member ~S" member-offset name))
+               (setf offset member-offset)))
+            (t
              (unless (zerop (mod offset alignment))
                (incf offset
-                     (- alignment (mod offset alignment)))))
-           (setf (slot-value member 'offset) offset)))
+                     (- alignment (mod offset alignment))))
+             (setf (slot-value member 'offset) offset))))
         (incf offset (* (foreign-type-size type) count))))
     ;; Compute the size of the structure; it must be a multiple of the
     ;; alignment of the structure itself, which is the largest member
-    ;; alignment. This is at least true on x86_64.
+    ;; alignment. This is true at least on x86_64.
     (let ((size offset))
       (unless (zerop (mod size max-alignment))
         (incf size (- max-alignment (mod size max-alignment))))
