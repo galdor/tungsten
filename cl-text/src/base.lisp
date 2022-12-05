@@ -4,7 +4,7 @@
   '(unsigned-byte 8))
 
 (deftype octet-vector (&optional length)
-  `(simple-array octet (,length)))
+  `(array octet (,length)))
 
 (deftype index ()
   'fixnum)
