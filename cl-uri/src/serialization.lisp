@@ -11,7 +11,7 @@
         (serialize-path path stream))
       (when query
         (serialize-query query stream))
-      (when fragment
+      (when (and fragment (not (string= fragment "")))
         (serialize-fragment fragment stream)))))
 
 (defun serialize-scheme (scheme stream)
