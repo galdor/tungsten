@@ -6,10 +6,12 @@
   (check-string= " " (uri:percent-decode "%20"))
   (check-string= "abc" (uri:percent-decode "%61%62%63"))
   (check-string= "aà€𝄞" (uri:percent-decode "%61%c3%a0%e2%82%AC%f0%9d%84%9E"))
-  (check-signals error (uri:percent-decode "%")) ; TODO error type
-  (check-signals error (uri:percent-decode "%6")) ; TODO error type
-  (check-signals error (uri:percent-decode "%6g")) ; TODO error type
-  (check-signals error (uri:percent-decode "%,1"))) ; TODO error type
+  (check-signals uri:truncated-percent-sequence (uri:percent-decode "%"))
+  (check-signals uri:truncated-percent-sequence (uri:percent-decode "%6"))
+  (check-signals uri:invalid-percent-sequence-hex-digit
+                 (uri:percent-decode "%6g"))
+  (check-signals uri:invalid-percent-sequence-hex-digit
+                 (uri:percent-decode "%,1")))
 
 (deftest percent-encode ()
   (flet ((validp (c)

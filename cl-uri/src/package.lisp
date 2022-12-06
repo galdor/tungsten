@@ -1,6 +1,9 @@
 (defpackage :uri
   (:use :cl)
   (:export
+   :percent-decoding-error
+   :truncated-percent-sequence
+   :invalid-percent-sequence-hex-digit
    :percent-decode
    :percent-encode
 

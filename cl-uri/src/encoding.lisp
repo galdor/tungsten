@@ -1,5 +1,29 @@
 (in-package :uri)
 
+(define-condition percent-decoding-error (parse-error)
+  ((string
+    :type string
+    :initarg :string)
+   (start
+    :type (integer 0)
+    :initarg :start)))
+
+(define-condition truncated-percent-sequence (percent-decoding-error)
+  ()
+  (:report
+   (lambda (c stream)
+     (declare (ignore c))
+     (format stream "Truncated percent sequence."))))
+
+(define-condition invalid-percent-sequence-hex-digit (percent-decoding-error)
+  ((digit
+     :type character
+     :initarg :digit))
+  (:report
+   (lambda (c stream)
+     (format stream "Invalid hex digit ~S in percent sequence."
+             (slot-value c 'digit)))))
+
 (defun percent-decode (string &key (start 0) (end (length string))
                                    decode-plus)
   (declare (type string string)
@@ -13,9 +37,15 @@
         (cond
           ((char= c #\%)
            (unless (>= (- end i) 3)
-             (error "truncated percent sequence"))
-           (let ((hi (hex-digit-to-integer (char string (+ i 1))))
-                 (lo (hex-digit-to-integer (char string (+ i 2)))))
+             (error 'truncated-percent-sequence :string string :start i))
+           (let ((hi (or (hex-digit-to-integer (char string (+ i 1)))
+                         (error 'invalid-percent-sequence-hex-digit
+                                :string string :start (+ i 1)
+                                :digit (char string (+ i 1)))))
+                 (lo (or (hex-digit-to-integer (char string (+ i 2)))
+                         (error 'invalid-percent-sequence-hex-digit
+                                :string string :start (+ i 2)
+                                :digit (char string (+ i 2))))))
              (vector-push-extend (logior (ash hi 4) lo) octets))
            (incf i 3))
           ((and (char= c #\+) decode-plus)
@@ -33,9 +63,7 @@
     ((char<= #\A digit #\F)
      (+ 10 (- (char-code digit) #.(char-code #\A))))
     ((char<= #\a digit #\f)
-     (+ 10 (- (char-code digit) #.(char-code #\a))))
-    (t
-     (error "invalid hex digit ~S" digit))))
+     (+ 10 (- (char-code digit) #.(char-code #\a))))))
 
 (defun percent-encode (string valid-char-p)
   (declare (type string string)
