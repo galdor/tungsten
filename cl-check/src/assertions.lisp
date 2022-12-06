@@ -1,16 +1,25 @@
 (in-package :check)
 
 (defmacro check-true (expr &key label)
-  `(unless ,expr
-     (fail "~@[~A: ~]~A is not true" ,label ',expr)))
+  (let ((value (gensym "VALUE-")))
+    `(let ((,value ,expr))
+       (unless ,value
+         (fail "~@[~A: ~]~A yielded ~S which is not true"
+               ,label ',expr ,value)))))
 
 (defmacro check-false (expr &key label)
-  `(when ,expr
-     (fail "~@[~A: ~]~A is not false" ,label ',expr)))
+  (let ((value (gensym "VALUE-")))
+    `(let ((,value ,expr))
+       (when ,value
+         (fail "~@[~A: ~]~A yielded ~S which is not false"
+               ,label ',expr ,value)))))
 
 (defmacro check-null (expr &key label)
-  `(unless (null ,expr)
-     (fail "~@[~A: ~]~A is not null" ,label ',expr)))
+  (let ((value (gensym "VALUE-")))
+    `(let ((,value ,expr))
+       (unless (null ,value)
+         (fail "~@[~A: ~]~A yielded ~S which is not null"
+               ,label ',expr ,value)))))
 
 (defmacro check-is (function expected-expr value-expr &key label)
   (let ((expected (gensym "EXPECTED-"))
