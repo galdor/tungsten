@@ -3,26 +3,27 @@
 (defmacro check-parser (&rest tests)
   `(progn
      ,@(mapcar
-        (lambda (test &aux (uri (gensym "URI-"))
-                           (label (format nil "URI ~S" (cadr test)))
-                           (values (car test)))
-          `(let ((,uri (uri:parse ,(cadr test))))
-             ,@(mapcar
-                (lambda (spec)
-                  (destructuring-bind (check keyword accessor)
-                      spec
-                    (if (getf values keyword)
-                        `(,check ,(getf values keyword) (,accessor ,uri)
-                                 :label ,label)
-                        `(check-null (,accessor ,uri) :label ,label))))
-                '((check-string= :scheme uri:uri-scheme)
-                  (check-string= :username uri:uri-username)
-                  (check-string= :password uri:uri-password)
-                  (check-string= :host uri:uri-host)
-                  (check= :port uri:uri-port)
-                  (check-string= :path uri:uri-path)
-                  (check-equal :query uri:uri-query)
-                  (check-string= :fragment uri:uri-fragment)))))
+        (lambda (test)
+          (destructuring-bind (values uri-string &rest parse-args) test
+            (let ((uri (gensym "URI-"))
+                  (label (format nil "URI ~S" uri-string)))
+              `(let ((,uri (uri:parse ,uri-string ,@parse-args)))
+                 ,@(mapcar
+                    (lambda (spec)
+                      (destructuring-bind (check keyword accessor)
+                          spec
+                        (if (getf values keyword)
+                            `(,check ,(getf values keyword) (,accessor ,uri)
+                                     :label ,label)
+                            `(check-null (,accessor ,uri) :label ,label))))
+                    '((check-string= :scheme uri:uri-scheme)
+                      (check-string= :username uri:uri-username)
+                      (check-string= :password uri:uri-password)
+                      (check-string= :host uri:uri-host)
+                      (check= :port uri:uri-port)
+                      (check-string= :path uri:uri-path)
+                      (check-equal :query uri:uri-query)
+                      (check-string= :fragment uri:uri-fragment)))))))
         tests)))
 
 (deftest parser/no-authority ()
@@ -185,3 +186,12 @@
     "//bob:foo@example.com")
    ((:path "foo" :query '(("a" . "b")) :fragment "bar")
     "foo?a=b#bar")))
+
+(deftest parser/boundaries ()
+  (check-parser
+   ((:scheme "http")
+    "abhttp:" :start 2)
+   ((:host "ex")
+    "//example.com" :end 4)
+   ((:path "/a")
+    "file:///a/b/c" :start 7 :end 9)))
