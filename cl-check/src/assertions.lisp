@@ -8,6 +8,10 @@
   `(when ,expr
      (fail "~@[~A: ~]~A is not false" ,label ',expr)))
 
+(defmacro check-null (expr &key label)
+  `(unless (null ,expr)
+     (fail "~@[~A: ~]~A is not null" ,label ',expr)))
+
 (defmacro check-is (function expected-expr value-expr &key label)
   (let ((expected (gensym "EXPECTED-"))
         (value (gensym "VALUE-")))

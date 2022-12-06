@@ -20,6 +20,7 @@
   (:export
    :check-true
    :check-false
+   :check-null
    :check-is
    :check=
    :check/=
