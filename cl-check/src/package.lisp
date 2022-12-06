@@ -6,18 +6,19 @@
    :test
    :test-package
    :test-name
-   :test-function)
-  (:export
+   :test-function
+
    :find-test
-   :list-tests)
-  (:export
+   :list-tests
+
    :test-failure
    :test-failure-test
    :test-failure-message
    :fail
    :run-test
-   :run)
-  (:export
+   :run
+
+   :export
    :check-true
    :check-false
    :check-null
@@ -33,8 +34,9 @@
    :check-string-equal
    :check-char=
    :check-char/=
-   :check-signals)
-  (:export
+   :check-signals
+
+   :export
    :reporter
    :reporter-nb-tests
    :reporter-nb-test-failures
@@ -46,11 +48,13 @@
    :report-test-package-end
    :report-test-start
    :report-test-success
-   :report-test-failure)
-  (:export
+   :report-test-failure
+
+   :export
    :text-reporter
    :text-reporter-stream
-   :make-test-reporter)
-  (:export
+   :make-test-reporter
+
+   :export
    :test-system
    :test-system-and-exit))
