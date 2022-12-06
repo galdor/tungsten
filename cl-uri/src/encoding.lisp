@@ -1,5 +1,42 @@
 (in-package :uri)
 
+(defun percent-decode (string &key (start 0) (end (length string))
+                                   decode-plus)
+  (declare (type string string)
+           (type integer start end))
+  (let ((octets (make-array (length string) :element-type '(unsigned-byte 8)
+                                            :fill-pointer 0)))
+    (do ((i start))
+        ((>= i end)
+         (text:decode-string octets))
+      (let ((c (char string i)))
+        (cond
+          ((char= c #\%)
+           (unless (>= (- end i) 3)
+             (error "truncated percent sequence"))
+           (let ((hi (hex-digit-to-integer (char string (+ i 1))))
+                 (lo (hex-digit-to-integer (char string (+ i 2)))))
+             (vector-push-extend (logior (ash hi 4) lo) octets))
+           (incf i 3))
+          ((and (char= c #\+) decode-plus)
+           (vector-push-extend #.(char-code #\Space) octets)
+           (incf i))
+          (t
+           (vector-push-extend (char-code c) octets)
+           (incf i)))))))
+
+(defun hex-digit-to-integer (digit)
+  (declare (type character digit))
+  (cond
+    ((char<= #\0 digit #\9)
+     (- (char-code digit) #.(char-code #\0)))
+    ((char<= #\A digit #\F)
+     (+ 10 (- (char-code digit) #.(char-code #\A))))
+    ((char<= #\a digit #\f)
+     (+ 10 (- (char-code digit) #.(char-code #\a))))
+    (t
+     (error "invalid hex digit ~S" digit))))
+
 (defun percent-encode (string valid-char-p)
   (declare (type string string)
            (type (function (character) boolean) valid-char-p))

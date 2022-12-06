@@ -1,6 +1,9 @@
 (defpackage :uri
   (:use :cl)
   (:export
+   :percent-decode
+   :percent-encode
+
    :uri
    :uri-scheme
    :uri-username
@@ -11,4 +14,7 @@
    :uri-query
    :uri-fragment
    :make-uri
-   :serialize))
+
+   :serialize
+
+   :parse))
