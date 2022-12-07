@@ -19,8 +19,7 @@
 (define-condition unknown-foreign-type (error)
   ((name
     :type symbol
-    :initarg :name
-    :reader unknown-foreign-type-name))
+    :initarg :name))
   (:report
    (lambda (condition stream)
      (with-slots (name) condition

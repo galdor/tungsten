@@ -27,6 +27,18 @@
     :initarg :offset
     :reader struct-member-offset)))
 
+(define-condition unknown-struct-member (error)
+  ((struct
+    :type struct
+    :initarg :struct)
+   (name
+    :type symbol
+    :initarg :name))
+  (:report
+   (lambda (condition stream)
+     (with-slots (name struct) condition
+       (format stream "Unknown struct member ~S in ~A." name struct)))))
+
 (defmethod print-object ((member struct-member) stream)
   (print-unreadable-object (member stream :type t)
     (princ (struct-member-name member) stream)))
@@ -60,6 +72,10 @@
       (setf (slot-value struct 'size) size
             (slot-value struct 'alignment) max-alignment))))
 
+(defun find-struct-member (name struct)
+  (or (find name (struct-members struct) :key #'struct-member-name)
+      (error 'unknown-struct-member :struct struct :name name)))
+
 (defmacro define-struct ((name) (&rest members-data))
   (let* ((members
            (mapcar
@@ -78,8 +94,7 @@
 
 (defun struct-member (ptr type-name member-name &optional (offset 0))
   (let* ((type (foreign-type type-name))
-         (member (find member-name (struct-members type)
-                       :key #'struct-member-name)))
+         (member (find-struct-member member-name type)))
     (foreign-value (%pointer+ ptr (struct-member-offset member))
                    (struct-member-type member)
                    offset)))
@@ -93,8 +108,7 @@
           (symbolp (cadr type-name))
           (constantp member-name))
      (let* ((type (foreign-type (cadr type-name)))
-            (member (find member-name (struct-members type)
-                          :key #'struct-member-name))
+            (member (find-struct-member member-name type))
             (member-type (struct-member-type member)))
        `(foreign-value (%pointer+ ,ptr ,(struct-member-offset member))
                        ,(if (keywordp member-type) member-type `',member-type)
@@ -105,8 +119,7 @@
 (defun (setf struct-member) (value ptr type-name member-name
                              &optional (offset 0))
   (let* ((type (foreign-type type-name))
-         (member (find member-name (struct-members type)
-                       :key #'struct-member-name)))
+         (member (find-struct-member member-name type)))
     (setf (foreign-value (%pointer+ ptr (struct-member-offset member))
                          (struct-member-type member)
                          offset)
@@ -114,8 +127,7 @@
 
 (defun struct-member-pointer (ptr type-name member-name &optional (offset 0))
   (let* ((type (foreign-type type-name))
-         (member (find member-name (struct-members type)
-                       :key #'struct-member-name)))
+         (member (find-struct-member member-name type)))
     (%pointer+ ptr (+ (struct-member-offset member)
                       (* offset (foreign-type-size
                                  (struct-member-type member)))))))
@@ -129,8 +141,7 @@
           (symbolp (cadr type-name))
           (constantp member-name))
      (let* ((type (foreign-type (cadr type-name)))
-            (member (find member-name (struct-members type)
-                          :key #'struct-member-name))
+            (member (find-struct-member member-name type))
             (member-type (struct-member-type member)))
        `(%pointer+
          ,ptr
