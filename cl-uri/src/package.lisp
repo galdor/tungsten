@@ -21,6 +21,11 @@
 
    #:serialize
 
+   #:uri-parse-error
+   #:truncated-host
+   #:invalid-host
+   #:invalid-port
    #:parse
 
+   #:missing-base-uri-scheme
    #:resolve-reference))
