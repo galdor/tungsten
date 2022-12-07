@@ -20,7 +20,7 @@
                       (check-string= :username uri:uri-username)
                       (check-string= :password uri:uri-password)
                       (check-string= :host uri:uri-host)
-                      (check= :port uri:uri-port)
+                      (check-equal :port uri:uri-port)
                       (check-string= :path uri:uri-path)
                       (check-equal :query uri:uri-query)
                       (check-string= :fragment uri:uri-fragment)))))))

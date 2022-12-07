@@ -1,5 +1,37 @@
 (in-package :uri)
 
+(define-condition uri-parse-error (parse-error)
+  ())
+
+(define-condition truncated-host (uri-parse-error)
+  ((host
+    :type string
+    :initarg :host))
+  (:report
+   (lambda (c stream)
+     (format stream "Truncated host ~S." (slot-value c 'host)))))
+
+(define-condition invalid-host (uri-parse-error)
+  ((host
+    :type string
+    :initarg :host))
+  (:report
+   (lambda (c stream)
+     (format stream "Invalid host ~S." (slot-value c 'host)))))
+
+(define-condition invalid-port (uri-parse-error)
+  ((port
+    :type (or string number)
+    :initarg :port))
+  (:report
+   (lambda (c stream)
+     (with-slots (port) c
+       (format stream "Invalid port ~?."
+               (etypecase port
+                 (string "~S")
+                 (integer "~D"))
+               (list port))))))
+
 (defun parse (string &key (start 0) (end (length string)))
   (declare (type string string)
            (type integer start end))
@@ -73,30 +105,32 @@
      ;; IPv6 address
      (let ((closing-bracket (position #\] string :start (1+ start) :end end)))
        (unless closing-bracket
-         (error "truncated host ~S" (subseq string start end)))
+         (error 'truncated-host :host (subseq string start end)))
        (setf (uri-host uri) (subseq string (1+ start) closing-bracket))
        (when (< closing-bracket (1- end))
          (unless (char= (char string (1+ closing-bracket)) #\:)
-           (error "invalid host ~S" (subseq string start end)))
+           (error 'invalid-host :host (subseq string start end)))
          (setf (uri-port uri)
-               (parse-port-number string :start (+ closing-bracket 2)
-                                         :end end)))))
+               (parse-port string :start (+ closing-bracket 2)
+                                  :end end)))))
     (t
      ;; Hostname or IPv4 address
      (let ((colon (position #\: string :start start :end end)))
        (cond
          (colon
           (setf (uri-host uri) (subseq string start colon))
-          (setf (uri-port uri) (parse-port-number string :start (1+ colon)
-                                                         :end end)))
+          (setf (uri-port uri) (parse-port string :start (1+ colon) :end end)))
          (t
           (setf (uri-host uri) (subseq string start end))))))))
 
-(defun parse-port-number (string &key (start 0) (end (length string)))
-  (handler-case
-      (parse-integer string :start start :end end)
-    (parse-error ()
-      (error "invalid port number ~S" (subseq string start end)))))
+(defun parse-port (string &key (start 0) (end (length string)))
+  (let ((port (handler-case
+                  (parse-integer string :start start :end end)
+                (parse-error ()
+                  (error 'invalid-port :port (subseq string start end))))))
+    (unless (< 0 port 65536)
+      (error 'invalid-port :port port))
+    port))
 
 (defun parse-query (string &key (start 0) (end (length string)))
   (declare (type string string)

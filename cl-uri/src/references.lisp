@@ -1,5 +1,18 @@
 (in-package :uri)
 
+(define-condition missing-base-uri-scheme (error)
+  ((reference
+    :type uri
+    :initarg :reference)
+   (base
+    :type uri
+    :initarg :base))
+  (:report
+   (lambda (c stream)
+     (declare (ignore c))
+     (format stream "Cannot resolve a reference against a base URI without ~
+                     a scheme."))))
+
 (defun resolve-reference (reference base)
   (cond
     ((uri-scheme reference)
@@ -32,7 +45,7 @@
                      (merge-paths base-path has-base-authority path)))))))
        uri))
     (t
-     (error "missing base uri scheme"))))
+     (error 'missing-base-uri-scheme :reference reference :base base))))
 
 (defun merge-paths (base-path has-base-authority path)
   (cond
