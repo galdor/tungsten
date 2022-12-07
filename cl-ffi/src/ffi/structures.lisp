@@ -116,14 +116,37 @@
     (t
      form)))
 
-(defun (setf struct-member) (value ptr type-name member-name
-                             &optional (offset 0))
+(defun write-struct-member (ptr type-name member-name offset value)
   (let* ((type (foreign-type type-name))
          (member (find-struct-member member-name type)))
     (setf (foreign-value (%pointer+ ptr (struct-member-offset member))
                          (struct-member-type member)
                          offset)
           value)))
+
+(define-compiler-macro write-struct-member (&whole form
+                                            ptr type-name member-name offset
+                                            value)
+  (cond
+    ((and (listp type-name)
+          (eq (car type-name) 'cl:quote)
+          (symbolp (cadr type-name))
+          (constantp member-name))
+     (let* ((type (foreign-type (cadr type-name)))
+            (member (find-struct-member member-name type))
+            (member-type (struct-member-type member)))
+       `(setf (foreign-value (%pointer+ ,ptr ,(struct-member-offset member))
+                             ,(if (keywordp member-type)
+                                  member-type
+                                  `',member-type)
+                             ,offset)
+              ,value)))
+    (t
+     form)))
+
+(defsetf struct-member (ptr type-name member-name &optional (offset 0))
+    (value)
+  `(write-struct-member ,ptr ,type-name ,member-name ,offset ,value))
 
 (defun struct-member-pointer (ptr type-name member-name &optional (offset 0))
   (let* ((type (foreign-type type-name))
