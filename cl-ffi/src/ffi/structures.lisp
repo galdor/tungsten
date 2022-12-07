@@ -84,6 +84,24 @@
                    (struct-member-type member)
                    offset)))
 
+(define-compiler-macro struct-member (&whole form
+                                      ptr type-name member-name
+                                      &optional (offset 0))
+  (cond
+    ((and (listp type-name)
+          (eq (car type-name) 'cl:quote)
+          (symbolp (cadr type-name))
+          (constantp member-name))
+     (let* ((type (foreign-type (cadr type-name)))
+            (member (find member-name (struct-members type)
+                          :key #'struct-member-name))
+            (member-type (struct-member-type member)))
+       `(foreign-value (%pointer+ ,ptr ,(struct-member-offset member))
+                       ,(if (keywordp member-type) member-type `',member-type)
+                       ,offset)))
+    (t
+     form)))
+
 (defun (setf struct-member) (value ptr type-name member-name
                              &optional (offset 0))
   (let* ((type (foreign-type type-name))
