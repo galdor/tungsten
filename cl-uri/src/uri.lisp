@@ -50,3 +50,13 @@
                       :path path
                       :query query
                       :fragment fragment))
+
+(defun copy-uri (uri)
+  (make-uri :scheme (uri-scheme uri)
+            :username (uri-username uri)
+            :password (uri-password uri)
+            :host (uri-host uri)
+            :port (uri-port uri)
+            :path (uri-path uri)
+            :query (uri-query uri)
+            :fragment (uri-fragment uri)))

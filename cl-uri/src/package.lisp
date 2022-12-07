@@ -17,7 +17,10 @@
    :uri-query
    :uri-fragment
    :make-uri
+   :copy-uri
 
    :serialize
 
-   :parse))
+   :parse
+
+   :resolve-reference))

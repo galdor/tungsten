@@ -9,7 +9,8 @@
    (:file "encoding")
    (:file "uri")
    (:file "serialization")
-   (:file "parser"))
+   (:file "parser")
+   (:file "references"))
   :in-order-to ((test-op (test-op "uri/test"))))
 
 (defsystem "uri/test"
@@ -22,6 +23,7 @@
   ((:file "package")
    (:file "encoding")
    (:file "serialization")
-   (:file "parser"))
+   (:file "parser")
+   (:file "references"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :uri-test)))
