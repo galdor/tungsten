@@ -1,11 +1,11 @@
 (defpackage :system-ffi
   (:use :cl)
   (:export
-   :size-t
-   :ssize-t
+   #:size-t
+   #:ssize-t
 
-   :errno
+   #:errno
 
-   :time-t
-   :suseconds-t
-   :timeval))
+   #:time-t
+   #:suseconds-t
+   #:timeval))
