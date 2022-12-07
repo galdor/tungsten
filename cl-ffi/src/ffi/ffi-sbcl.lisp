@@ -129,12 +129,15 @@
 (deftype %pointer ()
   'sb-sys:system-area-pointer)
 
+(declaim (inline %pointer+))
 (defun %pointer+ (ptr offset)
   (sb-sys:sap+ ptr offset))
 
+(declaim (inline %null-pointer))
 (defun %null-pointer ()
   (sb-sys:int-sap 0))
 
+(declaim (inline %null-pointer-p))
 (defun %null-pointer-p (ptr)
   (zerop (sb-sys:sap-int ptr)))
 
