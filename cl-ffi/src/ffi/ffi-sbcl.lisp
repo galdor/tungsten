@@ -116,7 +116,8 @@
   (funcall (fdefinition `(setf ,(%foreign-type-read-function type)))
            value ptr offset))
 
-(define-compiler-macro %write-foreign-type (&whole form ptr type offset value)
+(define-compiler-macro %write-foreign-type (&whole form
+                                            ptr type offset value)
   (if (constantp type)
       `(setf (,(%foreign-type-read-function type) ,ptr ,offset) ,value)
       form))

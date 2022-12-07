@@ -149,7 +149,8 @@
 (defun %write-foreign-type (ptr type offset value)
   (funcall (%foreign-type-write-function type) ptr offset value))
 
-(define-compiler-macro %write-foreign-type (&whole form ptr type offset value)
+(define-compiler-macro %write-foreign-type (&whole form
+                                            ptr type offset value)
   (if (constantp type)
       `(,(%foreign-type-write-function type) ,ptr ,offset ,value)
       form))

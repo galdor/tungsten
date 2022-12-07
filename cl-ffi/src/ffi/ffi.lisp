@@ -64,7 +64,7 @@
     value))
 
 (define-compiler-macro write-foreign-value (&whole form
-                                                   ptr type-name offset value)
+                                            ptr type-name offset value)
   (cond
     ((and (constantp type-name)
           (base-type-p type-name))
@@ -107,8 +107,8 @@
         (funcall (foreign-type-decoder type) type value)
         value)))
 
-(define-compiler-macro foreign-value (&whole form ptr type-name
-                                             &optional (offset 0))
+(define-compiler-macro foreign-value (&whole form
+                                      ptr type-name &optional (offset 0))
   (cond
     ((and (constantp type-name)
           (base-type-p type-name))
