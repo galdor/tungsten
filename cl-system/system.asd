@@ -7,13 +7,19 @@
   :serial t
   :components
   ((:module
-     "ffi"
+     "system-ffi"
      :serial t
      :components
      ((:file "package")
       ("ffi-extractor:manifest"
        "ffi-manifest"
-       :package :system-ffi))))
+       :package :system-ffi)
+      (:file "errors")))
+   (:module
+    "system"
+    :serial t
+    :components
+    ((:file "package"))))
   :in-order-to ((test-op (test-op "system/test"))))
 
 (defsystem "system/test"

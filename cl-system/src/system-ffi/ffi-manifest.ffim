@@ -6,6 +6,14 @@
 (type ssize-t "ssize_t")
 
 ;;;
+;;; Locales
+;;;
+
+(include "locale.h")
+
+(type locale-t "locale_t")
+
+;;;
 ;;; Errors
 ;;;
 
