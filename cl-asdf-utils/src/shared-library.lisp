@@ -1,4 +1,4 @@
-(in-package :systems)
+(in-package :asdf-utils)
 
 (defclass shared-library (asdf:file-component)
   ((source-files

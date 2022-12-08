@@ -19,7 +19,7 @@
 (defsystem "ffi/test"
   :description "Tests for the ffi system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :defsystem-depends-on ("systems")
+  :defsystem-depends-on ("asdf-utils")
   :depends-on ("check" "ffi")
   :pathname "t"
   :serial t

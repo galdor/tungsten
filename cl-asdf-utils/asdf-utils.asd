@@ -1,5 +1,5 @@
-(defsystem "systems"
-  :description "Utilities to work with ASDF systems."
+(defsystem "asdf-utils"
+  :description "Utilities for the ASDF system management software."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :pathname "src"
   :serial t
