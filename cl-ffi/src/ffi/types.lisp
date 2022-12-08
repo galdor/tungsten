@@ -100,6 +100,22 @@
               (%foreign-type-alignment ,type-var)
               (slot-value (foreign-type ,type-var) 'alignment)))))))
 
+(defun encode-foreign-value (value type-name)
+  (if (base-type-p type-name)
+      value
+      (let ((type (foreign-type type-name)))
+        (if (slot-boundp type 'encoder)
+            (funcall (foreign-type-encoder type) type value)
+            value))))
+
+(defun decode-foreign-value (value type-name)
+  (if (base-type-p type-name)
+      value
+      (let ((type (foreign-type type-name)))
+        (if (slot-boundp type 'decoder)
+            (funcall (foreign-type-decoder type) type value)
+            value))))
+
 (defmacro define-type-alias (name original-type)
   (let ((base-type (gensym "BASE-TYPE-")))
     `(let ((,base-type (foreign-base-type ,original-type)))

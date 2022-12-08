@@ -6,6 +6,8 @@
 
    #:define-foreign-type
    #:foreign-type-size
+   #:encode-foreign-value
+   #:decode-foreign-value
    #:define-type-alias
 
    #:null-pointer
