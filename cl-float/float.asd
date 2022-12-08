@@ -4,7 +4,8 @@
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "parser"))
   :in-order-to ((test-op (test-op "float/test"))))
 
 (defsystem "float/test"
@@ -14,6 +15,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "parser"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :float-test)))

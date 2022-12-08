@@ -1,3 +1,5 @@
 (defpackage :float
   (:use :cl)
-  (:export))
+  (:export
+   #:float-parse-error
+   #:parse))
