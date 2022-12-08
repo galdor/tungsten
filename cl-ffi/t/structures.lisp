@@ -24,9 +24,9 @@
   (ffi:with-foreign-value (ptr 'test-struct-arrays)
     (setf (ffi:struct-member ptr 'test-struct-arrays :a 0) 1
           (ffi:struct-member ptr 'test-struct-arrays :a 1) 2)
-    (setf (ffi:struct-member ptr 'test-struct-arrays :b 0) 1.5
-          (ffi:struct-member ptr 'test-struct-arrays :b 1) 2.5
-          (ffi:struct-member ptr 'test-struct-arrays :b 2) 3.5)
+    (setf (ffi:struct-member ptr 'test-struct-arrays :b 0) 1.5f0
+          (ffi:struct-member ptr 'test-struct-arrays :b 1) 2.5f0
+          (ffi:struct-member ptr 'test-struct-arrays :b 2) 3.5f0)
     (ffi:foreign-funcall "ffi_test_struct_arrays_x2" ((:pointer) :void) ptr)
     (check= 2 (ffi:struct-member ptr 'test-struct-arrays :a 0))
     (check= 4 (ffi:struct-member ptr 'test-struct-arrays :a 1))

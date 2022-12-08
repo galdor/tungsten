@@ -81,7 +81,7 @@
 
 (deftest foreign-values/float ()
   (check-foreign-value :float
-                       (0.0
+                       (0.0f0
                         most-negative-single-float
                         least-negative-single-float
                         most-positive-single-float
