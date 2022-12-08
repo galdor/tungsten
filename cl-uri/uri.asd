@@ -1,11 +1,14 @@
 (defsystem "uri"
   :description "Utilities to manipulate Universal Resource Identifiers."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
+  :depends-on ("text")
   :pathname "src"
   :serial t
   :components
   ((:file "package")
-   (:file "uri"))
+   (:file "encoding")
+   (:file "uri")
+   (:file "serialization"))
   :in-order-to ((test-op (test-op "uri/test"))))
 
 (defsystem "uri/test"
