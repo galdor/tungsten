@@ -17,6 +17,7 @@
                        (test-key package name))))))
 
 (defun test-key (package name)
+  (declare (type string package name))
   (concatenate 'string package ":" name))
 
 (defun register-test (test)
@@ -32,6 +33,7 @@
 (defun find-test (package name)
   "Find and return a test. Signal a TEST-NOT-FOUND-CONDITION if there is no
 test with this name."
+  (declare (type string package name))
   (or (gethash (test-key package name) *tests*)
       (error 'test-not-found :package package :name name)))
 
@@ -40,11 +42,13 @@ test with this name."
 names and values are list of tests.
 
 If PACKAGE is not null, only include tests in that package."
+  (declare (type string package))
   (let ((tests nil))
     (maphash (lambda (key test)
                (declare (ignore key))
                (unless (and package (string/= package (test-package test)))
-                 (let ((pair (assoc (test-package test) tests)))
+                 (let ((pair (assoc (test-package test) tests
+                                    :test #'string=)))
                    (if pair
                        (push test (cdr pair))
                        (push (list (test-package test) test) tests)))))
