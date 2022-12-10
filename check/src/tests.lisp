@@ -33,8 +33,8 @@
 (defun find-test (package name)
   "Find and return a test. Signal a TEST-NOT-FOUND-CONDITION if there is no
 test with this name."
-  (declare (type string package name))
-  (or (gethash (test-key package name) *tests*)
+  (declare (type (or string symbol) package name))
+  (or (gethash (test-key (string package) (string name)) *tests*)
       (error 'test-not-found :package package :name name)))
 
 (defun list-tests (&key package)
@@ -42,8 +42,9 @@ test with this name."
 names and values are list of tests.
 
 If PACKAGE is not null, only include tests in that package."
-  (declare (type string package))
-  (let ((tests nil))
+  (declare (type (or string symbol) package))
+  (let ((tests nil)
+        (package (string package)))
     (maphash (lambda (key test)
                (declare (ignore key))
                (unless (and package (string/= package (test-package test)))
