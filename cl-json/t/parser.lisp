@@ -1,0 +1,100 @@
+(in-package :json-test)
+
+(defmacro check-parser ((predicate) &rest tests)
+  `(progn
+    ,@(mapcar
+       (lambda (test)
+         (destructuring-bind (value string &rest args) test
+           `(,predicate ,value (json:parse ,string ,@args)
+                        :label ,string)))
+       tests)))
+
+(deftest parse/null ()
+  (check-parser
+   (check-eql)
+   (:null "null")
+   (:null (format nil " ~%null~% "))))
+
+(deftest parse/booleans ()
+  (check-parser
+   (check-eql)
+   (:true "true")
+   (:false "false")))
+
+(deftest parse/numbers ()
+  (check-parser
+   (check-eql)
+   (0 "0")
+   (-1 "-1")
+   (-42 "-42")
+   (18446744073709551615 "18446744073709551615")
+   (-18446744073709551616 "-18446744073709551616")
+   (0.0d0 "0e0")
+   (0.0d0 "0e1")
+   (1000.0d0 "1e3")
+   (1000.0d0 "1e+3")
+   (-100.0d0 "-1e2")
+   (-0.01d0 "-1e-2")
+   (0.0d0 "0.0")
+   (0.1d0 "0.1")
+   (-3.25d0 "-3.25")
+   (123.456d0 "123.456")
+   (-123.0d0 "-123.0")
+   (-0.00000000000000001d0 "-0.00000000000000001")
+   (0.0d0 "0.0e+0")
+   (125.0d0 "1.25e2")
+   (-3000.0d0 "-0.3e4")))
+
+(deftest parse/strings ()
+  (check-parser
+   (check-equal)
+   ("" "\"\"")
+   ("hello" "\"hello\"")
+   (" abc def " "\" abc def \"")
+   ("élément" "\"élément\"")
+   ("\"foo\"end\"" "\"\\\"foo\\\"end\\\"\"")
+   ("/\\" "\"\\/\\\\\"")
+   ((format nil "~C~C~C~C~C"
+                        (code-char 8)
+                        (code-char 12)
+                        (code-char 10)
+                        (code-char 13)
+                        (code-char 9))
+                "\"\\b\\f\\n\\r\\t\"")
+   ("\\" "\"\\u005c\"")
+   ("élément" "\"\\u00E9l\\U00e9ment\"")
+   ("foo 𝄞 bar" "\"foo \\uD834\\uDD1E bar\"")))
+
+(deftest parse/arrays ()
+  (check-parser
+   (check-equalp)
+   (#() "[]")
+   (#() "[   ]")
+   (#(1 2 3) "[ 1 ,2, 3]")
+   (#("foo" :null :true) "[\"foo\" , null,true]")
+   (#(#()) "[[]]")
+   (#(#(#()) #(#())) "[[ [  ]], [[] ]]")
+   (#(1 #(#(2 3)) #(4)) "[1, [[2, 3]], [4]]")))
+
+(deftest parse/objects ()
+  (check-parser
+   (check-equalp)
+   ('()
+     "{}")
+   ('(("" . ""))
+     "{\"\": \"\"}")
+   ('(("a" . 1))
+     "{\"a\":1}")
+   ('(("abc" . 2)
+      ("def" . "ghi"))
+     "{ \"abc\"	:2 , \"def\":  \"ghi\"}")
+   ('(("a" . nil) ("b" ("c" . 1)))
+     "{\"a\": {}, \"b\": {\"c\": 1}}")
+   ('(("a" . 1) ("b" . 2) ("a" . 3))
+     "{\"a\": 1, \"b\": 2, \"a\": 3}")))
+
+(deftest parse/boundaries ()
+  (check-parser
+   (check-eql)
+   (42 "1242" :start 2)
+   (42 "[42]" :start 1 :end 3)))

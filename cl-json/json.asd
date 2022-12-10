@@ -1,10 +1,12 @@
 (defsystem "json"
   :description "An implementation of the JSON serialization format"
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
+  :depends-on ("float")
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "parser"))
   :in-order-to ((test-op (test-op "json/test"))))
 
 (defsystem "json/test"
@@ -14,6 +16,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "parser"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :json-test)))
