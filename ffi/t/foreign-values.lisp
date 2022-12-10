@@ -80,35 +80,51 @@
   (check-foreign-value :uint64 (0 18446744073709551615)))
 
 (deftest foreign-values/float ()
-  (check-foreign-value :float
-                       (0.0f0
-                        most-negative-single-float
-                        least-negative-single-float
-                        most-positive-single-float
-                        least-positive-single-float)))
+  (check-foreign-value
+   :float
+   (0.0f0
+    most-negative-single-float
+    least-negative-single-float
+    most-positive-single-float
+    least-positive-single-float)))
 
 (deftest foreign-values/double ()
-  (check-foreign-value :double
-                       (0.0d0
-                        most-negative-double-float
-                        least-negative-double-float
-                        most-positive-double-float
-                        least-positive-double-float)))
+  (check-foreign-value
+   :double
+   (0.0d0
+    most-negative-double-float
+    least-negative-double-float
+    most-positive-double-float
+    least-positive-double-float)))
 
 (deftest foreign-values/enum ()
-  (check-foreign-value 'test-enum
-                       (:test-enum-min
-                        (:test-enum-min -2147483648)
-                        :test-enum-0
-                        (:test-enum-0 0)
-                        :test-enum-1
-                        (:test-enum-1 1)
-                        :test-enum-2
-                        (:test-enum-2 2)
-                        42
-                        :test-enum-max
-                        (:test-enum-max 2147483647))
-                       :check check-eq))
+  (check-foreign-value
+   'test-enum
+   (:min
+    (:min -2147483648)
+    :a
+    (:a 0)
+    :b
+    (:b 1)
+    :c
+    (:c 2)
+    42
+    :max
+    (:max 2147483647))
+   :check check-eql))
+
+(deftest foreign-values/bitset ()
+  (check-foreign-value
+   'test-bitset
+   (('() 0)
+    ('(:a) 1)
+    ('(:a) '(1))
+    ('(:b :a) 3)
+    ('(:b :a) '(1 2))
+    ('(:c) 4)
+    ('(:c :a) 5)
+    ('(:c :b :a) 7))
+   :check check-equal))
 
 (deftest foreign-values/pointer ()
   (ffi:with-foreign-value (i :int)

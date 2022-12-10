@@ -7,12 +7,16 @@
 enum ffi_test_enum {
         FFI_TEST_SIMPLE_ENUM_MIN = INT_MIN,
 
-        FFI_TEST_SIMPLE_ENUM_0 = 0,
-        FFI_TEST_SIMPLE_ENUM_1,
-        FFI_TEST_SIMPLE_ENUM_2,
+        FFI_TEST_SIMPLE_ENUM_A = 0,
+        FFI_TEST_SIMPLE_ENUM_B,
+        FFI_TEST_SIMPLE_ENUM_C,
 
         FFI_TEST_SIMPLE_ENUM_MAX = INT_MAX,
 };
+
+#define FFI_TEST_BITSET_A (1 << 0)
+#define FFI_TEST_BITSET_B (1 << 1)
+#define FFI_TEST_BITSET_C (1 << 2)
 
 struct ffi_test_struct_packed {
         int8_t a;

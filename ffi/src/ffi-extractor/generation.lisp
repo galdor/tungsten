@@ -46,6 +46,8 @@
        (generate-c-type (cdr form) stream))
       (enum
        (generate-c-enum (cdr form) stream))
+      (bitset
+       (generate-c-bitset (cdr form) stream))
       (struct
        (generate-c-struct (cdr form) stream))
       (t
@@ -64,6 +66,17 @@
   (destructuring-bind ((name c-name) (&rest constants)) form
     (declare (ignore c-name))
     (format stream "puts(\"\\n(ffi:define-enum (~A)\");~%" name)
+    (format stream "puts(\"(\");~%")
+    (dolist (constant constants)
+      (destructuring-bind (constant-name value) constant
+        (format stream "printf(\"  (~S %d)\\n\", ~A);~%"
+                constant-name value)))
+    (format stream "puts(\"))\");~%")))
+
+(defun generate-c-bitset (form stream)
+  (destructuring-bind ((name c-name) (&rest constants)) form
+    (declare (ignore c-name))
+    (format stream "puts(\"\\n(ffi:define-bitset (~A)\");~%" name)
     (format stream "puts(\"(\");~%")
     (dolist (constant constants)
       (destructuring-bind (constant-name value) constant

@@ -4,11 +4,16 @@
                              :reload t)
 
 (ffi:define-enum (test-enum)
-    ((:test-enum-min -2147483648)
-     (:test-enum-0 0)
-     (:test-enum-1 1)
-     (:test-enum-2 2)
-     (:test-enum-max 2147483647)))
+    ((:min -2147483648)
+     (:a             0)
+     (:b             1)
+     (:c             2)
+     (:max  2147483647)))
+
+(ffi:define-bitset (test-bitset)
+    ((:a    #x00000001)
+     (:b    #x00000002)
+     (:c    #x00000004)))
 
 (ffi:define-struct (test-struct-packed)
     ((:a :int8)

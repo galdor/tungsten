@@ -16,11 +16,11 @@
      (:file "ffi-sbcl" :if-feature :sbcl)
      (:file "ffi")
      (:file "enumerations")
+     (:file "bitsets")
      (:file "structures")
      (:file "libraries")
      (:file "errno")))
    (:module "ffi-extractor"
-    :depends-on ("ffi")
     :serial t
     :components
     ((:file "package")
@@ -38,12 +38,12 @@
   :pathname "t"
   :serial t
   :components
-  (("asdf-utils:shared-library"
+  ((:file "package")
+   ("asdf-utils:shared-library"
     "ffi-test"
     :source-files ("ffi-test.c")
     :header-files ("ffi-test.h")
     :cflags ("std=c99" "Wall" "Wextra" "Werror" "Wsign-conversion"))
-   (:file "package")
    (:file "ffi-test-definitions")
    (:file "foreign-values")
    (:file "foreign-funcall")

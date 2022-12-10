@@ -28,6 +28,8 @@
 
    #:define-enum
 
+   #:define-bitset
+
    #:define-struct
    #:struct-member
    #:struct-member-pointer
