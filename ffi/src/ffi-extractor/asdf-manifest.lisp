@@ -42,9 +42,10 @@
   (list (asdf:component-pathname manifest)))
 
 (defmethod asdf:output-files ((op process-manifest) (manifest manifest))
-  (let* ((input-file (car (asdf:input-files op manifest)))
-         (output-file (make-pathname :defaults input-file :type "lisp")))
-    (list output-file)))
+  (let ((input-file (car (asdf:input-files op manifest))))
+    (list (make-pathname :defaults input-file :type "lisp")
+          (make-pathname :defaults input-file :type "c")
+          (make-pathname :defaults input-file :type nil))))
 
 (defmethod asdf:input-files ((op asdf:compile-op) (manifest manifest))
   (asdf:output-files 'process-manifest manifest))
@@ -63,14 +64,16 @@
 
 (defmethod asdf:perform ((op process-manifest) (manifest manifest))
   (let ((ffim-path (car (asdf:input-files op manifest)))
-        (lisp-path (asdf:output-file op manifest)))
+        (output-paths (asdf:output-files op manifest)))
     (with-slots (package compiler cflags ldflags libs
                  asdf-shared-libraries)
         manifest
       (destructuring-bind (asdf-libs-cflags asdf-libs-ldflags asdf-libs-libs)
           (asdf-shared-libraries-flags asdf-shared-libraries)
         (declare (ignore asdf-libs-ldflags asdf-libs-libs))
-        (extract ffim-path :output-path lisp-path
+        (extract ffim-path :output-path (first output-paths)
+                           :c-program-path (second output-paths)
+                           :executable-path (third output-paths)
                            :package package
                            :compiler compiler
                            :cflags (append cflags asdf-libs-cflags)
@@ -86,10 +89,10 @@
       (unless component
         (error "unknown ASDF component ~S in system ~S"
                component-name system-name))
-      (let* ((lib-dir
+      (let* ((output-path (car (asdf:output-files 'asdf:compile-op component)))
+             (lib-dir
                (make-pathname
-                :directory (pathname-directory
-                            (asdf:output-file 'asdf:compile-op component))))
+                :directory (pathname-directory output-path)))
              (header-dir
                (asdf-utils:shared-library-source-directory component)))
         (list (list (concatenate 'string "I" (namestring header-dir)))

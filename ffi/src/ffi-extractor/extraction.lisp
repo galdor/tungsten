@@ -3,14 +3,20 @@
 (defparameter *cflags* '("Wall" "Werror"))
 
 (defun extract (manifest-path &key output-path
+                                   c-program-path
+                                   executable-path
                                    (package :cl-user)
                                    (compiler "cc") cflags ldflags libs)
   (unless output-path
     (setf output-path (make-pathname :defaults manifest-path :type "lisp")))
   (let* ((manifest
            (load-manifest manifest-path :package (find-package package)))
-         (c-program-path (make-pathname :defaults manifest-path :type "c"))
-         (executable-path (make-pathname :defaults manifest-path :type nil))
+         (c-program-path
+           (or c-program-path
+               (make-pathname :defaults manifest-path :type "c")))
+         (executable-path
+           (or executable-path
+               (make-pathname :defaults manifest-path :type nil)))
          (cflags-args
            (mapcar (lambda (flag) (concatenate 'string "-" flag))
                    (append *cflags* cflags)))
