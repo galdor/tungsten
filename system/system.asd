@@ -7,14 +7,14 @@
   :serial t
   :components
   ((:module
-     "system-ffi"
-     :serial t
-     :components
-     ((:file "package")
-      ("ffi-extractor:manifest"
-       "ffi-manifest"
-       :package :system-ffi)
-      (:file "errors")))
+    "system-ffi"
+    :serial t
+    :components
+    ((:file "package")
+     ("ffi-extractor:manifest"
+      "ffi-manifest"
+      :package :system-ffi)
+     (:file "errors")))
    (:module
     "system"
     :serial t
