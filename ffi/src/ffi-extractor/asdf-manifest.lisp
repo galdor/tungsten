@@ -25,7 +25,12 @@
     :type list
     :initarg :libs
     :initform nil
-    :accessor manifest-libs))
+    :accessor manifest-libs)
+   (asdf-shared-libraries
+    :type list
+    :initarg :asdf-shared-libraries
+    :initform nil
+    :accessor manifest-asdf-shared-libraries))
   (:default-initargs
    :type "ffim"))
 
@@ -59,10 +64,45 @@
 (defmethod asdf:perform ((op process-manifest) (manifest manifest))
   (let ((ffim-path (car (asdf:input-files op manifest)))
         (lisp-path (asdf:output-file op manifest)))
-    (with-slots (package compiler cflags ldflags libs) manifest
-      (extract ffim-path :output-path lisp-path
-                         :package package
-                         :compiler compiler
-                         :cflags cflags
-                         :ldflags ldflags
-                         :libs libs))))
+    (with-slots (package compiler cflags ldflags libs
+                 asdf-shared-libraries)
+        manifest
+      (destructuring-bind (asdf-libs-cflags asdf-libs-ldflags asdf-libs-libs)
+          (asdf-shared-libraries-flags asdf-shared-libraries)
+        (declare (ignore asdf-libs-ldflags asdf-libs-libs))
+        (extract ffim-path :output-path lisp-path
+                           :package package
+                           :compiler compiler
+                           :cflags (append cflags asdf-libs-cflags)
+                           :ldflags ldflags
+                           :libs libs)))))
+
+(defun asdf-shared-library-flags (spec)
+  (destructuring-bind (system-name component-name) spec
+    (let ((system (asdf:find-system system-name)))
+    (unless system
+      (error "unknown ASDF system ~S" system-name))
+    (let ((component (asdf:find-component system component-name)))
+      (unless component
+        (error "unknown ASDF component ~S in system ~S"
+               component-name system-name))
+      (let* ((lib-dir
+               (make-pathname
+                :directory (pathname-directory
+                            (asdf:output-file 'asdf:compile-op component))))
+             (header-dir
+               (asdf-utils:shared-library-source-directory component)))
+        (list (list (concatenate 'string "I" (namestring header-dir)))
+              (list (concatenate 'string "L" (namestring lib-dir)))
+              (list component-name)))))))
+
+(defun asdf-shared-libraries-flags (specs)
+  (let ((cflags nil)
+        (ldflags nil)
+        (libs nil))
+    (dolist (spec specs)
+      (let ((flags (asdf-shared-library-flags spec)))
+        (setf cflags (append cflags (first flags)))
+        (setf ldflags (append ldflags (second flags)))
+        (setf libs (append libs (third flags)))))
+    (list (nreverse cflags) (nreverse ldflags) (nreverse libs))))

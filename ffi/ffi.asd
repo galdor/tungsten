@@ -1,7 +1,7 @@
 (defsystem "ffi"
   :description "A foreign function interface."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("text")
+  :depends-on ("asdf-utils" "text")
   :pathname "src"
   :serial t
   :components

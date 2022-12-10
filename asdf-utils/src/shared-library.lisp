@@ -81,12 +81,7 @@ files it is build from."))
   nil)
 
 (defmethod asdf:input-files ((op asdf:compile-op) (library shared-library))
-  (let* ((parent-directory
-           (asdf:component-pathname (asdf:component-parent library)))
-         (directory
-           (make-pathname
-            :directory (append (pathname-directory parent-directory)
-                               (list (asdf:component-name library))))))
+  (let ((directory (shared-library-source-directory library)))
     (with-slots (source-files header-files) library
       (mapcar (lambda (filename)
                 (merge-pathnames filename directory))
@@ -94,3 +89,13 @@ files it is build from."))
 
 (defmethod asdf:output-files ((op asdf:compile-op) (library shared-library))
   (list (shared-library-filename library)))
+
+(defun shared-library-source-directory (library)
+  "Return the absolute path of the directory containing C source files for a
+shared library ASDF component."
+  (declare (type shared-library library))
+  (let ((parent-directory
+          (asdf:component-pathname (asdf:component-parent library))))
+    (make-pathname
+     :directory (append (pathname-directory parent-directory)
+                        (list (asdf:component-name library))))))
