@@ -19,7 +19,8 @@
     "system"
     :serial t
     :components
-    ((:file "package"))))
+    ((:file "package")
+     (:file "ip-addresses"))))
   :in-order-to ((test-op (test-op "system/test"))))
 
 (defsystem "system/test"
