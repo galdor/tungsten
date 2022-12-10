@@ -20,6 +20,9 @@
 
 (defun parse (string &key (start 0) (end (length string))
                           (type 'double-float))
+  "Parse a floating point number.
+
+Return both the floating point value and the number of characters read."
   (declare (type string string)
            (type (integer 0) start end))
   (let ((i start)
@@ -109,10 +112,11 @@
           (float-parse-error (subseq string start end)
                              "invalid digit ~S" (char string i))))
      end)
-    (let ((mantissa (* sign
-                       (+ integer-part
-                          (/ fractional-part
-                             (coerce (expt 10 nb-fractional-digits) type))))))
-      (if (> exponent-sign 0)
-          (* mantissa (expt 10 exponent))
-          (/ mantissa (expt 10 exponent))))))
+    (let* ((mantissa (* sign
+                        (+ integer-part
+                           (/ fractional-part
+                              (coerce (expt 10 nb-fractional-digits) type)))))
+           (number (if (> exponent-sign 0)
+                       (* mantissa (expt 10 exponent))
+                       (/ mantissa (expt 10 exponent)))))
+      (values number (- i start)))))
