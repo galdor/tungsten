@@ -81,7 +81,7 @@
      (let ((type-var (gensym "TYPE-")))
        `(let ((,type-var ,type-name))
           (if (base-type-p ,type-var)
-              (%foreign-type-alignment ,type-var)
+              (%foreign-type-size ,type-var)
               (slot-value (foreign-type ,type-var) 'size)))))))
 
 (defmacro foreign-type-alignment (type-name)
