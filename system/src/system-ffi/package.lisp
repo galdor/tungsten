@@ -3,11 +3,18 @@
   (:export
    #:size-t
    #:ssize-t
-
    #:errno
+   #:time-t
+   #:suseconds-t
+   #:timeval
+
    #:system-error
    #:system-funcall
 
-   #:time-t
-   #:suseconds-t
-   #:timeval))
+   #:clear-memory
+
+   #:close-fd
+   #:read-fd
+   #:write-fd
+   #:socket
+   #:shutdown))

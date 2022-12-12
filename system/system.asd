@@ -14,7 +14,9 @@
      ("ffi-extractor:manifest"
       "ffi-manifest"
       :package :system-ffi)
-     (:file "errors")))
+     (:file "errors")
+     (:file "memory")
+     (:file "io")))
    (:module
     "system"
     :serial t

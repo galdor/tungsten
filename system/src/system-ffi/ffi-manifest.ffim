@@ -118,9 +118,9 @@
  ((:sec 'time-t "tv_sec")
   (:usec 'suseconds-t "tv_usec")))
 
-;;;
-;;; Networking
-;;;
+;;
+;; Sockets
+;;
 
 (include "netdb.h")
 (include "netinet/in.h")
@@ -153,6 +153,12 @@
   (:af-inet6 "AF_INET6")
   (:af-unix "AF_UNIX")
   (:af-unspec "AF_UNSPEC")))
+
+(enum
+ (shutdown-type "int")
+ ((:shut-rd "SHUT_RD")
+  (:shut-wr "SHUT_WR")
+  (:shut-rdwr "SHUT_RDWR")))
 
 (struct
  (in-addr "struct in_addr")
