@@ -1,5 +1,8 @@
 (in-package :system-ffi)
 
+(defconstant ni-maxhost 1025)
+(defconstant ni-maxserv 32)
+
 (defun close-fd (fd)
   (system-funcall ("close" ((:int) :int) fd)))
 
@@ -20,21 +23,21 @@
 (defun shutdown (fd shutdown-type)
   (system-funcall ("shutdown" ((:int shutdown-type) :int) fd shutdown-type)))
 
-(defmacro with-getaddrinfo ((%info node service
+(defmacro with-getaddrinfo ((%info host service
                              &key (%hints (ffi:null-pointer)))
                             &body body)
-  (let ((%node (gensym "%NODE-"))
+  (let ((%host (gensym "%HOST-"))
         (%service (gensym "%SERVICE-"))
         (%result (gensym "%RESULT-")))
-    `(ffi:with-foreign-strings ((,%node ,node)
+    `(ffi:with-foreign-strings ((,%host ,host)
                                 (,%service ,service))
        (ffi:with-foreign-value (,%result :pointer)
          (system-funcall ("getaddrinfo"
                           ((:pointer :pointer :pointer :pointer) :int)
-                          ,%node ,%service ,%hints ,%result)
+                          ,%host ,%service ,%hints ,%result)
                          :errorp (complement #'zerop)
                          :error-value-function #'identity
-                         :error-description-function 'gai-strinfo)
+                         :error-description-function 'gai-strerror)
          (unwind-protect
               (do* ((,%info (ffi:foreign-value ,%result :pointer)))
                    ((ffi:null-pointer-p ,%info)
@@ -45,6 +48,21 @@
             ("freeaddrinfo" ((:pointer) :void)
                             (ffi:foreign-value ,%result :pointer))))))))
 
-(defun gai-strinfo (value)
+(defun getnameinfo (%address address-length flags)
+  (ffi:with-foreign-values ((%host :char :count #.ni-maxhost)
+                            (%service :char :count #.ni-maxserv))
+    (system-funcall ("getnameinfo"
+                     ((:pointer socklen-t :pointer socklen-t
+                       :pointer socklen-t ni-flags)
+                      :int)
+                     %address address-length %host #.ni-maxhost
+                     %service #.ni-maxserv flags)
+                    :errorp (complement #'zerop)
+                    :error-value-function #'identity
+                    :error-description-function 'gai-strerror)
+    (values (ffi:decode-foreign-string %host)
+            (ffi:decode-foreign-string %service))))
+
+(defun gai-strerror (value)
   (ffi:decode-foreign-string
    (system-funcall ("gai_strerror" ((:int) :pointer) value))))
