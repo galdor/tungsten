@@ -5,6 +5,7 @@
    #:use-asdf-shared-library
 
    #:define-foreign-type
+   #:foreign-type
    #:foreign-type-size
    #:encode-foreign-value
    #:decode-foreign-value

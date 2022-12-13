@@ -202,7 +202,29 @@
 ;;;
 
 (defmacro foreign-funcall (name ((&rest arg-types) return-type) &rest args)
-  `(%foreign-funcall ,name
-                     (,(mapcar #'foreign-base-type arg-types)
-                      ,(foreign-base-type return-type))
-                     ,@args))
+  (flet ((expand-arg (arg type-name)
+           (if (base-type-p type-name)
+               arg
+               (let* ((type (foreign-type type-name))
+                      (encoder (foreign-type-encoder type)))
+                 (if encoder
+                     `(,encoder (foreign-type ',type-name) ,arg)
+                     arg)))))
+    (let ((nb-args (length args))
+          (nb-arg-types (length arg-types)))
+      (unless (= nb-args nb-arg-types)
+        (error "cannot match ~D arguments to ~D argument types"
+               nb-args nb-arg-types)))
+    (let ((value (gensym "VALUE-")))
+      `(let ((,value
+               (%foreign-funcall ,name
+                                 (,(mapcar #'foreign-base-type arg-types)
+                                   ,(foreign-base-type return-type))
+                                 ,@(mapcar #'expand-arg args arg-types))))
+         ,(if (base-type-p return-type)
+              value
+              (let* ((type (foreign-type return-type))
+                     (decoder (foreign-type-decoder type)))
+                (if decoder
+                    `(,decoder (foreign-type ',return-type) ,value)
+                    value)))))))
