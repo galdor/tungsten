@@ -20,10 +20,9 @@
        (flet ((encode-value (constant-or-value)
                 (etypecase constant-or-value
                   (symbol
-                   (with-slots (name constants) bitset
-                     (or (cdr (assoc constant-or-value constants))
-                         (error "unknown constant ~S for bitset ~S"
-                                constant-or-value name))))
+                   (or (cdr (assoc constant-or-value constants))
+                       (error "unknown constant ~S for bitset ~S"
+                              constant-or-value name)))
                   (integer
                    constant-or-value))))
          (apply #'logior (mapcar #'encode-value integer-or-values)))))))
