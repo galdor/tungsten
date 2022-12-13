@@ -175,3 +175,14 @@
                   (* ,offset ,(foreign-type-size member-type)))))))
     (t
      form)))
+
+(defmacro with-struct-members ((bindings %pointer type-name) &body body)
+  `(symbol-macrolet
+       (,@(mapcar
+            (lambda (binding)
+              (destructuring-bind (var member-name &key offset) binding
+                `(,var (struct-member ,%pointer ,type-name ,member-name
+                                      ,@(when offset
+                                          `(:offset ,offset))))))
+            bindings))
+     ,@body))

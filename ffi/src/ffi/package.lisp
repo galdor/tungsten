@@ -34,6 +34,7 @@
    #:define-struct
    #:struct-member
    #:struct-member-pointer
+   #:with-struct-members
 
    #:foreign-funcall
 
