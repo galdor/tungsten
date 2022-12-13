@@ -26,14 +26,15 @@
 
 (defmacro with-foreign-value ((ptr-var type-name &key (count 1)) &body body)
   (cond
-    ((and (constantp type-name)
-          (base-type-p type-name))
+    ((and (constantp type-name) (base-type-p type-name)
+          (constantp count) (integerp count))
      `(%with-foreign-value (,ptr-var ,(foreign-base-type type-name)
                                      :count ,count)
         ,@body))
     ((and (listp type-name)
           (eq (car type-name) 'cl:quote)
-          (symbolp (cadr type-name)))
+          (symbolp (cadr type-name))
+          (constantp count) (integerp count))
      `(%with-foreign-value (,ptr-var ,(foreign-base-type (cadr type-name))
                                      :count ,count)
         ,@body))
