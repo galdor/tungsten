@@ -39,12 +39,14 @@
    (alignment
     :type integer)
    (encoder
-    :type symbol
+    :type (or symbol null)
     :initarg :encoder
+    :initform nil
     :reader foreign-type-encoder)
    (decoder
-    :type symbol
+    :type (or symbol null)
     :initarg :decoder
+    :initform nil
     :reader foreign-type-decoder)))
 
 (defmethod initialize-instance :after ((type foreign-type) &key)
@@ -97,17 +99,19 @@
 (defun encode-foreign-value (value type-name)
   (if (base-type-p type-name)
       value
-      (let ((type (foreign-type type-name)))
-        (if (slot-boundp type 'encoder)
-            (funcall (foreign-type-encoder type) type value)
+      (let* ((type (foreign-type type-name))
+             (encoder (foreign-type-encoder type)))
+        (if encoder
+            (funcall encoder type value)
             value))))
 
 (defun decode-foreign-value (value type-name)
   (if (base-type-p type-name)
       value
-      (let ((type (foreign-type type-name)))
-        (if (slot-boundp type 'decoder)
-            (funcall (foreign-type-decoder type) type value)
+      (let* ((type (foreign-type type-name))
+             (decoder (foreign-type-decoder type)))
+        (if decoder
+            (funcall decoder type value)
             value))))
 
 (defmacro define-type-alias (name original-type)
