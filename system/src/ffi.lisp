@@ -1,4 +1,4 @@
-(in-package :system-ffi)
+(in-package :system)
 
 (defconstant ni-maxhost 1025)
 (defconstant ni-maxserv 32)

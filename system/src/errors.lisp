@@ -1,4 +1,4 @@
-(in-package :system-ffi)
+(in-package :system)
 
 (define-condition system-error (error)
   ((function

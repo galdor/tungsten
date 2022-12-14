@@ -6,24 +6,15 @@
   :pathname "src"
   :serial t
   :components
-  ((:module
-    "system-ffi"
-    :serial t
-    :components
-    ((:file "package")
-     ("ffi-extractor:manifest"
-      "ffi-manifest"
-      :package :system-ffi)
-     (:file "errors")
-     (:file "io")))
-   (:module
-    "system"
-    :serial t
-    :components
-    ((:file "package")
-     (:file "ip-addresses")
-     (:file "socket-addresses")
-     (:file "tcp-client"))))
+  ((:file "package")
+   ("ffi-extractor:manifest"
+    "ffi-manifest"
+    :package :system)
+   (:file "errors")
+   (:file "ffi")
+   (:file "ip-addresses")
+   (:file "socket-addresses")
+   (:file "tcp-client"))
   :in-order-to ((test-op (test-op "system/test"))))
 
 (defsystem "system/test"

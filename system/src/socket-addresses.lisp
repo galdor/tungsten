@@ -65,10 +65,9 @@
 
 (defgeneric initialize-socket-address-from-sockaddr (address %addr)
   (:method ((address ipv4-socket-address) %addr)
-    (let* ((%in (ffi:struct-member-pointer
-                 %addr 'system-ffi:sockaddr-in :sin-addr))
-           (addr (ffi:struct-member %in 'system-ffi:in-addr :s-addr))
-           (port (ffi:struct-member %addr 'system-ffi:sockaddr-in :sin-port)))
+    (let* ((%in (ffi:struct-member-pointer %addr 'sockaddr-in :sin-addr))
+           (addr (ffi:struct-member %in 'in-addr :s-addr))
+           (port (ffi:struct-member %addr 'sockaddr-in :sin-port)))
       (setf (ipv4-socket-address-address address)
             (ip-address (vector (ldb (byte 8 0) addr)
                                 (ldb (byte 8 8) addr)
@@ -87,19 +86,16 @@
     ;; Calling getaddrinfo() always return flowinfo fields set to zero anyway.
     (ffi:with-struct-members (((port :sin6-port)
                                (scope-id :sin6-scope-id))
-                              %addr 'system-ffi:sockaddr-in6)
+                              %addr 'sockaddr-in6)
       (let ((%in6 (ffi:struct-member-pointer
-                   %addr 'system-ffi:sockaddr-in6 :sin6-addr))
+                   %addr 'sockaddr-in6 :sin6-addr))
             (ipv6-address (make-array 8 :element-type '(unsigned-byte 16))))
         (dotimes (i 8)
-          (let ((hi (ffi:struct-member
-                     %in6 'system-ffi:in6-addr :s6-addr (* i 2)))
-                (lo (ffi:struct-member
-                     %in6 'system-ffi:in6-addr :s6-addr (1+ (* i 2)))))
+          (let ((hi (ffi:struct-member %in6 'in6-addr :s6-addr (* i 2)))
+                (lo (ffi:struct-member %in6 'in6-addr :s6-addr (1+ (* i 2)))))
             (setf (aref ipv6-address i)
                   (logior (ash hi 8) lo))))
-        (setf (ipv6-socket-address-address address)
-              (ip-address ipv6-address)))
+        (setf (ipv6-socket-address-address address) (ip-address ipv6-address)))
       (setf (ipv6-socket-address-scope-id address) scope-id)
       (setf (ip-socket-address-port address)
             (logior (ash (ldb (byte 8 0) port) 8)
@@ -109,14 +105,13 @@
 (defgeneric initialize-sockaddr-from-socket-address (%addr address)
   (:method (%addr (address ipv4-socket-address))
     (with-slots (address port) address
-      (setf (ffi:struct-member %addr 'system-ffi:sockaddr-in :sin-family)
-            (ffi:encode-foreign-value :af-inet 'system-ffi:address-family))
-      (setf (ffi:struct-member %addr 'system-ffi:sockaddr-in :sin-port)
+      (setf (ffi:struct-member %addr 'sockaddr-in :sin-family)
+            (ffi:encode-foreign-value :af-inet 'address-family))
+      (setf (ffi:struct-member %addr 'sockaddr-in :sin-port)
             (logior (ash (ldb (byte 8 0) port) 8)
                     (ldb (byte 8 8) port)))
-      (let ((%in (ffi:struct-member-pointer %addr 'system-ffi:sockaddr-in
-                                            :sin-addr)))
-        (setf (ffi:struct-member %in 'system-ffi:in-addr :s-addr)
+      (let ((%in (ffi:struct-member-pointer %addr 'sockaddr-in :sin-addr)))
+        (setf (ffi:struct-member %in 'in-addr :s-addr)
               (logior (aref address 0)
                       (ash (aref address 1) 8)
                       (ash (aref address 2) 16)
@@ -124,24 +119,20 @@
     %addr)
   (:method (%addr (address ipv6-socket-address))
     (with-slots (address scope-id port) address
-      (setf (ffi:struct-member %addr 'system-ffi:sockaddr-in6 :sin6-family)
-            (ffi:encode-foreign-value :af-inet6 'system-ffi:address-family))
-      (setf (ffi:struct-member %addr 'system-ffi:sockaddr-in6 :sin6-port)
+      (setf (ffi:struct-member %addr 'sockaddr-in6 :sin6-family)
+            (ffi:encode-foreign-value :af-inet6 'address-family))
+      (setf (ffi:struct-member %addr 'sockaddr-in6 :sin6-port)
             (logior (ash (ldb (byte 8 0) port) 8)
                     (ldb (byte 8 8) port)))
-      (let ((%in6 (ffi:struct-member-pointer %addr 'system-ffi:sockaddr-in6
-                                             :sin6-addr)))
+      (let ((%in6 (ffi:struct-member-pointer %addr 'sockaddr-in6 :sin6-addr)))
         (dotimes (i 8)
           (let ((offset (* i 2))
                 (group (aref address i)))
-            (setf
-             (ffi:struct-member %in6 'system-ffi:in6-addr :s6-addr offset)
-             (ldb (byte 8 8) group))
-            (setf
-             (ffi:struct-member %in6 'system-ffi:in6-addr :s6-addr (1+ offset))
-             (ldb (byte 8 0) group)))))
-      (setf (ffi:struct-member %addr 'system-ffi:sockaddr-in6 :sin6-scope-id)
-            scope-id))
+            (setf (ffi:struct-member %in6 'in6-addr :s6-addr offset)
+                  (ldb (byte 8 8) group))
+            (setf (ffi:struct-member %in6 'in6-addr :s6-addr (1+ offset))
+                  (ldb (byte 8 0) group)))))
+      (setf (ffi:struct-member %addr 'sockaddr-in6 :sin6-scope-id) scope-id))
     %addr))
 
 (defun resolve-net-service (host service-or-port)
@@ -160,15 +151,14 @@ be used as such."
                      service-or-port
                      (princ-to-string service-or-port)))
         (addresses nil))
-    (ffi:with-foreign-value (%hints 'system-ffi:addrinfo)
+    (ffi:with-foreign-value (%hints 'addrinfo)
       (ffi:clear-foreign-memory
-       %hints (ffi:foreign-type-size 'system-ffi:addrinfo))
-      (setf (ffi:struct-member %hints 'system-ffi:addrinfo :ai-flags)
-            '(:ai-addrconfig))
-      (system-ffi:with-getaddrinfo (%info host service :%hints %hints)
+       %hints (ffi:foreign-type-size 'addrinfo))
+      (setf (ffi:struct-member %hints 'addrinfo :ai-flags) '(:ai-addrconfig))
+      (with-getaddrinfo (%info host service :%hints %hints)
         (ffi:with-struct-members (((family :ai-family)
                                    (%addr :ai-addr))
-                                  %info 'system-ffi:addrinfo)
+                                  %info 'addrinfo)
           (let ((address-class (case family
                                  (:af-inet 'ipv4-socket-address)
                                  (:af-inet6 'ipv6-socket-address))))
@@ -183,8 +173,8 @@ be used as such."
   "Return the name and service associated with a socket address."
   (declare (type socket-address address))
   (let* ((sockaddr-type (etypecase address
-                          (ipv4-socket-address 'system-ffi:sockaddr-in)
-                          (ipv6-socket-address 'system-ffi:sockaddr-in6)))
+                          (ipv4-socket-address 'sockaddr-in)
+                          (ipv6-socket-address 'sockaddr-in6)))
          (sockaddr-length (ffi:foreign-type-size sockaddr-type))
          (flags nil))
     (when numeric-host
@@ -194,4 +184,4 @@ be used as such."
     (ffi:with-foreign-value (%addr sockaddr-type)
       (ffi:clear-foreign-memory %addr sockaddr-length)
       (initialize-sockaddr-from-socket-address %addr address)
-      (system-ffi:getnameinfo %addr sockaddr-length flags))))
+      (getnameinfo %addr sockaddr-length flags))))
