@@ -71,6 +71,8 @@
       (destructuring-bind (asdf-libs-cflags asdf-libs-ldflags asdf-libs-libs)
           (asdf-shared-libraries-flags asdf-shared-libraries)
         (declare (ignore asdf-libs-ldflags asdf-libs-libs))
+        (unless (find-package package)
+          (error "unknown package ~S" package))
         (extract ffim-path :output-path (first output-paths)
                            :c-program-path (second output-paths)
                            :executable-path (third output-paths)
