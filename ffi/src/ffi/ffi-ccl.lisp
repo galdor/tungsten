@@ -146,13 +146,13 @@
     (t
      (error 'unknown-foreign-type :name type))))
 
-(defun %write-foreign-type (ptr type offset value)
-  (funcall (%foreign-type-write-function type) ptr offset value))
+(defun %write-foreign-type (%pointer type offset value)
+  (funcall (%foreign-type-write-function type) %pointer offset value))
 
 (define-compiler-macro %write-foreign-type (&whole form
-                                            ptr type offset value)
+                                            %pointer type offset value)
   (if (constantp type)
-      `(,(%foreign-type-write-function type) ,ptr ,offset ,value)
+      `(,(%foreign-type-write-function type) ,%pointer ,offset ,value)
       form))
 
 ;;;
@@ -162,23 +162,23 @@
 (deftype %pointer ()
   'ccl:macptr)
 
-(defun %pointer+ (ptr offset)
-  (ccl:%inc-ptr ptr offset))
+(defun %pointer+ (%pointer offset)
+  (ccl:%inc-ptr %pointer offset))
 
 (defun %null-pointer ()
   (ccl:%null-ptr))
 
-(defun %null-pointer-p (ptr)
-  (ccl:%null-ptr-p ptr))
+(defun %null-pointer-p (%pointer)
+  (ccl:%null-ptr-p %pointer))
 
 (defun %allocate-foreign-memory (size)
   (ccl::malloc size))
 
-(defun %free-foreign-memory (ptr)
-  (ccl::free ptr))
+(defun %free-foreign-memory (%pointer)
+  (ccl::free %pointer))
 
-(defmacro %with-foreign-value ((ptr-var type &key (count 1)) &body body)
-  `(ccl:%stack-block ((,ptr-var ,(* (%foreign-type-size type) count)))
+(defmacro %with-foreign-value ((%pointer type &key (count 1)) &body body)
+  `(ccl:%stack-block ((,%pointer ,(* (%foreign-type-size type) count)))
      ,@body))
 
 ;;;

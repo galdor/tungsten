@@ -95,15 +95,15 @@
                      ,@(when size `(:size ,size))
                      :members (list ,@members)))))
 
-(defun struct-member (ptr type-name member-name &optional (offset 0))
+(defun struct-member (%pointer type-name member-name &optional (offset 0))
   (let* ((type (foreign-type type-name))
          (member (find-struct-member member-name type)))
-    (foreign-value (%pointer+ ptr (struct-member-offset member))
+    (foreign-value (%pointer+ %pointer (struct-member-offset member))
                    (struct-member-type member)
                    offset)))
 
 (define-compiler-macro struct-member (&whole form
-                                      ptr type-name member-name
+                                      %pointer type-name member-name
                                       &optional (offset 0))
   (cond
     ((and (listp type-name)
@@ -113,22 +113,22 @@
      (let* ((type (foreign-type (cadr type-name)))
             (member (find-struct-member member-name type))
             (member-type (struct-member-type member)))
-       `(foreign-value (%pointer+ ,ptr ,(struct-member-offset member))
+       `(foreign-value (%pointer+ ,%pointer ,(struct-member-offset member))
                        ,(if (keywordp member-type) member-type `',member-type)
                        ,offset)))
     (t
      form)))
 
-(defun write-struct-member (ptr type-name member-name offset value)
+(defun write-struct-member (%pointer type-name member-name offset value)
   (let* ((type (foreign-type type-name))
          (member (find-struct-member member-name type)))
-    (setf (foreign-value (%pointer+ ptr (struct-member-offset member))
+    (setf (foreign-value (%pointer+ %pointer (struct-member-offset member))
                          (struct-member-type member)
                          offset)
           value)))
 
 (define-compiler-macro write-struct-member (&whole form
-                                            ptr type-name member-name offset
+                                            %pointer type-name member-name offset
                                             value)
   (cond
     ((and (listp type-name)
@@ -138,7 +138,7 @@
      (let* ((type (foreign-type (cadr type-name)))
             (member (find-struct-member member-name type))
             (member-type (struct-member-type member)))
-       `(setf (foreign-value (%pointer+ ,ptr ,(struct-member-offset member))
+       `(setf (foreign-value (%pointer+ ,%pointer ,(struct-member-offset member))
                              ,(if (keywordp member-type)
                                   member-type
                                   `',member-type)
@@ -147,19 +147,19 @@
     (t
      form)))
 
-(defsetf struct-member (ptr type-name member-name &optional (offset 0))
+(defsetf struct-member (%pointer type-name member-name &optional (offset 0))
     (value)
-  `(write-struct-member ,ptr ,type-name ,member-name ,offset ,value))
+  `(write-struct-member ,%pointer ,type-name ,member-name ,offset ,value))
 
-(defun struct-member-pointer (ptr type-name member-name &optional (offset 0))
+(defun struct-member-pointer (%pointer type-name member-name &optional (offset 0))
   (let* ((type (foreign-type type-name))
          (member (find-struct-member member-name type)))
-    (%pointer+ ptr (+ (struct-member-offset member)
-                      (* offset (foreign-type-size
-                                 (struct-member-type member)))))))
+    (%pointer+ %pointer (+ (struct-member-offset member)
+                           (* offset (foreign-type-size
+                                      (struct-member-type member)))))))
 
 (define-compiler-macro struct-member-pointer (&whole form
-                                              ptr type-name member-name
+                                              %pointer type-name member-name
                                               &optional (offset 0))
   (cond
     ((and (listp type-name)
@@ -170,7 +170,7 @@
             (member (find-struct-member member-name type))
             (member-type (struct-member-type member)))
        `(%pointer+
-         ,ptr
+         ,%pointer
          ,(if (constantp offset)
               (+ (struct-member-offset member)
                   (* offset (foreign-type-size member-type)))

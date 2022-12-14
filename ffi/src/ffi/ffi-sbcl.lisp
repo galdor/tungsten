@@ -112,14 +112,14 @@
       (t
        (error 'unknown-foreign-type :name type)))))
 
-(defun %write-foreign-type (ptr type offset value)
+(defun %write-foreign-type (%pointer type offset value)
   (funcall (fdefinition `(setf ,(%foreign-type-read-function type)))
-           value ptr offset))
+           value %pointer offset))
 
 (define-compiler-macro %write-foreign-type (&whole form
-                                            ptr type offset value)
+                                            %pointer type offset value)
   (if (constantp type)
-      `(setf (,(%foreign-type-read-function type) ,ptr ,offset) ,value)
+      `(setf (,(%foreign-type-read-function type) ,%pointer ,offset) ,value)
       form))
 
 ;;;
@@ -130,32 +130,31 @@
   'sb-sys:system-area-pointer)
 
 (declaim (inline %pointer+))
-(defun %pointer+ (ptr offset)
-  (sb-sys:sap+ ptr offset))
+(defun %pointer+ (%pointer offset)
+  (sb-sys:sap+ %pointer offset))
 
 (declaim (inline %null-pointer))
 (defun %null-pointer ()
   (sb-sys:int-sap 0))
 
 (declaim (inline %null-pointer-p))
-(defun %null-pointer-p (ptr)
-  (zerop (sb-sys:sap-int ptr)))
+(defun %null-pointer-p (%pointer)
+  (zerop (sb-sys:sap-int %pointer)))
 
 (defun %allocate-foreign-memory (size)
   (sb-alien:alien-sap
    (sb-alien:make-alien (sb-alien:unsigned 8) size)))
 
-(defun %free-foreign-memory (ptr)
+(defun %free-foreign-memory (%pointer)
   (sb-alien:free-alien
-   (sb-alien:sap-alien ptr (sb-alien:* (sb-alien:unsigned 8)))))
+   (sb-alien:sap-alien %pointer (sb-alien:* (sb-alien:unsigned 8)))))
 
-(defmacro %with-foreign-value ((ptr-var type &key (count 1)) &body body)
-  (let ((alien-var (gensym "ALIEN-")))
+(defmacro %with-foreign-value ((%pointer type &key (count 1)) &body body)
+  (let ((alien (gensym "ALIEN-")))
     `(sb-alien:with-alien
-         ((,alien-var
-           (sb-alien:array (sb-alien:unsigned 8)
-                           ,(* (%foreign-type-size type) count))))
-       (let ((,ptr-var (sb-alien:alien-sap ,alien-var)))
+         ((,alien (sb-alien:array (sb-alien:unsigned 8)
+                                  ,(* (%foreign-type-size type) count))))
+       (let ((,%pointer (sb-alien:alien-sap ,alien)))
          ,@body))))
 
 ;;;
