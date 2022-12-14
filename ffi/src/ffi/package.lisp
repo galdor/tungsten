@@ -20,6 +20,7 @@
    #:with-foreign-memory
    #:foreign-value
    #:read-foreign-memory
+   #:clear-foreign-memory
 
    #:*default-string-encoding*
    #:allocate-foreign-string

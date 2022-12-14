@@ -147,6 +147,13 @@ octet array."
     (dotimes (i size octets)
       (setf (aref octets i) (foreign-value %pointer :uint8 i)))))
 
+(defun clear-foreign-memory (%pointer size)
+  "Clear SIZE octets of foreign memory starting at %POINTER by setting them to
+zero."
+  (declare (type (integer 0) size))
+  (dotimes (i size size)
+    (setf (foreign-value %pointer :uint8 i) 0)))
+
 ;;;
 ;;; Strings
 ;;;
