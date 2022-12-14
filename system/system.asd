@@ -15,14 +15,15 @@
       "ffi-manifest"
       :package :system-ffi)
      (:file "errors")
-     (:file "memory")
      (:file "io")))
    (:module
     "system"
     :serial t
     :components
     ((:file "package")
-     (:file "ip-addresses"))))
+     (:file "ip-addresses")
+     (:file "socket-addresses")
+     (:file "tcp-client"))))
   :in-order-to ((test-op (test-op "system/test"))))
 
 (defsystem "system/test"

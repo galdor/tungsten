@@ -15,5 +15,5 @@
    #:ipv6-socket-address
    #:ipv6-socket-address-address
    #:ipv6-socket-address-scope-id
-   #:ipv6-socket-address-flow-label
-   #:format-socket-address))
+   #:format-socket-address
+   #:socket-address-equal))
