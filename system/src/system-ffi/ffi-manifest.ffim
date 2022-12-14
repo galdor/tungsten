@@ -172,7 +172,7 @@
 
 (struct
  (in6-addr "struct in6_addr")
- ((:s6-addr :char "s6_addr" :count 16)))
+ ((:s6-addr :uint8 "s6_addr" :count 16)))
 
 (struct
  (sockaddr-in6 "struct sockaddr_in6")
