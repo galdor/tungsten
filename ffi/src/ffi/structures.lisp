@@ -4,9 +4,7 @@
   ((members
     :type list
     :initarg :members
-    :reader struct-members))
-  (:default-initargs
-   :base-type :pointer))
+    :reader struct-members)))
 
 (defclass struct-member ()
   ((name
@@ -43,7 +41,7 @@
   (print-unreadable-object (member stream :type t)
     (princ (struct-member-name member) stream)))
 
-(defmethod initialize-instance :after ((struct struct) &key)
+(defmethod initialize-instance :after ((struct struct) &key &allow-other-keys)
   (let ((offset 0)
         (max-alignment 0))
     ;; Compute the offset of each member
@@ -69,14 +67,17 @@
     (let ((size offset))
       (unless (zerop (mod size max-alignment))
         (incf size (- max-alignment (mod size max-alignment))))
-      (setf (slot-value struct 'size) size
-            (slot-value struct 'alignment) max-alignment))))
+      (unless (slot-boundp struct 'size)
+        (setf (slot-value struct 'size) size))
+      (unless (slot-boundp struct 'alignment)
+        (setf (slot-value struct 'alignment) max-alignment)))
+    (setf (slot-value struct 'base-type) :pointer)))
 
 (defun find-struct-member (name struct)
   (or (find name (struct-members struct) :key #'struct-member-name)
       (error 'unknown-struct-member :struct struct :name name)))
 
-(defmacro define-struct ((name) (&rest members-data))
+(defmacro define-struct ((name &key size) (&rest members-data))
   (let* ((members
            (mapcar
             (lambda (member-data)
@@ -89,8 +90,10 @@
                                 ,@(when offset (list :offset offset)))))
             members-data)))
     `(register-foreign-type
-      (make-instance 'struct :name ',name
-                             :members (list ,@members)))))
+      (make-instance 'struct
+                     :name ',name
+                     ,@(when size `(:size ,size))
+                     :members (list ,@members)))))
 
 (defun struct-member (ptr type-name member-name &optional (offset 0))
   (let* ((type (foreign-type type-name))

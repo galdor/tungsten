@@ -35,9 +35,11 @@
     :initarg :base-type
     :reader foreign-type-base-type)
    (size
-    :type integer)
+    :type integer
+    :initarg :size)
    (alignment
-    :type integer)
+    :type integer
+    :initarg :alignment)
    (encoder
     :type (or symbol null)
     :initarg :encoder
@@ -49,10 +51,17 @@
     :initform nil
     :reader foreign-type-decoder)))
 
-(defmethod initialize-instance :after ((type foreign-type) &key)
-  (let ((base-type (foreign-type-base-type type)))
-    (setf (slot-value type 'size) (%foreign-type-size base-type)
-          (slot-value type 'alignment) (%foreign-type-alignment base-type))))
+(defmethod initialize-instance :after ((type foreign-type)
+                                       &key &allow-other-keys)
+  ;; Some types such as structures do not set the base type with
+  ;; :DEFAULT-INITARGS to avoid automatic size and alignment computation.
+  (when (slot-boundp type 'base-type)
+    (let ((base-type (foreign-type-base-type type)))
+      (unless (slot-boundp type 'size)
+        (setf (slot-value type 'size) (%foreign-type-size base-type)))
+      (unless (slot-boundp type 'alignment)
+        (setf (slot-value type 'alignment)
+              (%foreign-type-alignment base-type))))))
 
 (defun register-foreign-type (type)
   (setf (gethash (foreign-type-name type) *foreign-types*) type))

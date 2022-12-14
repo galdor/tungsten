@@ -86,7 +86,9 @@
 
 (defun generate-c-struct (form stream)
   (destructuring-bind ((name c-name) (&rest members)) form
-    (format stream "puts(\"\\n(ffi:define-struct (~A)\");~%" name)
+    (format stream "printf(\"\\n(ffi:define-struct (~A :size %zu)\", ~
+                           sizeof(~A));~%"
+            name c-name)
     (format stream "puts(\"(\");~%")
     (dolist (member members)
       (destructuring-bind (member-name type member-c-name &key (count 1))
