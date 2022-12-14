@@ -139,6 +139,14 @@
     (value)
   `(write-foreign-value ,ptr ,type-name ,offset ,value))
 
+(defun read-foreign-memory (%pointer size)
+  "Read SIZE octets of foreign memory starting at %POINTER and return them as an
+octet array."
+  (declare (type (integer 0) size))
+  (let ((octets (make-array size :element-type '(unsigned-byte 8))))
+    (dotimes (i size octets)
+      (setf (aref octets i) (foreign-value %pointer :uint8 i)))))
+
 ;;;
 ;;; Strings
 ;;;

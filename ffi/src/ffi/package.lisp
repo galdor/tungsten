@@ -19,6 +19,7 @@
    #:with-foreign-values
    #:with-foreign-memory
    #:foreign-value
+   #:read-foreign-memory
 
    #:*default-string-encoding*
    #:allocate-foreign-string
