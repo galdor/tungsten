@@ -34,6 +34,12 @@
   (print-unreadable-object (address stream :type t)
     (princ (format-socket-address address) stream)))
 
+(defun make-ip-socket-address (ip-address port)
+  (let ((class (etypecase ip-address
+                 (ipv4-address 'ipv4-socket-address)
+                 (ipv6-address 'ipv6-socket-address))))
+    (make-instance class :address ip-address :port port)))
+
 (defgeneric format-socket-address (address)
   (:documentation "Return the textual representation of an IP address.")
   (:method ((address ipv4-socket-address))
