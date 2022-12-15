@@ -10,7 +10,6 @@
     :serial t
     :components
     ((:file "package")
-     (:file "utils")
      (:file "types")
      (:file "ffi-ccl" :if-feature :ccl)
      (:file "ffi-sbcl" :if-feature :sbcl)
