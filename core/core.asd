@@ -4,7 +4,8 @@
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "sequences"))
   :in-order-to ((test-op (test-op "core/test"))))
 
 (defsystem "core/test"
@@ -14,6 +15,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "sequences"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :core-test)))

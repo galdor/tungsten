@@ -1,3 +1,5 @@
 (defpackage :core
   (:use :cl)
-  (:export))
+  (:export
+   #:shuffle
+   #:nshuffle))
