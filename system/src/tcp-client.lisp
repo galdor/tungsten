@@ -37,7 +37,7 @@ If HOST is a hostname, unsuccessful connection attempts are logged to
   (etypecase host
     (string
      (let ((addresses (resolve-net-service host port)))
-       (dolist (address addresses)
+       (dolist (address (core:nshuffle addresses))
          (handler-case
              (return-from tcp-connect (tcp-connect-to-address address))
            (error (c)
