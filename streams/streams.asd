@@ -5,6 +5,7 @@
   :serial t
   :components
   ((:file "package")
+   (:file "fundamental-stream-definitions")
    (:file "fundamental-streams"))
   :in-order-to ((test-op (test-op "streams/test"))))
 
