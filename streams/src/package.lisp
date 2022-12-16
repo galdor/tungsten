@@ -31,4 +31,5 @@
    #:stream-clear-output
    #:stream-advance-to-column
    #:stream-write-byte
-   #:stream-write-sequence))
+   #:stream-write-sequence
+   #:stream-file-position))

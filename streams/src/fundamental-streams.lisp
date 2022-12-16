@@ -48,6 +48,7 @@
 (define-stream-generic stream-advance-to-column)
 (define-stream-generic stream-write-byte)
 (define-stream-generic stream-write-sequence)
+(define-stream-generic stream-file-position)
 
 ;; Binary streams do not have an element type by default, forcing all child
 ;; classes to implement it. It makes sense to provide a sensible default
