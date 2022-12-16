@@ -7,9 +7,10 @@
 
 (defmacro define-stream-class (name)
   `(setf (find-class ',name)
-         (find-class (or (find-symbol ,(symbol-name name) *gray-package*)
-                         (error "symbol ~S not found in package ~S"
-                                ,(symbol-name name) *gray-package*)))))
+         (find-class
+          (or (find-symbol ,(symbol-name name) *gray-package*)
+              (error "symbol ~S not found in package ~S"
+                     ,(symbol-name name) *gray-package*)))))
 
 (define-stream-class fundamental-stream)
 (define-stream-class fundamental-input-stream)
@@ -21,11 +22,12 @@
 (define-stream-class fundamental-character-input-stream)
 (define-stream-class fundamental-character-output-stream)
 
-(defmacro define-stream-generic (name)
+(defmacro define-stream-generic (name &optional (original-name name))
   `(setf (fdefinition ',name)
-         (fdefinition (or (find-symbol ,(symbol-name name) *gray-package*)
-                          (error "symbol ~S not found in package ~S"
-                                 ,(symbol-name name) *gray-package*)))))
+         (fdefinition
+          (or (find-symbol ,(symbol-name original-name) *gray-package*)
+              (error "symbol ~S not found in package ~S"
+                     ,(symbol-name original-name) *gray-package*)))))
 
 ;; Original generics from the Gray Streams document
 (define-stream-generic stream-read-char)
@@ -49,9 +51,12 @@
 (define-stream-generic stream-write-byte)
 
 ;; Extensions
-(define-stream-generic stream-read-sequence)
-(define-stream-generic stream-write-sequence)
-(define-stream-generic stream-file-position)
+(define-stream-generic stream-read-sequence
+  #+ccl stream-read-vector)
+(define-stream-generic stream-write-sequence
+  #+ccl stream-write-vector)
+(define-stream-generic stream-file-position
+  #+ccl stream-position)
 
 ;; Binary streams do not have an element type by default, forcing all child
 ;; classes to implement it. It makes sense to provide a sensible default
