@@ -3,7 +3,7 @@
 (deftype host ()
   '(or string ip-address))
 
-(defclass tcp-client (steam-socket)
+(defclass tcp-client (stream-socket)
   ((host
     :type host
     :initarg :host
