@@ -18,10 +18,12 @@
    #:format-socket-address
    #:socket-address-equal
 
+   #:stream-socket
+   #:stream-socket-file-descriptor
+   #:stream-socket-address
+
    #:host
    #:tcp-client
    #:tcp-client-host
    #:tcp-client-port
-   #:tcp-client-address
-   #:tcp-client-socket
    #:make-tcp-client))

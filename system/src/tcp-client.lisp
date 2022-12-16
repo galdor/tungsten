@@ -3,8 +3,7 @@
 (deftype host ()
   '(or string ip-address))
 
-(defclass tcp-client (streams:fundamental-binary-input-stream
-                      streams:fundamental-binary-output-stream)
+(defclass tcp-client (steam-socket)
   ((host
     :type host
     :initarg :host
@@ -12,16 +11,7 @@
    (port
     :type port-number
     :initarg :port
-    :reader tcp-client-port)
-   (address
-    :type socket-address
-    :initarg :address
-    :reader tcp-client-address)
-   (socket
-    :type (or (integer 0) null)
-    :initarg :socket
-    :initform nil
-    :reader tcp-client-socket)))
+    :reader tcp-client-port)))
 
 (defmethod print-object ((client tcp-client) stream)
   (print-unreadable-object (client stream :type t)
@@ -34,8 +24,8 @@
            (type port-number port))
   (multiple-value-bind (socket address)
       (tcp-connect host port)
-    (make-instance 'tcp-client :host host :port port :address address
-                               :socket socket)))
+    (make-instance 'tcp-client :address address :file-descriptor socket
+                               :host host :port port)))
 
 (defun tcp-connect (host port)
   "Establish a TCP connection to HOST and PORT. If HOST is an IP address, use it
@@ -86,14 +76,3 @@ it."
            socket)
       (unless success
         (close-fd socket)))))
-
-(defmethod close ((client tcp-client) &key abort)
-  (declare (ignore abort))
-  (with-slots (socket) client
-    (when socket
-      (close-fd (tcp-client-socket client))
-      (setf socket nil)
-      t)))
-
-(defmethod open-stream-p ((client tcp-client))
-  (not (null (tcp-client-socket client))))
