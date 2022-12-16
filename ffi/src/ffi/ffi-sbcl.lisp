@@ -157,6 +157,14 @@
        (let ((,%pointer (sb-alien:alien-sap ,alien)))
          ,@body))))
 
+(defmacro %with-pinned-vector-data ((%pointer vector) &body body)
+  (let ((vector-var (gensym "VECTOR-")))
+    `(let ((,vector-var ,vector))
+       (declare (type (sb-kernel:simple-unboxed-array (*)) ,vector-var))
+       (sb-sys:with-pinned-objects (,vector-var)
+         (let ((,%pointer (sb-sys:vector-sap ,vector-var)))
+           ,@body)))))
+
 ;;;
 ;;; Foreign calls
 ;;;

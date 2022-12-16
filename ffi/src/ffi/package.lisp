@@ -21,6 +21,7 @@
    #:foreign-value
    #:read-foreign-memory
    #:clear-foreign-memory
+   #:with-pinned-vector-data
 
    #:*default-string-encoding*
    #:allocate-foreign-string

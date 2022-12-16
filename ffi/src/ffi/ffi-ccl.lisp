@@ -155,6 +155,10 @@
       `(,(%foreign-type-write-function type) ,%pointer ,offset ,value)
       form))
 
+(defmacro %with-pinned-vector-data ((%pointer vector) &body body)
+  `(ccl:with-pointer-to-ivector (,%pointer ,vector)
+     ,@body))
+
 ;;;
 ;;; Memory
 ;;;
