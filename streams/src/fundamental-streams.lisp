@@ -27,6 +27,7 @@
                           (error "symbol ~S not found in package ~S"
                                  ,(symbol-name name) *gray-package*)))))
 
+;; Original generics from the Gray Streams document
 (define-stream-generic stream-read-char)
 (define-stream-generic stream-unread-char)
 (define-stream-generic stream-read-char-no-hang)
@@ -35,7 +36,6 @@
 (define-stream-generic stream-read-line)
 (define-stream-generic stream-clear-input)
 (define-stream-generic stream-read-byte)
-(define-stream-generic stream-read-sequence)
 (define-stream-generic stream-write-char)
 (define-stream-generic stream-line-column)
 (define-stream-generic stream-start-line-p)
@@ -47,6 +47,9 @@
 (define-stream-generic stream-clear-output)
 (define-stream-generic stream-advance-to-column)
 (define-stream-generic stream-write-byte)
+
+;; Extensions
+(define-stream-generic stream-read-sequence)
 (define-stream-generic stream-write-sequence)
 (define-stream-generic stream-file-position)
 
