@@ -4,9 +4,15 @@
 ;;; Memory
 ;;;
 
+(declaim (inline pointer+))
+(defun pointer+ (%pointer offset)
+  (%pointer+ %pointer offset))
+
+(declaim (inline null-pointer))
 (defun null-pointer ()
   (%null-pointer))
 
+(declaim (inline null-pointer-p))
 (defun null-pointer-p (%pointer)
   (%null-pointer-p %pointer))
 
