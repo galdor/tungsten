@@ -1,7 +1,8 @@
 (in-package :system)
 
-(defconstant ni-maxhost 1025)
-(defconstant ni-maxserv 32)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defconstant ni-maxhost 1025)
+  (defconstant ni-maxserv 32))
 
 (defun close-fd (fd)
   (system-funcall ("close" ((:int) :int) fd)))
