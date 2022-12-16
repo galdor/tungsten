@@ -2,4 +2,7 @@
   (:use :cl)
   (:export
    #:shuffle
-   #:nshuffle))
+   #:nshuffle
+
+   #:octet
+   #:octet-vector))

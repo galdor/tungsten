@@ -5,7 +5,8 @@
   :serial t
   :components
   ((:file "package")
-   (:file "sequences"))
+   (:file "sequences")
+   (:file "binary"))
   :in-order-to ((test-op (test-op "core/test"))))
 
 (defsystem "core/test"
