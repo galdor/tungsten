@@ -16,4 +16,12 @@
    #:ipv6-socket-address-address
    #:ipv6-socket-address-scope-id
    #:format-socket-address
-   #:socket-address-equal))
+   #:socket-address-equal
+
+   #:host
+   #:tcp-client
+   #:tcp-client-host
+   #:tcp-client-port
+   #:tcp-client-address
+   #:tcp-client-socket
+   #:make-tcp-client))

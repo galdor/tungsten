@@ -2,7 +2,7 @@
   :description "System programming utilities."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :defsystem-depends-on ("ffi")
-  :depends-on ("core" "ffi")
+  :depends-on ("core" "ffi" "streams")
   :pathname "src"
   :serial t
   :components
