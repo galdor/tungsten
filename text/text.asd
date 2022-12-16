@@ -2,6 +2,7 @@
   :description "Textual data manipulation."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :pathname "src"
+  :depends-on ("core")
   :serial t
   :components
   ((:file "package")

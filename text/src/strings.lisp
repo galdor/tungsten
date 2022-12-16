@@ -17,14 +17,14 @@
            (funcall (encoding-encoded-string-length-function encoding)
                     string start end)))
     (unless octets
-      (setf octets (make-array nb-octets :element-type 'octet)))
+      (setf octets (make-array nb-octets :element-type 'core:octet)))
     (funcall (encoding-encoding-function encoding) string start end
              octets offset)
     octets))
 
 (defun decoded-string-length (octets &key (encoding *default-encoding*)
                                           start end)
-  (declare (type octet-vector octets)
+  (declare (type core:octet-vector octets)
            (type (or index null) end))
   (let ((encoding (encoding encoding)))
     (funcall (encoding-decoded-string-length-function encoding)
@@ -32,7 +32,7 @@
 
 (defun decode-string (octets &key (encoding *default-encoding*) start end
                                   string (offset 0))
-  (declare (type octet-vector octets)
+  (declare (type core:octet-vector octets)
            (type (or index null) start end))
   (let* ((encoding (encoding encoding))
          (nb-characters

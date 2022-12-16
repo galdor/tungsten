@@ -2,7 +2,7 @@
 
 (define-condition utf8-decoding-error (error)
   ((octets
-    :type octet-vector
+    :type core:octet-vector
     :initarg :octets)
    (offset
     :type index
@@ -10,12 +10,12 @@
 
 (define-condition invalid-utf8-leading-byte (utf8-decoding-error)
   ((octet
-    :type octet
+    :type core:octet
     :initarg :octet)))
 
 (define-condition invalid-utf8-continuation-byte (utf8-decoding-error)
   ((octet
-    :type octet
+    :type core:octet
     :initarg :octet)))
 
 (define-condition truncated-utf8-sequence (utf8-decoding-error)
@@ -45,7 +45,7 @@
 
 (defun encode-string/utf8 (string start end octets offset)
   (declare (type simple-string string)
-           (type octet-vector octets)
+           (type core:octet-vector octets)
            (type (or index null) start end offset))
   (do ((max-index (1- (or end (length string))))
        (i (or start 0) (1+ i))
@@ -74,7 +74,7 @@
          (incf j 4))))))
 
 (defun decoded-string-length/utf8 (octets start end)
-  (declare (type octet-vector octets)
+  (declare (type core:octet-vector octets)
            (type (or index null) start end))
   (do ((max-index (1- (or end (length octets))))
        (length 0 (the fixnum (1+ length)))
@@ -106,7 +106,7 @@
                 :octets octets :offset i :octet b1))))))
 
 (defun decode-string/utf8 (octets start end string offset)
-  (declare (type octet-vector octets)
+  (declare (type core:octet-vector octets)
            (type string string)
            (type (or index null) start end offset))
   (flet ((check-continuation-byte (b i)
