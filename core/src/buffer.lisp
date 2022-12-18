@@ -33,6 +33,12 @@ Optimized to be read at the start and written at the end."))
   (with-slots (start end) buffer
     (= start end)))
 
+(defun buffer-length (buffer)
+  "Return the number of octets stored in BUFFER."
+  (declare (type buffer buffer))
+  (with-slots (start end) buffer
+    (- end start)))
+
 (defun buffer-append-octet (buffer octet)
   "Add an octet to the end of BUFFER."
   (declare (type buffer buffer)

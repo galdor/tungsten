@@ -45,7 +45,7 @@ If HOST is a hostname, unsuccessful connection attempts are logged to
              (return-from tcp-connect
                (values (tcp-connect-to-address address) address))
            (error (c)
-             (format *error-output* "cannot connect to ~A: ~A" address c))))
+             (format *error-output* "cannot connect to ~A: ~A~%" address c))))
        (error "cannot connect to ~A port ~D" host port)))
     (ip-address
      (let ((address (make-ip-socket-address host port)))
