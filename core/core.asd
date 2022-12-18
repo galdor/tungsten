@@ -6,7 +6,8 @@
   :components
   ((:file "package")
    (:file "sequences")
-   (:file "binary"))
+   (:file "binary")
+   (:file "buffer"))
   :in-order-to ((test-op (test-op "core/test"))))
 
 (defsystem "core/test"
