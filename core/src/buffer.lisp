@@ -7,11 +7,11 @@
    (start
     :type (integer 0)
     :initform 0
-    :reader buffer-start)
+    :accessor buffer-start)
    (end
     :type (integer 0)
     :initform 0
-    :reader buffer-end))
+    :accessor buffer-end))
   (:documentation
    "A buffer designed to store octets in a simple vector.
 Optimized to be read at the start and written at the end."))

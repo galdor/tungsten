@@ -17,5 +17,6 @@
    #:buffer-empty-p
    #:buffer-append-octet
    #:buffer-append-octets
+   #:buffer-reserve
    #:buffer-reset
    #:buffer-skip))
