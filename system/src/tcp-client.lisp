@@ -3,7 +3,7 @@
 (deftype host ()
   '(or string ip-address))
 
-(defclass tcp-client (stream-socket)
+(defclass tcp-client (file-descriptor-stream)
   ((host
     :type host
     :initarg :host
@@ -11,7 +11,11 @@
    (port
     :type port-number
     :initarg :port
-    :reader tcp-client-port)))
+    :reader tcp-client-port)
+   (address
+    :type socket-address
+    :initarg :address
+    :reader tcp-client-address)))
 
 (defmethod print-object ((client tcp-client) stream)
   (print-unreadable-object (client stream :type t)
@@ -24,8 +28,9 @@
            (type port-number port))
   (multiple-value-bind (socket address)
       (tcp-connect host port)
-    (make-instance 'tcp-client :address address :file-descriptor socket
-                               :host host :port port)))
+    (make-instance 'tcp-client :file-descriptor socket
+                               :host host :port port
+                               :address address)))
 
 (defun tcp-connect (host port)
   "Establish a TCP connection to HOST and PORT. If HOST is an IP address, use it
