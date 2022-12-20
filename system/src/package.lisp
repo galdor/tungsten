@@ -22,6 +22,10 @@
    #:stream-socket-file-descriptor
    #:stream-socket-address
 
+   #:socket
+   #:socket-file-descriptor
+   #:socket-address
+
    #:host
    #:tcp-client
    #:tcp-client-host
