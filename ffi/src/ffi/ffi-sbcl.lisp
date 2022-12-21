@@ -126,7 +126,7 @@
 ;;; Memory
 ;;;
 
-(deftype %pointer ()
+(deftype pointer ()
   'sb-sys:system-area-pointer)
 
 (declaim (inline %pointer+))

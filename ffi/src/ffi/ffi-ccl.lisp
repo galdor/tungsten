@@ -163,7 +163,7 @@
 ;;; Memory
 ;;;
 
-(deftype %pointer ()
+(deftype pointer ()
   'ccl:macptr)
 
 (defun %pointer+ (%pointer offset)

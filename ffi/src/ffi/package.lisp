@@ -11,6 +11,7 @@
    #:decode-foreign-value
    #:define-type-alias
 
+   #:pointer
    #:pointer+
    #:null-pointer
    #:null-pointer-p
