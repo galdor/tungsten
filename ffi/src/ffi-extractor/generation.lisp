@@ -4,6 +4,7 @@
   (list "stdbool.h"
         "stddef.h"                      ; needed for offsetof()
         "stdio.h"
+        "inttypes.h"
         "stdlib.h"))
 
 (defun generate-c-program (manifest &key (stream *standard-output*)
@@ -63,25 +64,27 @@
             name c-name c-name c-name)))
 
 (defun generate-c-enum (form stream)
-  (destructuring-bind ((name c-name) (&rest constants)) form
-    (declare (ignore c-name))
-    (format stream "puts(\"\\n(ffi:define-enum (~A)\");~%" name)
+  (destructuring-bind ((name base-type) (&rest constants)) form
+    (format stream "puts(\"\\n(ffi:define-enum (~A :base-type ~S)\");~%"
+            name base-type)
     (format stream "puts(\"(\");~%")
     (dolist (constant constants)
       (destructuring-bind (constant-name value) constant
-        (format stream "printf(\"  (~S %d)\\n\", ~A);~%"
-                constant-name value)))
+        (format stream "printf(\"  (~S \"~A\")\\n\", (~A)~A);~%"
+                constant-name (integer-printf-string base-type)
+                (integer-type-name base-type) value)))
     (format stream "puts(\"))\");~%")))
 
 (defun generate-c-bitset (form stream)
-  (destructuring-bind ((name c-name) (&rest constants)) form
-    (declare (ignore c-name))
-    (format stream "puts(\"\\n(ffi:define-bitset (~A)\");~%" name)
+  (destructuring-bind ((name base-type) (&rest constants)) form
+    (format stream "puts(\"\\n(ffi:define-bitset (~A :base-type ~S)\");~%"
+            name base-type)
     (format stream "puts(\"(\");~%")
     (dolist (constant constants)
       (destructuring-bind (constant-name value) constant
-        (format stream "printf(\"  (~S %d)\\n\", ~A);~%"
-                constant-name value)))
+        (format stream "printf(\"  (~S \"~A\")\\n\", (~A)~A);~%"
+                constant-name (integer-printf-string base-type)
+                (integer-type-name base-type) value)))
     (format stream "puts(\"))\");~%")))
 
 (defun generate-c-struct (form stream)
@@ -102,3 +105,45 @@
                   member-name type
                   count-expr c-name member-c-name))))
     (format stream "puts(\"))\");~%")))
+
+(defun integer-printf-string (base-type)
+  (ecase base-type
+    (:char "\"%hhd\"")
+    (:unsigned-char "\"hhu\"")
+    (:short "\"%hu\"")
+    (:unsigned-short "\"%hd\"")
+    (:int "\"%d\"")
+    (:unsigned-int "\"%u\"")
+    (:long "\"%ld\"")
+    (:unsigned-long "\"%lu\"")
+    (:long-long "\"%lld\"")
+    (:unsigned-long-long "\"%llu\"")
+    (:int8 "\"%\"PRId8")
+    (:uint8 "\"%\"PRIu8")
+    (:int16 "\"%\"PRId16")
+    (:uint16 "\"%\"PRIu16")
+    (:int32 "\"%\"PRId32")
+    (:uint32 "\"%\"PRIu32")
+    (:int64 "\"%\"PRId64")
+    (:uint64 "\"%\"PRIu64")))
+
+(defun integer-type-name (base-type)
+  (ecase base-type
+    (:char "char")
+    (:unsigned-char "unsigned char")
+    (:short "short")
+    (:unsigned-short "unsigned short")
+    (:int "int")
+    (:unsigned-int "unsigned int")
+    (:long "long")
+    (:unsigned-long "unsigned long")
+    (:long-long "long long")
+    (:unsigned-long-long "unsigned long long")
+    (:int8 "int8_t")
+    (:uint8 "uint8_t")
+    (:int16 "int16_t")
+    (:uint16 "uint16_t")
+    (:int32 "int32_t")
+    (:uint32 "uint32_t")
+    (:int64 "int64_t")
+    (:uint64 "uint64_t")))

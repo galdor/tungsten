@@ -21,7 +21,7 @@
 
 ;; See errno.h description in POSIX 2018.
 (enum
- (errno "int")
+ (errno :int)
  ((:e2big "E2BIG")
   (:eacces "EACCES")
   (:eaddrinuse "EADDRINUSE")
@@ -132,14 +132,14 @@
 (type in-port-t "in_port_t")
 
 (enum
- (socket-type "int")
+ (socket-type :int)
  ((:sock-dgram "SOCK_DGRAM")
   (:sock-raw "SOCK_RAW")
   (:sock-seqpacket "SOCK_SEQPACKET")
   (:sock-stream "SOCK_STREAM")))
 
 (enum
- (socket-protocol "int")
+ (socket-protocol :int)
  ((:ipproto-ip "IPPROTO_IP")
   (:ipproto-ipv6 "IPPROTO_IPV6")
   (:ipproto-icmp "IPPROTO_ICMP")
@@ -148,14 +148,14 @@
   (:ipproto-udp "IPPROTO_UDP")))
 
 (enum
- (address-family "int")
+ (address-family :int)
  ((:af-inet "AF_INET")
   (:af-inet6 "AF_INET6")
   (:af-unix "AF_UNIX")
   (:af-unspec "AF_UNSPEC")))
 
 (enum
- (shutdown-type "int")
+ (shutdown-type :int)
  ((:shut-rd "SHUT_RD")
   (:shut-wr "SHUT_WR")
   (:shut-rdwr "SHUT_RDWR")))
@@ -189,7 +189,7 @@
 (include "netdb.h")
 
 (enum
- (ai-error "int")
+ (ai-error :int)
  ((:eai-again "EAI_AGAIN")
   (:eai-badflags "EAI_BADFLAGS")
   (:eai-fail "EAI_FAIL")
@@ -202,7 +202,7 @@
   (:eai-overflow "EAI_OVERFLOW")))
 
 (bitset
- (ai-flags "int")
+ (ai-flags :int)
  ((:ai-passive "AI_PASSIVE")
   (:ai-canonname "AI_CANONNAME")
   (:ai-numerichost "AI_NUMERICHOST")
@@ -212,7 +212,7 @@
   (:ai-addrconfig "AI_ADDRCONFIG")))
 
 (bitset
- (ni-flags "int")
+ (ni-flags :int)
  ((:ni-nofqdn "NI_NOFQDN")
   (:ni-numerichost "NI_NUMERICHOST")
   (:ni-namereqd "NI_NAMEREQD")
