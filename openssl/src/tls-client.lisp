@@ -49,7 +49,7 @@
            (type (or pathname string null)
                  ca-certificate-path ca-certificate-directory
                  certificate-path private-key-path)
-           (ignore ciphers verify verification-depth
+           (ignore verify verification-depth
                    ca-certificate-path ca-certificate-directory
                    certificate-path private-key-path))
   (let ((%context nil)
@@ -60,10 +60,9 @@
       (unwind-protect
            (progn
              (setf %context (ssl-ctx-new (tls-client-method)))
-             ;; TODO disable <TLS1.2 by default
-             ;; TODO SSL_CTX_set_options
-             ;; TODO SSL_CTX_set_mode
-             ;; TODO SSL_CTX_set_cipher_list
+             (ssl-ctx-set-options %context '(:ssl-op-all))
+             (ssl-ctx-set-min-proto-version %context :tls1-2-version)
+             (ssl-ctx-set-cipher-list %context ciphers)
              ;; TODO SSL_CTX_set_verify
              ;; TODO SSL_CTX_set_verify_depth
              ;; TODO SSL_CTX_set_client_CA_list
@@ -71,7 +70,7 @@
              ;; TODO SSL_CTX_use_certificate_file
              ;; TODO SSL_CTX_use_PrivateKey_file
              ;; TODO SSL_CTX_set_tmp_dh
-             (setf %ssl (ssl-new))
+             (setf %ssl (ssl-new %context))
              (ssl-set-fd %ssl socket)
              (ssl-connect %ssl)
              (prog1

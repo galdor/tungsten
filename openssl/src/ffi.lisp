@@ -168,12 +168,31 @@
 (defun tls-client-method ()
   (openssl-funcall ("TLS_client_method" (() :pointer))))
 
+(defun ssl-ctx-set-options (%context options)
+  (openssl-funcall ("SSL_CTX_set_options" ((:pointer ctx-options) :uint64)
+                                          %context options)))
+
+(defun ssl-ctx-ctrl (%context command long %pointer)
+  (openssl-funcall
+   ("SSL_CTX_ctrl" ((:pointer ctrl-command :long :pointer) :long)
+                   %context command long %pointer)))
+
+(defun ssl-ctx-set-min-proto-version (%context version)
+  (ssl-ctx-ctrl %context :ssl-ctrl-set-min-proto-version
+                (ffi:encode-foreign-value version 'ssl-version)
+                (ffi:null-pointer)))
+
+(defun ssl-ctx-set-cipher-list (%context ciphers)
+  (ffi:with-foreign-string (%ciphers (format nil "~{~^:~A~}" ciphers))
+    (openssl-funcall ("SSL_CTX_set_cipher_list" ((:pointer :pointer) :int)
+                                                %context %ciphers))))
+
 ;;;
 ;;; Connection data
 ;;;
 
-(defun ssl-new ()
-  (openssl-funcall ("SSL_new" (() :pointer))))
+(defun ssl-new (%context)
+  (openssl-funcall ("SSL_new" ((:pointer) :pointer) %context)))
 
 (defun ssl-free (%ssl)
   (openssl-funcall ("SSL_free" ((:pointer) :void) %ssl)))
