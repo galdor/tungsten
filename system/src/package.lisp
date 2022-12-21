@@ -1,6 +1,9 @@
 (defpackage :system
   (:use :cl)
   (:export
+   #:size-t
+   #:ssize-t
+
    #:ipv4-address
    #:ipv6-address
    #:ip-address
