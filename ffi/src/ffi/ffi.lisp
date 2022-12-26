@@ -225,6 +225,56 @@ zero."
     (text:decode-string octets :encoding encoding)))
 
 ;;;
+;;; Callbacks
+;;;
+
+(define-condition unknown-callback (error)
+  ((name
+    :type symbol
+    :initarg :name))
+  (:report
+   (lambda (condition stream)
+     (with-slots (name) condition
+       (format stream "Unknown callback ~S." name)))))
+
+(defmacro defcallback ((name ((&rest arg-types) return-type) &rest arg-names)
+                       &body body)
+  (let ((nb-arg-names (length arg-names))
+        (nb-arg-types (length arg-types)))
+    (unless (= nb-arg-names nb-arg-types)
+      (error "cannot match ~D argument names to ~D argument types"
+             nb-arg-names nb-arg-types)))
+  (let ((value (gensym "VALUE-")))
+    `(%defcallback (,name ((,@(mapcar 'foreign-base-type arg-types))
+                           ,(foreign-base-type return-type))
+                          ,@arg-names)
+       (let ,(mapcar
+              (lambda (name type-name)
+                (if (base-type-p type-name)
+                    `(,name ,name)
+                    (let* ((type (foreign-type type-name))
+                           (decoder (foreign-type-decoder type)))
+                      (if decoder
+                          `(,name
+                            (,decoder (foreign-type ',type-name) ,name))
+                          `(,name ,name)))))
+              arg-names arg-types)
+         (let ((,value (progn ,@body)))
+           ,(if (base-type-p return-type)
+                value
+                (let* ((type (foreign-type return-type))
+                       (decoder (foreign-type-decoder type)))
+                  (if decoder
+                      `(,decoder (foreign-type ',return-type) ,value)
+                      value))))))))
+
+(defun callback-pointer (name)
+  (let ((pointer (%callback-pointer name)))
+    (unless pointer
+      (error 'unknown-callback :name name))
+    pointer))
+
+;;;
 ;;; Foreign calls
 ;;;
 
@@ -245,8 +295,8 @@ zero."
     (let ((value (gensym "VALUE-")))
       `(let ((,value
                (%foreign-funcall ,name
-                                 (,(mapcar #'foreign-base-type arg-types)
-                                   ,(foreign-base-type return-type))
+                                 (,(mapcar 'foreign-base-type arg-types)
+                                  ,(foreign-base-type return-type))
                                  ,@(mapcar #'expand-arg args arg-types))))
          ,(if (base-type-p return-type)
               value

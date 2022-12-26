@@ -166,6 +166,30 @@
            ,@body)))))
 
 ;;;
+;;; Callbacks
+;;;
+
+(defmacro %defcallback ((name ((&rest arg-types) return-type) &rest arg-names)
+                        &body body)
+  `(sb-alien:define-alien-callable ,name
+       ,(%translate-to-foreign-type return-type)
+       ,(mapcar (lambda (type name)
+                  (list name (%translate-to-foreign-type type)))
+                arg-types arg-names)
+     (let ,(mapcar (lambda (type name)
+                     `(,name ,(if (eq type :pointer)
+                                  `(sb-alien:alien-sap ,name)
+                                  name)))
+            arg-types arg-names)
+       ,@body)))
+
+(declaim (inline %callback-pointer))
+(defun %callback-pointer (name)
+  (let ((alien (sb-alien:alien-callable-function name)))
+    (when alien
+      (sb-alien:alien-sap alien))))
+
+;;;
 ;;; Foreign calls
 ;;;
 

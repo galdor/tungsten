@@ -41,6 +41,9 @@
    #:struct-member-pointer
    #:with-struct-members
 
+   #:defcallback
+   #:callback-pointer
+
    #:foreign-funcall
 
    #:errno))

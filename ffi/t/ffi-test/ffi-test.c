@@ -84,3 +84,14 @@ ffi_test_struct_nested_x2(struct ffi_test_struct_nested *s) {
 
         ffi_test_struct_packed_x2(s->ps);
 }
+
+int
+ffi_test_call(int (*fn)(const char *, int), const char *s, int n) {
+        return fn(s, n);
+}
+
+unsigned int
+ffi_test_call_enum_in(unsigned int (*fn)(enum ffi_test_enum),
+                      enum ffi_test_enum e) {
+        return fn(e);
+}

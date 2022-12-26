@@ -186,6 +186,28 @@
      ,@body))
 
 ;;;
+;;; Callbacks
+;;;
+
+(defvar *callback-pointers* (make-hash-table))
+
+(defmacro %defcallback ((name ((&rest arg-types) return-type) &rest arg-names)
+                        &body body)
+  `(setf (gethash ',name *callback-pointers*)
+         (symbol-value
+          (ccl:defcallback ,name
+            (,@(apply #'append
+                      (mapcar (lambda (type name)
+                                `(,(%translate-to-foreign-type type) ,name))
+                              arg-types arg-names))
+             ,(%translate-to-foreign-type return-type))
+            ,@body))))
+
+(declaim (inline %callback-pointer))
+(defun %callback-pointer (name)
+  (gethash name *callback-pointers*))
+
+;;;
 ;;; Foreign calls
 ;;;
 

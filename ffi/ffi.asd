@@ -47,6 +47,7 @@
    (:file "memory")
    (:file "foreign-values")
    (:file "foreign-funcall")
+   (:file "callbacks")
    (:file "structures")
    (:file "errno"))
   :perform (test-op (op system)

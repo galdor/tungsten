@@ -50,5 +50,8 @@ void ffi_test_struct_packed_x2(struct ffi_test_struct_packed *);
 void ffi_test_struct_padding_x2(struct ffi_test_struct_padding *);
 void ffi_test_struct_arrays_x2(struct ffi_test_struct_arrays *);
 void ffi_test_struct_nested_x2(struct ffi_test_struct_nested *);
+int ffi_test_call(int (*)(const char *, int), const char *, int);
+unsigned int ffi_test_call_enum_in(unsigned int (*)(enum ffi_test_enum),
+                                   enum ffi_test_enum);
 
 #endif
