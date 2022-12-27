@@ -145,11 +145,13 @@
                                    (:pointer ''ffi:null-pointer-p))))
   (let ((errorp-var (gensym "ERRORP-VAR-"))
         (value (gensym "VALUE-")))
-    `(let ((,errorp-var ,errorp)
-           (,value (ffi:foreign-funcall ,name ,signature ,@args)))
-       (when (and ,errorp-var (funcall ,errorp-var ,value))
-         (error 'openssl-error-stack :function ,name :errors (err-get-errors)))
-       ,value)))
+    `(progn
+       (ffi:foreign-funcall "ERR_clear_error" (() :void))
+       (let ((,errorp-var ,errorp)
+             (,value (ffi:foreign-funcall ,name ,signature ,@args)))
+         (when (and ,errorp-var (funcall ,errorp-var ,value))
+           (error 'openssl-error-stack :function ,name :errors (err-get-errors)))
+         ,value))))
 
 (declaim (inline <=0))
 (defun <=0 (n)
