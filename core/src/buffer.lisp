@@ -22,6 +22,10 @@ Optimized to be read at the start and written at the end."))
   (with-slots (data) buffer
     (setf data (make-array initial-size :element-type 'octet))))
 
+(defmethod print-object ((buffer buffer) stream)
+  (print-unreadable-object (buffer stream :type t)
+    (format stream "~D/~D" (buffer-length buffer) (buffer-capacity buffer))))
+
 (defun make-buffer (initial-size)
   "Create and return a new empty buffer."
   (declare (type (integer 0) initial-size))
@@ -32,6 +36,12 @@ Optimized to be read at the start and written at the end."))
   (declare (type buffer buffer))
   (with-slots (start end) buffer
     (= start end)))
+
+(defun buffer-capacity (buffer)
+  "Return the number of octets available in the buffer."
+  (declare (type buffer buffer))
+  (with-slots (data) buffer
+    (length data)))
 
 (defun buffer-length (buffer)
   "Return the number of octets stored in BUFFER."

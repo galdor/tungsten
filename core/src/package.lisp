@@ -13,6 +13,7 @@
    #:buffer-start
    #:buffer-end
    #:make-buffer
+   #:buffer-capacity
    #:buffer-length
    #:buffer-empty-p
    #:buffer-append-octet
