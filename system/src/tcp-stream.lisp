@@ -23,7 +23,6 @@
 
 (defmethod streams:stream-write-sequence ((stream tcp-stream) octets
                                           &optional (start 0) end)
-  ;; Note that WRITE-SEQUENCE can call this method with END being NIL
   (declare (type core:octet-vector octets)
            (type (integer 0) start)
            (type (or (integer 0) null) end))
@@ -74,7 +73,6 @@
 (defmethod streams:stream-read-sequence ((stream tcp-stream) octets
                                          &optional (start 0) end
                                          &aux (end (or end (length octets))))
-  ;; Note that READ-SEQUENCE can call this method with END being NIL
   (declare (type core:octet-vector octets)
            (type (integer 0) start)
            (type (or (integer 0) null) end))
