@@ -18,7 +18,7 @@
 (defmethod streams:stream-write-byte ((stream tcp-stream) octet)
   (declare (type core:octet octet))
   (with-slots (write-buffer) stream
-    (core:buffer-append-octet write-buffer 1))
+    (core:buffer-append-octet write-buffer octet))
   octet)
 
 (defmethod streams:stream-write-sequence ((stream tcp-stream) octets
