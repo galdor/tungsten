@@ -34,24 +34,21 @@
       (setf %context nil))))
 
 (defun make-tls-client (host port &key (ciphers *default-tls-client-ciphers*)
-                                       (verify t)
-                                       (verification-depth 20)
+                                       (peer-verification t)
+                                       (peer-verification-depth 20)
                                        ca-certificate-path
-                                       ca-certificate-directory
+                                       ca-certificate-directory-path
                                        certificate-path
                                        private-key-path)
   "Create and return a TLS client connected to HOST and PORT."
   (declare (type system:host host)
            (type system:port-number port)
            (type list ciphers)
-           (type boolean verify)
-           (type (integer 0) verification-depth)
+           (type boolean peer-verification)
+           (type (integer 0) peer-verification-depth)
            (type (or pathname string null)
-                 ca-certificate-path ca-certificate-directory
-                 certificate-path private-key-path)
-           (ignore verify verification-depth
-                   ca-certificate-path ca-certificate-directory
-                   certificate-path private-key-path))
+                 ca-certificate-path ca-certificate-directory-path
+                 certificate-path private-key-path))
   (let ((%context nil)
         (%ssl nil)
         (success nil))
@@ -63,13 +60,21 @@
              (ssl-ctx-set-options %context '(:ssl-op-all))
              (ssl-ctx-set-min-proto-version %context :tls1-2-version)
              (ssl-ctx-set-cipher-list %context ciphers)
-             ;; TODO SSL_CTX_set_verify
-             ;; TODO SSL_CTX_set_verify_depth
-             ;; TODO SSL_CTX_set_client_CA_list
-             ;; TODO SSL_CTX_load_verify_locations
-             ;; TODO SSL_CTX_use_certificate_file
-             ;; TODO SSL_CTX_use_PrivateKey_file
-             ;; TODO SSL_CTX_set_tmp_dh
+             (when peer-verification
+               (ssl-ctx-set-verify %context '(:ssl-verify-peer) nil))
+             (when peer-verification-depth
+               (ssl-ctx-set-verify-depth %context peer-verification-depth))
+             (when ca-certificate-path
+               (ssl-ctx-load-verify-file %context ca-certificate-path))
+             (when ca-certificate-directory-path
+               (ssl-ctx-load-verify-dir %context
+                                        ca-certificate-directory-path))
+             (when certificate-path
+               (ssl-ctx-use-certificate-file %context certificate-path
+                                             :ssl-filetype-pem))
+             (when private-key-path
+               (ssl-ctx-use-private-key-file %context private-key-path
+                                             :ssl-filetype-pem))
              (setf %ssl (ssl-new %context))
              (ssl-set-fd %ssl socket)
              (ssl-connect %ssl)

@@ -187,6 +187,40 @@
     (openssl-funcall ("SSL_CTX_set_cipher_list" ((:pointer :pointer) :int)
                                                 %context %ciphers))))
 
+(defun ssl-ctx-set-verify (%context mode callback)
+  (let ((%callback (if callback
+                       (ffi:callback-pointer callback)
+                       (ffi:null-pointer))))
+    (openssl-funcall
+     ("SSL_CTX_set_verify" ((:pointer verification-mode :pointer) :void)
+                           %context mode %callback))))
+
+(defun ssl-ctx-set-verify-depth (%context depth)
+  (openssl-funcall ("SSL_CTX_set_verify_depth" ((:pointer :int) :void)
+                                               %context depth)))
+
+(defun ssl-ctx-load-verify-dir (%context path)
+  (ffi:with-foreign-string (%path (namestring path))
+    (openssl-funcall ("SSL_CTX_load_verify_dir" ((:pointer :pointer) :int)
+                                                %context %path))))
+
+(defun ssl-ctx-load-verify-file (%context path)
+  (ffi:with-foreign-string (%path (namestring path))
+    (openssl-funcall ("SSL_CTX_load_verify_file" ((:pointer :pointer) :int)
+                                                 %context %path))))
+
+(defun ssl-ctx-use-certificate-file (%context path type)
+  (ffi:with-foreign-string (%path (namestring path))
+    (openssl-funcall
+     ("SSL_CTX_use_certificate_file" ((:pointer :pointer filetype) :int)
+                                     %context %path type))))
+
+(defun ssl-ctx-use-private-key-file (%context path type)
+  (ffi:with-foreign-string (%path (namestring path))
+    (openssl-funcall
+     ("SSL_CTX_use_PrivateKey_file" ((:pointer :pointer filetype) :int)
+                                    %context %path type))))
+
 ;;;
 ;;; Connection data
 ;;;

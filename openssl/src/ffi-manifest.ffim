@@ -51,3 +51,16 @@
   (:ssl-op-no-ticket "SSL_OP_NO_TICKET")
   (:ssl-op-prioritize-chacha "SSL_OP_PRIORITIZE_CHACHA")
   (:ssl-op-tls-rollback-bug "SSL_OP_TLS_ROLLBACK_BUG")))
+
+(bitset
+ (verification-mode :int)
+ ((:ssl-verify-none "SSL_VERIFY_NONE")
+  (:ssl-verify-peer "SSL_VERIFY_PEER")
+  (:ssl-verify-fail-if-no-peer-cert "SSL_VERIFY_FAIL_IF_NO_PEER_CERT")
+  (:ssl-verify-client-once "SSL_VERIFY_CLIENT_ONCE")
+  (:ssl-verify-post-handshake "SSL_VERIFY_POST_HANDSHAKE")))
+
+(enum
+ (filetype :int)
+ ((:ssl-filetype-pem "SSL_FILETYPE_PEM")
+  (:ssl-filetype-asn1 "SSL_FILETYPE_ASN1")))
