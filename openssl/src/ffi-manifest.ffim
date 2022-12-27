@@ -1,4 +1,29 @@
 (include "openssl/ssl.h")
+(include "openssl/err.h")
+
+(constant err-system-flag "ERR_SYSTEM_FLAG" :unsigned-int)
+(constant err-system-mask "ERR_SYSTEM_MASK")
+(constant err-reason-mask "ERR_REASON_MASK")
+
+(enum
+ (ssl-error :int)
+ ((:ssl-error-none "SSL_ERROR_NONE")
+  (:ssl-error-ssl "SSL_ERROR_SSL")
+  (:ssl-error-want-read "SSL_ERROR_WANT_READ")
+  (:ssl-error-want-write "SSL_ERROR_WANT_WRITE")
+  (:ssl-error-want-x509-lookup "SSL_ERROR_WANT_X509_LOOKUP")
+  (:ssl-error-syscall "SSL_ERROR_SYSCALL")
+  (:ssl-error-zero-return "SSL_ERROR_ZERO_RETURN")
+  (:ssl-error-want-connect "SSL_ERROR_WANT_CONNECT")
+  (:ssl-error-want-accept "SSL_ERROR_WANT_ACCEPT")
+  (:ssl-error-want-async "SSL_ERROR_WANT_ASYNC")
+  (:ssl-error-want-async-job "SSL_ERROR_WANT_ASYNC_JOB")
+  (:ssl-error-want-client-hello-cb "SSL_ERROR_WANT_CLIENT_HELLO_CB")
+  (:ssl-error-want-retry-verify "SSL_ERROR_WANT_RETRY_VERIFY")))
+
+(enum
+ (ssl-reason :int)
+ ((:ssl-r-unexpected-eof-while-reading "SSL_R_UNEXPECTED_EOF_WHILE_READING")))
 
 (enum
  (ssl-version :int)

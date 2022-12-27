@@ -28,6 +28,10 @@
     :type integer
     :initarg :value
     :reader openssl-error-value)
+   (reason
+    :type (or keyword integer)
+    :initarg :reason
+    :reader openssl-error-reason)
    (description
     :type string
     :initarg :description
@@ -61,10 +65,12 @@
 (define-condition openssl-error-stack (error)
   ((function
     :type string
-    :initarg :function)
+    :initarg :function
+    :reader openssl-error-stack-function)
    (errors
     :type list
-    :initarg :errors))
+    :initarg :errors
+    :reader openssl-error-stack-errors))
   (:report
    (lambda (c stream)
      (with-slots (function errors) c
@@ -89,6 +95,13 @@
                          value %buffer buffer-size)
     (ffi:decode-foreign-string %buffer)))
 
+(defun err-get-reason (value)
+  (cond
+    ((> (logand value err-system-flag) 0)
+     (logand value err-system-mask))
+    (t
+     (logand value err-reason-mask))))
+
 (defun err-get-error ()
   (ffi:with-foreign-values ((%file :pointer)
                             (%line :int)
@@ -106,7 +119,9 @@
                                        :unsigned-int)
                                       %file %line %function %data %flags)))
       (unless (zerop value)
-        (let ((description (err-error-string value))
+        (let ((reason
+                (ffi:decode-foreign-value (err-get-reason value) 'ssl-reason))
+              (description (err-error-string value))
               (file
                 (let ((%pointer (ffi:foreign-value %file :pointer)))
                   (unless (ffi:null-pointer-p %pointer)
@@ -123,6 +138,7 @@
               (flags (ffi:foreign-value %flags :int)))
           (make-instance 'openssl-error
                          :value value
+                         :reason reason
                          :description description
                          :file (unless (string= file "") file)
                          :line (unless (zerop line) line)
@@ -238,6 +254,10 @@
 
 (defun ssl-connect (%ssl)
   (openssl-funcall ("SSL_connect" ((:pointer) :int) %ssl)))
+
+(defun ssl-read (%ssl %data size)
+  (openssl-funcall ("SSL_read" ((:pointer :pointer :int) :int)
+                                %ssl %data size)))
 
 (defun ssl-write (%ssl %data size)
   (openssl-funcall ("SSL_write" ((:pointer :pointer :int) :int)
