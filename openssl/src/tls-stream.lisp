@@ -13,6 +13,12 @@
     :type core:buffer
     :initform (core:make-buffer 4096))))
 
+(defmethod close :before ((stream tls-stream) &key abort)
+  (declare (ignore abort))
+  (with-slots (%ssl) stream
+    (ignore-errors
+     (ssl-shutdown %ssl))))
+
 (defmethod close :after ((stream tls-stream) &key abort)
   (declare (ignore abort))
   (with-slots (%ssl) stream

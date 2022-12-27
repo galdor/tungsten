@@ -255,6 +255,9 @@
 (defun ssl-connect (%ssl)
   (openssl-funcall ("SSL_connect" ((:pointer) :int) %ssl)))
 
+(defun ssl-shutdown (%ssl)
+  (openssl-funcall ("SSL_shutdown" ((:pointer) :int) %ssl)))
+
 (defun ssl-read (%ssl %data size)
   (openssl-funcall ("SSL_read" ((:pointer :pointer :int) :int)
                                 %ssl %data size)))
