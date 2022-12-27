@@ -43,6 +43,8 @@
     (case (car form)
       (include
        nil)
+      (constant
+       (generate-constant (cdr form) stream))
       (type
        (generate-c-type (cdr form) stream))
       (enum
@@ -54,6 +56,12 @@
       (t
        (error "invalid manifest form ~S" form))))
   (format stream "}~%"))
+
+(defun generate-constant (form stream)
+  (destructuring-bind (name c-name &optional (base-type :int)) form
+    (format stream "~%printf(\"\\n(defconstant ~A \"~A\")\\n\",~
+                             ~A);~%"
+            name (integer-printf-string base-type) c-name)))
 
 (defun generate-c-type (form stream)
   (destructuring-bind (name c-name) form
