@@ -5,7 +5,8 @@
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "client"))
   :in-order-to ((test-op (test-op "http/test"))))
 
 (defsystem "http/test"

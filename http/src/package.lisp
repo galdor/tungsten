@@ -1,3 +1,7 @@
 (defpackage :http
   (:use :cl)
-  (:export))
+  (:export
+   #:client
+   #:make-client
+   #:client-connections
+   #:disconnect-client))
