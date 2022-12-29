@@ -24,7 +24,7 @@
            (type port-number port))
   (multiple-value-bind (socket address)
       (tcp-connect host port)
-    (make-instance 'tcp-client :file-descriptor socket :address address
+    (make-instance 'tcp-client :socket socket :address address
                                :host host :port port)))
 
 (defun tcp-connect (host port)

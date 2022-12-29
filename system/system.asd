@@ -14,7 +14,7 @@
    (:file "ffi")
    (:file "ip-addresses")
    (:file "socket-addresses")
-   (:file "socket")
+   (:file "network-stream")
    (:file "tcp-stream")
    (:file "tcp-client"))
   :in-order-to ((test-op (test-op "system/test"))))

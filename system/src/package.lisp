@@ -21,13 +21,11 @@
    #:format-socket-address
    #:socket-address-equal
 
-   #:stream-socket
-   #:stream-socket-file-descriptor
-   #:stream-socket-address
-
-   #:socket
-   #:socket-file-descriptor
-   #:socket-address
+   #:network-stream
+   #:network-stream-socket
+   #:network-stream-address
+   #:network-stream-read-buffer
+   #:network-stream-write-buffer
 
    #:host
    #:tcp-client

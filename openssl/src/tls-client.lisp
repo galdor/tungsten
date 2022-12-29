@@ -23,7 +23,7 @@
 
 (defmethod print-object ((client tls-client) stream)
   (print-unreadable-object (client stream :type t)
-    (let ((address (system:socket-address client)))
+    (let ((address (system:network-stream-address client)))
       (write-string (system:format-socket-address address) stream))))
 
 (defmethod close :after ((client tls-client) &key abort)
@@ -79,8 +79,7 @@
              (ssl-set-fd %ssl socket)
              (ssl-connect %ssl)
              (prog1
-                 (make-instance 'tls-client :file-descriptor socket
-                                            :address address
+                 (make-instance 'tls-client :socket socket :address address
                                             :host host :port port
                                             :%context %context :%ssl %ssl)
                (setf success t)))
