@@ -8,12 +8,12 @@
     :type index
     :initarg :offset)))
 
-(define-condition invalid-utf8-leading-byte (utf8-decoding-error)
+(define-condition invalid-utf8-leading-octet (utf8-decoding-error)
   ((octet
     :type core:octet
     :initarg :octet)))
 
-(define-condition invalid-utf8-continuation-byte (utf8-decoding-error)
+(define-condition invalid-utf8-continuation-octet (utf8-decoding-error)
   ((octet
     :type core:octet
     :initarg :octet)))
@@ -102,16 +102,16 @@
            (error 'truncated-utf8-sequence :octets octets :offset i))
          (incf i 4))
         (t
-         (error 'invalid-utf8-leading-byte
+         (error 'invalid-utf8-leading-octet
                 :octets octets :offset i :octet b1))))))
 
 (defun decode-string/utf8 (octets start end string offset)
   (declare (type core:octet-vector octets)
            (type string string)
            (type (or index null) start end offset))
-  (flet ((check-continuation-byte (b i)
+  (flet ((check-continuation-octet (b i)
            (unless (<= #x80 b #xbf)
-             (error 'invalid-utf8-continuation-byte
+             (error 'invalid-utf8-continuation-octet
                     :octets octets :offset i :octet b))))
     (do ((max-index (1- (or end (length octets))))
          (i (or start 0))
@@ -129,7 +129,7 @@
            (when (<= b1 #xc1)
              (error 'overlong-utf8-sequence :octets octets :offset i))
            (let ((b2 (aref octets (+ i 1))))
-             (check-continuation-byte b2 (+ i 1))
+             (check-continuation-octet b2 (+ i 1))
              (let ((code (logior (ash (logand b1 #x1f) 6)
                                  (logand b2 #x3f))))
                (setf (schar string j) (code-char code))))
@@ -138,8 +138,8 @@
           ((<= #xe0 b1 #xef)
            (let ((b2 (aref octets (+ i 1)))
                  (b3 (aref octets (+ i 2))))
-             (check-continuation-byte b2 (+ i 1))
-             (check-continuation-byte b3 (+ i 2))
+             (check-continuation-octet b2 (+ i 1))
+             (check-continuation-octet b3 (+ i 2))
              (when (and (= b1 #xe0) (< b2 #x9f))
                (error 'overlong-utf8-sequence :octets octets :offset i))
              (let ((code (logior (ash (logand b1 #x0f) 12)
@@ -161,9 +161,9 @@
                  (b4 (aref octets (+ i 3))))
              (when (and (= b1 #xf0) (<= b2 #x8f))
                (error 'overlong-utf8-sequence :octets octets :offset i))
-             (check-continuation-byte b2 (+ i 1))
-             (check-continuation-byte b3 (+ i 2))
-             (check-continuation-byte b4 (+ i 3))
+             (check-continuation-octet b2 (+ i 1))
+             (check-continuation-octet b3 (+ i 2))
+             (check-continuation-octet b4 (+ i 3))
              (let ((code (logior (ash (logand b1 #x07) 18)
                                  (ash (logand b2 #x3f) 12)
                                  (ash (logand b3 #x3f) 6)

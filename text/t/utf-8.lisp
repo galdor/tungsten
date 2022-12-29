@@ -53,20 +53,20 @@
    ((codepoint-string #xfffd) #(239 191 189))
    ((codepoint-string #x10ffff) #(244 143 191 191))))
 
-(deftest decode-string/utf8/invalid-leading-bytes ()
+(deftest decode-string/utf8/invalid-leading-octets ()
   (check-decode-string-error
    :utf-8
-   (text:invalid-utf8-leading-byte #(128))
-   (text:invalid-utf8-leading-byte #(191))
-   (text:invalid-utf8-leading-byte #(245))
-   (text:invalid-utf8-leading-byte #(255))))
+   (text:invalid-utf8-leading-octet #(128))
+   (text:invalid-utf8-leading-octet #(191))
+   (text:invalid-utf8-leading-octet #(245))
+   (text:invalid-utf8-leading-octet #(255))))
 
-(deftest decode-string/utf8/invalid-continuation-bytes ()
+(deftest decode-string/utf8/invalid-continuation-octets ()
   (check-decode-string-error
    :utf-8
-   (text:invalid-utf8-continuation-byte #(194 0))
-   (text:invalid-utf8-continuation-byte #(226 130 127))
-   (text:invalid-utf8-continuation-byte #(240 159 152 92))))
+   (text:invalid-utf8-continuation-octet #(194 0))
+   (text:invalid-utf8-continuation-octet #(226 130 127))
+   (text:invalid-utf8-continuation-octet #(240 159 152 92))))
 
 (deftest decode-string/utf8/truncated-sequences ()
   (check-decode-string-error

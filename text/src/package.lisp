@@ -16,8 +16,8 @@
    #:decode-string
 
    #:utf8-decoding-error
-   #:invalid-utf8-leading-byte
-   #:invalid-utf8-continuation-byte
+   #:invalid-utf8-leading-octet
+   #:invalid-utf8-continuation-octet
    #:truncated-utf8-sequence
    #:overlong-utf8-sequence
    #:invalid-utf8-sequence))
