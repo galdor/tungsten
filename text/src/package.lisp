@@ -2,6 +2,7 @@
   (:use :cl)
   (:export
    #:*default-encoding*
+   #:unencodable-character
    #:encoding
    #:encoding-name
    #:encoding-encoding-function
@@ -14,6 +15,9 @@
    #:encode-string
    #:decoded-string-length
    #:decode-string
+
+   #:ascii-decoding-error
+   #:invalid-ascii-octet
 
    #:utf8-decoding-error
    #:invalid-utf8-leading-octet

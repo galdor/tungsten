@@ -9,6 +9,15 @@
                                        ,@(cddr check))))
                checks)))
 
+(defmacro check-encode-string-error (encoding &rest checks)
+  `(progn
+     ,@(mapcar (lambda (check)
+                 `(check:check-signals
+                   ,(car check)
+                   (text:encode-string ,(cadr check) :encoding ,encoding
+                                       ,@(cddr check))))
+               checks)))
+
 (defmacro check-decode-string (encoding &rest checks)
   `(progn
      ,@(mapcar (lambda (check)

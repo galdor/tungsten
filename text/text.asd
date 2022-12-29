@@ -9,6 +9,7 @@
    (:file "base")
    (:file "encodings")
    (:file "strings")
+   (:file "ascii")
    (:file "utf-8"))
   :in-order-to ((test-op (test-op "text/test"))))
 
@@ -21,6 +22,7 @@
   :components
   ((:file "package")
    (:file "utils")
+   (:file "ascii")
    (:file "utf-8"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :text-test)))

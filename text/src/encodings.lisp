@@ -4,6 +4,15 @@
 
 (defparameter *default-encoding* :utf-8)
 
+(define-condition unencodable-character (error)
+  ((character
+    :type character))
+  (:report
+   (lambda (condition stream)
+     (with-slots (character) condition
+       (format stream "Character ~S cannot be represented in the selected ~
+                       text encoding." character)))))
+
 (deftype encoded-string-length-function ()
   '(function (simple-string index index) vector-length))
 
