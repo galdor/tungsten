@@ -24,8 +24,8 @@
    #:network-stream
    #:network-stream-socket
    #:network-stream-address
-   #:network-stream-read-buffer
-   #:network-stream-write-buffer
+   #:write-network-stream
+   #:read-network-stream
 
    #:host
    #:tcp-client
