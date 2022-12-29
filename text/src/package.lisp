@@ -3,6 +3,7 @@
   (:export
    #:*default-encoding*
    #:unencodable-character
+   #:decoding-error
    #:encoding
    #:encoding-name
    #:encoding-encoding-function
@@ -16,10 +17,8 @@
    #:decoded-string-length
    #:decode-string
 
-   #:ascii-decoding-error
    #:invalid-ascii-octet
 
-   #:utf8-decoding-error
    #:invalid-utf8-leading-octet
    #:invalid-utf8-continuation-octet
    #:truncated-utf8-sequence

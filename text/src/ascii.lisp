@@ -1,14 +1,6 @@
 (in-package :text)
 
-(define-condition ascii-decoding-error (error)
-  ((octets
-    :type core:octet-vector
-    :initarg :octets)
-   (offset
-    :type index
-    :initarg :offset)))
-
-(define-condition invalid-ascii-octet (ascii-decoding-error)
+(define-condition invalid-ascii-octet (decoding-error)
   ((octet
     :type core:octet
     :initarg :octet))

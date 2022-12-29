@@ -1,30 +1,22 @@
 (in-package :text)
 
-(define-condition utf8-decoding-error (error)
-  ((octets
-    :type core:octet-vector
-    :initarg :octets)
-   (offset
-    :type index
-    :initarg :offset)))
-
-(define-condition invalid-utf8-leading-octet (utf8-decoding-error)
+(define-condition invalid-utf8-leading-octet (decoding-error)
   ((octet
     :type core:octet
     :initarg :octet)))
 
-(define-condition invalid-utf8-continuation-octet (utf8-decoding-error)
+(define-condition invalid-utf8-continuation-octet (decoding-error)
   ((octet
     :type core:octet
     :initarg :octet)))
 
-(define-condition truncated-utf8-sequence (utf8-decoding-error)
+(define-condition truncated-utf8-sequence (decoding-error)
   ())
 
-(define-condition overlong-utf8-sequence (utf8-decoding-error)
+(define-condition overlong-utf8-sequence (decoding-error)
   ())
 
-(define-condition invalid-utf8-sequence (utf8-decoding-error)
+(define-condition invalid-utf8-sequence (decoding-error)
   ())
 
 (defun encoded-string-length/utf8 (string start end)

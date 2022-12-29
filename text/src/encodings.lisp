@@ -13,6 +13,14 @@
        (format stream "Character ~S cannot be represented in the selected ~
                        text encoding." character)))))
 
+(define-condition decoding-error (error)
+  ((octets
+    :type core:octet-vector
+    :initarg :octets)
+   (offset
+    :type index
+    :initarg :offset)))
+
 (deftype encoded-string-length-function ()
   '(function (simple-string index index) vector-length))
 
