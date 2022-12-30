@@ -17,6 +17,13 @@
    #:decoded-string-length
    #:decode-string
 
+   #:*default-eol-style*
+   #:*default-external-format*
+   #:eol-style
+   #:external-format
+   #:external-format-encoding
+   #:external-format-eol-style
+
    #:invalid-ascii-octet
 
    #:invalid-utf8-leading-octet

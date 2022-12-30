@@ -9,6 +9,7 @@
    (:file "base")
    (:file "encodings")
    (:file "strings")
+   (:file "external-formats")
    (:file "ascii")
    (:file "utf-8"))
   :in-order-to ((test-op (test-op "text/test"))))
