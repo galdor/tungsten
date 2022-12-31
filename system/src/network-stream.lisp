@@ -118,8 +118,7 @@ octets actually written."))
   nil)
 
 (defmethod streams:stream-finish-output ((stream network-stream))
-  (with-slots (socket write-buffer)
-      stream
+  (with-slots (socket write-buffer) stream
     (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
                                         (core:buffer-start write-buffer))
       (do ()
