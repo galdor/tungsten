@@ -105,7 +105,7 @@
          (nb-octets (- end start)))
     (flet ((check-length (n)
              (when (< nb-octets n)
-               (error 'truncated-utf8-sequence :octets octets :offset start)))
+               (return-from decode-character/utf8 (values nil 0))))
            (check-continuation-octet (b i)
              (unless (<= #x80 b #xbf)
                (error 'invalid-utf8-continuation-octet
