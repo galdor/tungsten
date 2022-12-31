@@ -6,12 +6,16 @@
 
 (define-condition unencodable-character (error)
   ((character
-    :type character))
+    :type character
+    :initarg :character)
+   (encoding
+    :type symbol
+    :initarg :encoding))
   (:report
    (lambda (condition stream)
-     (with-slots (character) condition
-       (format stream "Character ~S cannot be represented in the selected ~
-                       text encoding." character)))))
+     (with-slots (character encoding) condition
+       (format stream "Character ~S cannot be represented in encoding ~S."
+               character encoding)))))
 
 (define-condition decoding-error (error)
   ((octets

@@ -29,7 +29,8 @@
        (setf (aref octets offset) code)
        1)
       (t
-       (error 'unencodable-character :character character)))))
+       (error 'unencodable-character :character character
+                                     :encoding :ascii)))))
 
 (defun decoded-string-length/ascii (octets start end)
   (declare (type core:octet-vector octets)
