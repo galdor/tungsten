@@ -21,6 +21,7 @@
     :initform (core:make-buffer 4096))
    (external-format
     :type text:external-format
+    :initarg :external-format
     :initform text:*default-external-format*)))
 
 (defgeneric read-network-stream (stream octets start end)
