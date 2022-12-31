@@ -19,6 +19,15 @@
 (define-condition invalid-utf8-sequence (decoding-error)
   ())
 
+(defun encoded-character-length/utf8 (character)
+  (declare (type character character))
+  (let ((code (char-code character)))
+    (cond
+      ((< code #x80) 1)
+      ((< code #x800) 2)
+      ((< code #x10000) 3)
+      (t 4))))
+
 (defun encoded-string-length/utf8 (string start end)
   (declare (type simple-string string)
            (type (or index null) start end))
@@ -27,43 +36,34 @@
        (i (or start 0) (1+ i)))
       ((> i max-index)
        length)
-    (let* ((code (char-code (schar string i)))
-           (code-length (cond
-                          ((< code #x80) 1)
-                          ((< code #x800) 2)
-                          ((< code #x10000) 3)
-                          (t 4))))
-      (setf length (+ length code-length)))))
+    (incf length (encoded-character-length/utf8 (schar string i)))))
 
-(defun encode-string/utf8 (string start end octets offset)
-  (declare (type simple-string string)
+(defun encode-character/utf8 (character octets offset)
+  (declare (type character character)
            (type core:octet-vector octets)
-           (type (or index null) start end offset))
-  (do ((max-index (1- (or end (length string))))
-       (i (or start 0) (1+ i))
-       (j offset))
-      ((> i max-index)
-       octets)
-    (let ((code (char-code (schar string i))))
+           (type (or index null) offset))
+  (let ((code (char-code character)))
+    (macrolet ((char-octets (i)
+                 `(aref octets (+ offset ,i))))
       (cond
         ((< code #x80)
-         (setf (aref octets j) code)
-         (incf j 1))
+         (setf (char-octets 0) code)
+         1)
         ((< code #x800)
-         (setf (aref octets j) (logior #xc0 (ash code -6)))
-         (setf (aref octets (+ j 1)) (logior #x80 (logand code #x3f)))
-         (incf j 2))
+         (setf (char-octets 0) (logior #xc0 (ash code -6)))
+         (setf (char-octets 1) (logior #x80 (logand code #x3f)))
+         2)
         ((< code #x10000)
-         (setf (aref octets j) (logior #xe0 (ash code -12)))
-         (setf (aref octets (+ j 1)) (logior #x80 (logand (ash code -6) #x3f)))
-         (setf (aref octets (+ j 2)) (logior #x80 (logand code #x3f)))
-         (incf j 3))
+         (setf (char-octets 0) (logior #xe0 (ash code -12)))
+         (setf (char-octets 1) (logior #x80 (logand (ash code -6) #x3f)))
+         (setf (char-octets 2) (logior #x80 (logand code #x3f)))
+         3)
         (t
-         (setf (aref octets j) (logior #xf0 (ash code -18)))
-         (setf (aref octets (+ j 1)) (logior #x80 (logand (ash code -12) #x3f)))
-         (setf (aref octets (+ j 2)) (logior #x80 (logand (ash code -6) #x3f)))
-         (setf (aref octets (+ j 3)) (logior #x80 (logand code #x3f)))
-         (incf j 4))))))
+         (setf (char-octets 0) (logior #xf0 (ash code -18)))
+         (setf (char-octets 1) (logior #x80 (logand (ash code -12) #x3f)))
+         (setf (char-octets 2) (logior #x80 (logand (ash code -6) #x3f)))
+         (setf (char-octets 3) (logior #x80 (logand code #x3f)))
+         4)))))
 
 (defun decoded-string-length/utf8 (octets start end)
   (declare (type core:octet-vector octets)
@@ -165,7 +165,8 @@
 
 (define-encoding :utf-8 ()
   :name "UTF-8"
+  :encoded-character-length-function #'encoded-character-length/utf8
   :encoded-string-length-function #'encoded-string-length/utf8
-  :encoding-function #'encode-string/utf8
+  :character-encoding-function #'encode-character/utf8
   :decoded-string-length-function #'decoded-string-length/utf8
-  :decoding-function #'decode-string/utf8)
+  :string-decoding-function #'decode-string/utf8)

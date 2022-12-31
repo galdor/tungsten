@@ -21,11 +21,14 @@
     :type index
     :initarg :offset)))
 
+(deftype encoded-character-length-function ()
+  '(function (character) vector-length))
+
 (deftype encoded-string-length-function ()
   '(function (simple-string index index) vector-length))
 
-(deftype string-encoding-function ()
-  '(function (simple-string index index vector index) octet-vector))
+(deftype character-encoding-function ()
+  '(function (character vector index) vector-length))
 
 (deftype decoded-string-length-function ()
   '(function (octet-vector index index) vector-length))
@@ -38,22 +41,26 @@
     :type string
     :initarg :name
     :reader encoding-name)
+   (encoded-character-length-function
+    :type encoded-character-length-function
+    :initarg :encoded-character-length-function
+    :reader encoding-encoded-character-length-function)
    (encoded-string-length-function
     :type encoded-string-length-function
     :initarg :encoded-string-length-function
     :reader encoding-encoded-string-length-function)
-   (encoding-function
-    :type string-encoding-function
-    :initarg :encoding-function
-    :reader encoding-encoding-function)
+   (character-encoding-function
+    :type character-encoding-function
+    :initarg :character-encoding-function
+    :reader encoding-character-encoding-function)
    (decoded-string-length-function
     :type decoded-string-length-function
     :initarg :decoded-string-length-function
     :reader encoding-decoded-string-length-function)
-   (decoding-function
+   (string-decoding-function
     :type string-decoding-function
-    :initarg :decoding-function
-    :reader encoding-decoding-function)))
+    :initarg :string-decoding-function
+    :reader encoding-string-decoding-function)))
 
 (defun encoding (id-or-encoding)
   (declare (type (or symbol encoding) id-or-encoding))
