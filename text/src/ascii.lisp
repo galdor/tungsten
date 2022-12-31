@@ -10,9 +10,14 @@
        (format stream "Invalid ASCII octet ~S." octet)))))
 
 (defun encoded-character-length/ascii (character)
-  (declare (type character character)
-           (ignore character))
-  1)
+  (declare (type character character))
+  (let ((code (char-code character)))
+    (cond
+      ((< code #x80)
+       1)
+      (t
+       (error 'unencodable-character :character character
+                                     :encoding :ascii)))))
 
 (defun encoded-string-length/ascii (string start end)
   (declare (type simple-string string)
