@@ -26,3 +26,11 @@
      *default-eol-style*)
     (list
      (getf (cdr format) :eol-style *default-eol-style*))))
+
+(declaim (inline eol-octets))
+(defun eol-octets (style)
+  (declare (type eol-style style))
+  (ecase style
+    (:cr #.(core:octet-vector* 13))
+    (:lf #.(core:octet-vector* 10))
+    (:crlf #.(core:octet-vector* 13 10))))

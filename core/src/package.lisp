@@ -19,5 +19,6 @@
    #:buffer-append-octet
    #:buffer-append-octets
    #:buffer-reserve
+   #:buffer-reserve-start
    #:buffer-reset
    #:buffer-skip))

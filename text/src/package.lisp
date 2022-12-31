@@ -25,6 +25,7 @@
    #:external-format
    #:external-format-encoding
    #:external-format-eol-style
+   #:eol-octets
 
    #:invalid-ascii-octet
 

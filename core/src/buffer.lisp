@@ -84,10 +84,36 @@ return the position of the first free octet in the buffer."
          ;; There is enough space if we remove unused space at the start
          (buffer-compact buffer))
         (t
-         ;; We have to increase the length of the buffer
+         ;; We have to increase the length of the underlying array
          (buffer-compact buffer)
          (buffer-grow buffer (max (- n end) (* (length data) 2))))))
     end))
+
+(defun buffer-reserve-start (buffer n)
+  "Alter BUFFER so that it has space for N additional octets before its current
+content and return the position of the first free octet in the buffer."
+  (declare (type buffer buffer)
+           (type (integer 1) n))
+  (with-slots (data start end) buffer
+    (let ((end-space (- (length data) end))
+          (start-space start))
+      (cond
+        ((<= n start-space)
+         ;; There is already enough free space at the beginning
+         nil)
+        ((<= n (+ start-space end-space))
+         ;; There is enough space if we use some of unused space at the end
+         (replace data data :start1 n :start2 start :end2 end)
+         (setf end (+ n (- end start))
+               start n))
+        (t
+         ;; We have to increase the length of the underlying array
+         (buffer-compact buffer)
+         (buffer-grow buffer (max (- n end) (* (length data) 2)))
+         (replace data data :start1 n :end2 end)
+         (setf end (+ n (- end start))
+               start n)))
+      (- start n))))
 
 (defun buffer-grow (buffer n)
   "Resize BUFFER to increase its length by N octets."

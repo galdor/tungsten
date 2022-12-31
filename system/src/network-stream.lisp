@@ -1,6 +1,7 @@
 (in-package :system)
 
 (defclass network-stream (streams:fundamental-binary-input-stream
+                          streams:fundamental-character-input-stream
                           streams:fundamental-binary-output-stream)
   ((socket
     :type (or (integer 0) null)
@@ -16,7 +17,10 @@
     :initform (core:make-buffer 4096))
    (write-buffer
     :type core:buffer
-    :initform (core:make-buffer 4096))))
+    :initform (core:make-buffer 4096))
+   (external-format
+    :type text:external-format
+    :initform text:*default-external-format*)))
 
 (defgeneric read-network-stream (stream octets start end)
   (:documentation
@@ -132,3 +136,114 @@ octets actually written."))
           (setf %data (ffi:pointer+ %data nb-written))
           (core:buffer-skip write-buffer nb-written)))))
   nil)
+
+(defmethod streams:stream-read-char ((stream network-stream))
+  (with-slots (read-buffer external-format) stream
+    (do ((encoding (text:external-format-encoding external-format)))
+        (nil)
+      (multiple-value-bind (character nb-octets)
+          (text:decode-character (core:buffer-data read-buffer)
+                                 :encoding encoding
+                                 :start (core:buffer-start read-buffer)
+                                 :end (core:buffer-end read-buffer))
+        (when character
+          (core:buffer-skip read-buffer nb-octets)
+          (return character))
+        (let* ((read-size 4096)
+               (position (core:buffer-reserve read-buffer read-size)))
+          (let ((nb-read (read-network-stream stream
+                                              (core:buffer-data read-buffer)
+                                              position
+                                              (+ position read-size))))
+            (incf (core:buffer-end read-buffer) nb-read)
+            (when (zerop nb-read)
+              (return-from streams:stream-read-char :eof))))))))
+
+(defmethod streams:stream-unread-char ((stream network-stream) character)
+  (declare (type (character character)))
+  (with-slots (read-buffer external-format) stream
+    (let* ((encoding (text:external-format-encoding external-format))
+           (nb-octets
+             (text:encoded-character-length character :encoding encoding))
+           (position
+             (core:buffer-reserve-start read-buffer nb-octets)))
+      (text:encode-string (string character)
+                          :encoding encoding
+                          :octets (core:buffer-data read-buffer)
+                          :offset position)
+      (decf (core:buffer-start read-buffer) nb-octets)))
+  nil)
+
+(defmethod streams:stream-read-char-no-hang ((stream network-stream))
+  ;; This will not return a character if the read buffer is empty, even if it
+  ;; could be possible to read the socket and obtain at least one character
+  ;; without blocking.
+  ;;
+  ;; The right way to implement this would be to switch the socket to
+  ;; non-blocking mode, perform one socket read, then switch back the socket
+  ;; to blocking mode.
+  (with-slots (read-buffer external-format) stream
+    (let ((encoding (text:external-format-encoding external-format)))
+      (multiple-value-bind (character nb-octets)
+          (text:decode-character (core:buffer-data read-buffer)
+                                 :encoding encoding
+                                 :start (core:buffer-start read-buffer)
+                                 :end (core:buffer-end read-buffer))
+        (when character
+          (core:buffer-skip read-buffer nb-octets)
+          character)))))
+
+(defmethod streams:stream-peek-char ((stream network-stream))
+  (let ((character (streams:stream-read-char stream)))
+    (unless (eq character :eof)
+      (streams:stream-unread-char stream character))
+    character))
+
+(defmethod streams:stream-listen ((stream network-stream))
+  (let ((character (streams:stream-read-char-no-hang stream)))
+    (cond
+      ((or (null character)
+           (eq character :eof))
+       nil)
+      (t
+       (streams:stream-unread-char stream character)
+       t))))
+
+(defmethod streams:stream-read-line ((stream network-stream))
+  (with-slots (read-buffer external-format) stream
+    (do* ((encoding (text:external-format-encoding external-format))
+          (eol-style (text:external-format-eol-style external-format))
+          (eol-octets (text:eol-octets eol-style)))
+         (nil)
+      (let ((eol (search eol-octets (core:buffer-data read-buffer)
+                         :start2 (core:buffer-start read-buffer)
+                         :end2 (core:buffer-end read-buffer))))
+        (when eol
+          (let ((line
+                  (text:decode-string (core:buffer-data read-buffer)
+                                      :encoding encoding
+                                      :start (core:buffer-start read-buffer)
+                                      :end eol)))
+            (core:buffer-skip read-buffer
+                              (+ (- eol (core:buffer-start read-buffer))
+                                 (length eol-octets)))
+            (return (values line nil))))
+        (let* ((read-size 4096)
+               (position (core:buffer-reserve read-buffer read-size))
+               (nb-read (read-network-stream stream
+                                             (core:buffer-data read-buffer)
+                                             position
+                                             (+ position read-size))))
+          (incf (core:buffer-end read-buffer) nb-read)
+          (when (zerop nb-read)
+            (let ((line
+                    (text:decode-string (core:buffer-data read-buffer)
+                                        :encoding encoding
+                                        :start (core:buffer-start read-buffer)
+                                        :end (core:buffer-end read-buffer))))
+              (core:buffer-reset read-buffer)
+              (return (values line t)))))))))
+
+(defmethod streams:stream-clear-input ((stream network-stream))
+  (with-slots (read-buffer) stream
+    (core:buffer-reset read-buffer)))
