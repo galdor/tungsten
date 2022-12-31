@@ -1,5 +1,10 @@
 (in-package :text)
 
+(defun encoded-character-length (character &key (encoding *default-encoding*))
+  (declare (type character character))
+  (let ((encoding (encoding encoding)))
+    (funcall (encoding-encoded-character-length-function encoding) character)))
+
 (defun encoded-string-length (string &key (encoding *default-encoding*)
                                           start end)
   (declare (type simple-string string)
