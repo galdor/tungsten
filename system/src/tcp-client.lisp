@@ -18,13 +18,15 @@
     (with-slots (address) client
       (write-string (format-socket-address address) stream))))
 
-(defun make-tcp-client (host port)
+(defun make-tcp-client (host port
+                        &key (external-format text:*default-external-format*))
   "Create and return a TCP client connected to HOST and PORT."
   (declare (type host host)
            (type port-number port))
   (multiple-value-bind (socket address)
       (tcp-connect host port)
     (make-instance 'tcp-client :socket socket :address address
+                               :external-format external-format
                                :host host :port port)))
 
 (defun tcp-connect (host port)
