@@ -33,13 +33,15 @@
       (ssl-ctx-free %context)
       (setf %context nil))))
 
-(defun make-tls-client (host port &key (ciphers *default-tls-client-ciphers*)
-                                       (peer-verification t)
-                                       (peer-verification-depth 20)
-                                       ca-certificate-path
-                                       ca-certificate-directory-path
-                                       certificate-path
-                                       private-key-path)
+(defun make-tls-client (host port
+                        &key (external-format text:*default-external-format*)
+                             (ciphers *default-tls-client-ciphers*)
+                             (peer-verification t)
+                             (peer-verification-depth 20)
+                             ca-certificate-path
+                             ca-certificate-directory-path
+                             certificate-path
+                             private-key-path)
   "Create and return a TLS client connected to HOST and PORT."
   (declare (type system:host host)
            (type system:port-number port)
@@ -80,6 +82,7 @@
              (ssl-connect %ssl)
              (prog1
                  (make-instance 'tls-client :socket socket :address address
+                                            :external-format external-format
                                             :host host :port port
                                             :%context %context :%ssl %ssl)
                (setf success t)))
