@@ -2,7 +2,8 @@
 
 (defclass network-stream (streams:fundamental-binary-input-stream
                           streams:fundamental-character-input-stream
-                          streams:fundamental-binary-output-stream)
+                          streams:fundamental-binary-output-stream
+                          streams:fundamental-character-output-stream)
   ((socket
     :type (or (integer 0) null)
     :initarg :socket
@@ -247,3 +248,61 @@ octets actually written."))
 (defmethod streams:stream-clear-input ((stream network-stream))
   (with-slots (read-buffer) stream
     (core:buffer-reset read-buffer)))
+
+(defmethod streams:stream-write-char ((stream network-stream) character)
+  (declare (type character character))
+  (with-slots (write-buffer external-format) stream
+    (let* ((encoding (text:external-format-encoding external-format))
+           (nb-octets
+             (text:encoded-character-length character :encoding encoding))
+           (position (core:buffer-reserve write-buffer nb-octets)))
+      (text:encode-string (string character)
+                          :encoding encoding
+                          :octets (core:buffer-data write-buffer)
+                          :offset position)
+      (incf (core:buffer-end write-buffer) nb-octets)))
+  character)
+
+(defmethod streams:stream-line-column ((stream network-stream))
+  (declare (ignore stream))
+  nil)
+
+(defmethod streams:stream-start-line-p ((stream network-stream))
+  (eql (streams:stream-line-column stream) 0))
+
+(defmethod streams:stream-write-string ((stream network-stream) string
+                                        &optional (start 0) end)
+  (declare (type string string))
+  (with-slots (write-buffer external-format) stream
+    (let* ((end (or end (length string)))
+           (encoding (text:external-format-encoding external-format))
+           (nb-octets
+             (text:encoded-string-length string :encoding encoding
+                                                :start start :end end))
+           (position (core:buffer-reserve write-buffer nb-octets)))
+      (text:encode-string string :encoding encoding
+                                 :start start :end end
+                                 :octets (core:buffer-data write-buffer)
+                                 :offset position)
+      (incf (core:buffer-end write-buffer) nb-octets)))
+  string)
+
+(defmethod streams:stream-terpri ((stream network-stream))
+  (with-slots (external-format) stream
+    (let ((eol-style (text:external-format-eol-style external-format)))
+      (streams:stream-write-sequence stream (text:eol-octets eol-style))))
+  nil)
+
+(defmethod streams:stream-fresh-line ((stream network-stream))
+  (unless (streams:stream-start-line-p stream)
+    (streams:stream-terpri stream)
+    t))
+
+(defmethod streams:stream-advance-to-column ((stream network-stream) column)
+  (declare (type (integer 0) column))
+  (let ((current-column (streams:stream-line-column stream)))
+    (when current-column
+      (let ((nb-spaces (- column current-column)))
+        (dotimes (i nb-spaces)
+          (streams:stream-write-char stream #\Space)))
+      t)))
