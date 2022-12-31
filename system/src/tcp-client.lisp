@@ -23,11 +23,17 @@
   "Create and return a TCP client connected to HOST and PORT."
   (declare (type host host)
            (type port-number port))
-  (multiple-value-bind (socket address)
-      (tcp-connect host port)
-    (make-instance 'tcp-client :socket socket :address address
-                               :external-format external-format
-                               :host host :port port)))
+  (let ((success nil))
+    (multiple-value-bind (socket address) (tcp-connect host port)
+      (unwind-protect
+           (prog1
+               (make-instance 'tcp-client :socket socket :address address
+                                          :external-format external-format
+                                          :host host :port port)
+             (setf success t))
+        (unless success
+          (when socket
+            (close-fd socket)))))))
 
 (defun tcp-connect (host port)
   "Establish a TCP connection to HOST and PORT. If HOST is an IP address, use it
