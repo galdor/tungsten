@@ -15,6 +15,7 @@
    #:encoded-string-length
    #:encode-string
    #:decoded-string-length
+   #:decode-character
    #:decode-string
 
    #:*default-eol-style*

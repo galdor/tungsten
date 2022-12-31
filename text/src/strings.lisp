@@ -34,6 +34,13 @@
     (funcall (encoding-decoded-string-length-function encoding)
              octets start end)))
 
+(defun decode-character (octets &key (encoding *default-encoding*) start end)
+  (declare (type core:octet-vector octets)
+           (type (or index null) start end))
+  (let* ((encoding (encoding encoding))
+         (decode-character (encoding-character-decoding-function encoding)))
+    (funcall decode-character octets start end)))
+
 (defun decode-string (octets &key (encoding *default-encoding*) start end
                                   string (offset 0))
   (declare (type core:octet-vector octets)
