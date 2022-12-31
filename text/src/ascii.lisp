@@ -36,22 +36,22 @@
            (type (or index null) start end))
   (- (or end (length octets)) (or start 0)))
 
-(defun decode-string/ascii (octets start end string offset)
+(defun decode-character/ascii (octets start end)
   (declare (type core:octet-vector octets)
-           (type string string)
-           (type (or index null) start end offset))
-  (do ((max-index (1- (or end (length octets))))
-       (i (or start 0) (1+ i))
-       (j offset (1+ j)))
-      ((> i max-index)
-       string)
-    (let ((octet (aref octets i)))
-      (cond
-        ((< octet #x80)
-         (setf (schar string j) (code-char octet)))
-        (t
-         (error 'invalid-ascii-octet :octets octets :offset i
-                                     :octet octet))))))
+           (type (or index null) start end))
+  (let ((start (or start 0))
+        (end (or end (length octets))))
+    (cond
+      ((>= start end)
+       (values nil 0))
+      (t
+       (let ((octet (aref octets start)))
+         (cond
+           ((< octet #x80)
+            (values (code-char octet) 1))
+           (t
+            (error 'invalid-ascii-octet :octets octets :offset start
+                                        :octet octet))))))))
 
 (define-encoding :ascii ()
   :name "ASCII"
@@ -59,4 +59,4 @@
   :encoded-string-length-function #'encoded-string-length/ascii
   :character-encoding-function #'encode-character/ascii
   :decoded-string-length-function #'decoded-string-length/ascii
-  :string-decoding-function #'decode-string/ascii)
+  :character-decoding-function #'decode-character/ascii)

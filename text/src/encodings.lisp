@@ -33,6 +33,9 @@
 (deftype decoded-string-length-function ()
   '(function (octet-vector index index) vector-length))
 
+(deftype character-decoding-function ()
+  '(function (octet-vector index index) (values character vector-length)))
+
 (deftype string-decoding-function ()
   '(function (octet-vector index index string index) simple-string))
 
@@ -57,10 +60,10 @@
     :type decoded-string-length-function
     :initarg :decoded-string-length-function
     :reader encoding-decoded-string-length-function)
-   (string-decoding-function
-    :type string-decoding-function
-    :initarg :string-decoding-function
-    :reader encoding-string-decoding-function)))
+   (character-decoding-function
+    :type character-decoding-function
+    :initarg :character-decoding-function
+    :reader encoding-character-decoding-function)))
 
 (defun encoding (id-or-encoding)
   (declare (type (or symbol encoding) id-or-encoding))
