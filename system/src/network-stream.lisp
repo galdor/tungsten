@@ -22,7 +22,8 @@
    (external-format
     :type text:external-format
     :initarg :external-format
-    :initform text:*default-external-format*)))
+    :initform text:*default-external-format*
+    :reader network-stream-external-format)))
 
 (defgeneric read-network-stream (stream octets start end)
   (:documentation

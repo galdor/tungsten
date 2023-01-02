@@ -21,4 +21,6 @@
    #:buffer-reserve
    #:buffer-reserve-start
    #:buffer-reset
-   #:buffer-skip))
+   #:buffer-skip
+
+   #:prompt-eval))

@@ -1,5 +1,8 @@
 (in-package :http)
 
+(deftype connection-key ()
+  'list)
+
 (defclass client ()
   ((connections
     :type hash-table
@@ -44,12 +47,20 @@
                connections))
     connection-list))
 
+(defun client-connection (client key)
+  (declare (type client client)
+           (type connection-key key))
+  (with-slots (connections) client
+    (or (gethash key connections)
+        (destructuring-bind (host port tls) key
+          (connect-client client host port tls)))))
+
 (defun connect-client (client host port tls)
   (declare (type client client)
            (type system:host host)
            (type system:port-number port)
            (type boolean tls))
-  (let* ((external-format '(:utf-8 :eol-style :crlf))
+  (let* ((external-format '(:ascii :eol-style :crlf))
          (stream
            (cond
              (tls
@@ -87,3 +98,32 @@
 (defun close-client-connection (connection)
   (declare (type client-connection connection))
   (close (client-connection-stream connection)))
+
+(defvar *client* (make-client))
+
+(defun send-request (request &key (client *client*))
+  (declare (type client client)
+           (type request request))
+  (let* ((key (request-connection-key request))
+         (connection (client-connection client key)))
+    (finalize-request request)
+    (write-request request (client-connection-stream connection)))
+  ;; TODO read and return the response
+  nil)
+
+(defun finalize-request (request)
+  (with-slots (body) request
+    (let ((target (request-target-uri (request-target request))))
+      ;; Target
+      (setf (request-target request) (normalize-request-target target))
+      ;; Host header field
+      (add-new-request-header-field request "Host"
+                                    (request-target-host-header-field target))
+      ;; Body
+      (when (and body (stringp body))
+        (setf body (text:encode-string body)))
+      ;; Content-Length header field
+      (when body
+        (add-new-request-header-field request "Content-Length"
+                                      (princ-to-string (length body))))))
+  request)
