@@ -106,9 +106,10 @@ octets actually written."))
   (declare (type core:octet-vector octets)
            (type (integer 0) start)
            (type (or (integer 0) null) end))
-  (with-slots (write-buffer) stream
-    (core:buffer-append-octets write-buffer octets
-                               :start start :end (or end (length octets))))
+  (when (> (length octets) 0)
+    (with-slots (write-buffer) stream
+      (core:buffer-append-octets write-buffer octets
+                                 :start start :end (or end (length octets)))))
   octets)
 
 (defmethod streams:stream-force-output ((stream network-stream))
@@ -274,18 +275,19 @@ octets actually written."))
 (defmethod streams:stream-write-string ((stream network-stream) string
                                         &optional (start 0) end)
   (declare (type string string))
-  (with-slots (write-buffer external-format) stream
-    (let* ((end (or end (length string)))
-           (encoding (text:external-format-encoding external-format))
-           (nb-octets
-             (text:encoded-string-length string :encoding encoding
-                                                :start start :end end))
-           (position (core:buffer-reserve write-buffer nb-octets)))
-      (text:encode-string string :encoding encoding
-                                 :start start :end end
-                                 :octets (core:buffer-data write-buffer)
-                                 :offset position)
-      (incf (core:buffer-end write-buffer) nb-octets)))
+  (when (> (length string) 0)
+    (with-slots (write-buffer external-format) stream
+      (let* ((end (or end (length string)))
+             (encoding (text:external-format-encoding external-format))
+             (nb-octets
+               (text:encoded-string-length string :encoding encoding
+                                                  :start start :end end))
+             (position (core:buffer-reserve write-buffer nb-octets)))
+        (text:encode-string string :encoding encoding
+                                   :start start :end end
+                                   :octets (core:buffer-data write-buffer)
+                                   :offset position)
+        (incf (core:buffer-end write-buffer) nb-octets))))
   string)
 
 (defmethod streams:stream-terpri ((stream network-stream))
