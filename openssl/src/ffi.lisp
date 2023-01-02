@@ -157,8 +157,9 @@
 (defmacro openssl-funcall ((name signature &rest args)
                            &key (errorp
                                  (case (car (last signature))
-                                   (:int ''<=0)
-                                   (:pointer ''ffi:null-pointer-p))))
+                                   (:void nil)
+                                   (:pointer ''ffi:null-pointer-p)
+                                   (:int ''<=0))))
   (let ((errorp-var (gensym "ERRORP-VAR-"))
         (value (gensym "VALUE-")))
     `(progn

@@ -39,8 +39,9 @@
 (defmacro system-funcall ((name signature &rest args)
                           &key (errorp
                                 (case (car (last signature))
-                                  (:int ''minus1p)
-                                  (:pointer ''ffi:null-pointer-p)))
+                                  (:void 'nil)
+                                  (:pointer ''ffi:null-pointer-p)
+                                  (t ''minus1p)))
                                (error-value-function ''errno-value)
                                (error-description-function ''strerror-l)
                                (retryp ''eintrp))
