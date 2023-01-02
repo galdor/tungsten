@@ -18,16 +18,16 @@
     :type boolean
     :initarg :tls
     :reader client-connection-tls-p)
-   (socket
-    :type system:socket
-    :initarg :socket
-    :reader client-connection-socket)))
+   (stream
+    :type system:network-stream
+    :initarg :stream
+    :reader client-connection-stream)))
 
 (defmethod print-object ((connection client-connection) stream)
   (print-unreadable-object (connection stream :type t)
-    (let* ((socket (client-connection-socket connection))
-           (address (system:socket-address socket)))
-      (write-string (system:format-socket-address address) stream)
+    (let* ((connection-stream (client-connection-stream connection))
+           (address (system:network-stream-address connection-stream)))
+      (system:format-socket-address address stream)
       (when (client-connection-tls-p connection)
         (write-string " TLS" stream)))))
 
@@ -49,21 +49,25 @@
            (type system:host host)
            (type system:port-number port)
            (type boolean tls))
-  (let* ((socket
+  (let* ((external-format '(:utf-8 :eol-style :crlf))
+         (stream
            (cond
              (tls
-              (openssl:make-tls-client host port))
+              (openssl:make-tls-client host port
+                                       :external-format external-format))
              (t
-              (system:make-tcp-client host port))))
+              (system:make-tcp-client host port
+                                      :external-format external-format))))
          (connection
            (make-instance 'client-connection :host host :port port :tls tls
-                                             :socket socket))
+                                             :stream stream))
          (key (client-connection-key connection)))
     (with-slots (connections) client
       (let ((previous-connection (gethash key connections)))
         (when previous-connection
           (close-client-connection previous-connection)))
-      (setf (gethash key connections) connection))))
+      (setf (gethash key connections) connection))
+    connection))
 
 (defun disconnect-client (client)
   (declare (type client client))
@@ -82,4 +86,4 @@
 
 (defun close-client-connection (connection)
   (declare (type client-connection connection))
-  (close (client-connection-socket connection)))
+  (close (client-connection-stream connection)))

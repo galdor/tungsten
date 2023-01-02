@@ -40,14 +40,14 @@
                  (ipv6-address 'ipv6-socket-address))))
     (make-instance class :address ip-address :port port)))
 
-(defgeneric format-socket-address (address)
+(defgeneric format-socket-address (address &optional stream)
   (:documentation "Return the textual representation of an IP address.")
-  (:method ((address ipv4-socket-address))
+  (:method ((address ipv4-socket-address) &optional stream)
     (with-slots (address port) address
-      (format nil "~A:~D" (format-ip-address address) port)))
-  (:method ((address ipv6-socket-address))
+      (format stream "~A:~D" (format-ip-address address) port)))
+  (:method ((address ipv6-socket-address) &optional stream)
     (with-slots (address port) address
-      (format nil "[~A]:~D" (format-ip-address address) port))))
+      (format stream "[~A]:~D" (format-ip-address address) port))))
 
 (defgeneric socket-address-equal (address1 address2)
   (:method ((address1 ipv4-socket-address) (address2 ipv4-socket-address))
