@@ -8,6 +8,14 @@
     "ECDHE-ECDSA-AES128-GCM-SHA256"
     "ECDHE-RSA-AES128-GCM-SHA256"))
 
+(defparameter *default-ca-certificate-directory-paths*
+  (let ((paths nil))
+    (flet ((try (path)
+             (when (probe-file path)
+               (push path paths))))
+      (try #p"/etc/ssl/certs/"))
+    paths))
+
 (defclass tls-client (tls-stream)
   ((host
     :type system:host
@@ -39,7 +47,8 @@
                              (peer-verification t)
                              (peer-verification-depth 20)
                              ca-certificate-paths
-                             ca-certificate-directory-paths
+                             (ca-certificate-directory-paths
+                              *default-ca-certificate-directory-paths*)
                              certificate-path
                              private-key-path)
   "Create and return a TLS client connected to HOST and PORT."
