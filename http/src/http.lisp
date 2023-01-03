@@ -90,3 +90,11 @@
     ((eq version :http-1.0) "HTTP/1.0")
     ((eq version :http-1.1) "HTTP/1.1")
     ((typep version 'string) version)))
+
+(defun header-field-name-string (name)
+  (declare (type header-field-name name))
+  (etypecase name
+    (symbol
+     (symbol-name name))
+    (string
+     name)))
