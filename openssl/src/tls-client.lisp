@@ -81,7 +81,8 @@
              (ssl-set-fd %ssl socket)
              (ssl-connect %ssl)
              (prog1
-                 (make-instance 'tls-client :socket socket :address address
+                 (make-instance 'tls-client :file-descriptor socket
+                                            :address address
                                             :external-format external-format
                                             :host host :port port
                                             :%context %context :%ssl %ssl)

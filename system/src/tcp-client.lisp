@@ -27,7 +27,8 @@
     (multiple-value-bind (socket address) (tcp-connect host port)
       (unwind-protect
            (prog1
-               (make-instance 'tcp-client :socket socket :address address
+               (make-instance 'tcp-client :file-descriptor socket
+                                          :address address
                                           :external-format external-format
                                           :host host :port port)
              (setf success t))

@@ -18,7 +18,7 @@
       (ssl-free %ssl)
       (setf %ssl nil))))
 
-(defmethod system:read-network-stream ((stream tls-stream) octets start end)
+(defmethod system:read-io-stream ((stream tls-stream) octets start end)
   (declare (type core:octet-vector octets)
            (type (integer 0) start end))
   (with-slots (%ssl) stream
@@ -34,7 +34,7 @@
                 0
                 (error condition))))))))
 
-(defmethod system:write-network-stream ((stream tls-stream) octets start end)
+(defmethod system:write-io-stream ((stream tls-stream) octets start end)
   (declare (type core:octet-vector octets)
            (type (integer 0) start)
            (type (or (integer 0) null) end))
