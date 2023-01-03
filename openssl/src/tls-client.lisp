@@ -38,8 +38,8 @@
                              (ciphers *default-tls-client-ciphers*)
                              (peer-verification t)
                              (peer-verification-depth 20)
-                             ca-certificate-path
-                             ca-certificate-directory-path
+                             ca-certificate-paths
+                             ca-certificate-directory-paths
                              certificate-path
                              private-key-path)
   "Create and return a TLS client connected to HOST and PORT."
@@ -48,9 +48,8 @@
            (type list ciphers)
            (type boolean peer-verification)
            (type (integer 0) peer-verification-depth)
-           (type (or pathname string null)
-                 ca-certificate-path ca-certificate-directory-path
-                 certificate-path private-key-path))
+           (type list ca-certificate-paths ca-certificate-directory-paths)
+           (type (or pathname string null) certificate-path private-key-path))
   (let ((%context nil)
         (%ssl nil)
         (success nil))
@@ -66,11 +65,10 @@
                (ssl-ctx-set-verify %context '(:ssl-verify-peer) nil))
              (when peer-verification-depth
                (ssl-ctx-set-verify-depth %context peer-verification-depth))
-             (when ca-certificate-path
-               (ssl-ctx-load-verify-file %context ca-certificate-path))
-             (when ca-certificate-directory-path
-               (ssl-ctx-load-verify-dir %context
-                                        ca-certificate-directory-path))
+             (dolist (path ca-certificate-paths)
+               (ssl-ctx-load-verify-file %context path))
+             (dolist (path ca-certificate-directory-paths)
+               (ssl-ctx-load-verify-dir %context path))
              (when certificate-path
                (ssl-ctx-use-certificate-file %context certificate-path
                                              :ssl-filetype-pem))
