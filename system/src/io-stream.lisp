@@ -68,8 +68,8 @@ written."))
            (type (or (integer 0) null) end))
   (with-slots (file-descriptor read-buffer) stream
     (do ((nb-octets (- end start))
-         (eofp nil))
-        ((or eofp (>= (core:buffer-length read-buffer) nb-octets))
+         (eof nil))
+        ((or eof (>= (core:buffer-length read-buffer) nb-octets))
          (let* ((buffer-start (core:buffer-start read-buffer))
                 (buffer-end (min (core:buffer-end read-buffer)
                                  (+ buffer-start nb-octets))))
@@ -78,16 +78,8 @@ written."))
                     :start2 buffer-start :end2 buffer-end)
            (core:buffer-skip read-buffer (- buffer-end buffer-start))
            buffer-end))
-      (let* ((read-size
-               (max (- (core:buffer-length read-buffer) nb-octets) 4096))
-             (position (core:buffer-reserve read-buffer read-size))
-             (nb-read (read-io-stream stream
-                                      (core:buffer-data read-buffer)
-                                      position
-                                      (+ position read-size))))
-        (incf (core:buffer-end read-buffer) nb-read)
-        (when (zerop nb-read)
-          (setf eofp t))))))
+      (when (zerop (io-stream-read-more stream))
+        (setf eof t)))))
 
 (defmethod streams:stream-clear-output ((stream io-stream))
   (with-slots (write-buffer) stream
