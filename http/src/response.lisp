@@ -59,11 +59,13 @@
          (start line-start))
     (let (version status reason end)
       ;; Version
-      (setf end (position #.(char-code #\Space) data :start start :end eol))
+      (setf end (or (position #.(char-code #\Space) data :start start :end eol)
+                    (http-parse-error "truncated protocol version")))
       (setf version (parse-protocol-version data start end))
       (setf start (1+ end))
       ;; Status
-      (setf end (position #.(char-code #\Space) data :start start :end eol))
+      (setf end (or (position #.(char-code #\Space) data :start start :end eol)
+                    (http-parse-error "truncated response status")))
       (setf status (parse-response-status data start end))
       (setf start (1+ end))
       ;; Reason
