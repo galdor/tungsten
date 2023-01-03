@@ -81,6 +81,7 @@
        (eol nil)
        (header nil))
       ((and eol (= eol (core:buffer-start buffer)))
+       (core:buffer-skip buffer (length eol-octets))
        (nreverse header))
     (when (>= (core:buffer-length buffer) *max-header-length*)
       (error 'header-too-large :data (core:buffer-content buffer)))
