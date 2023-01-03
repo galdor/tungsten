@@ -49,6 +49,12 @@ Optimized to be read at the start and written at the end."))
   (with-slots (start end) buffer
     (- end start)))
 
+(defun buffer-content (buffer)
+  "Return a copy of the data stored in BUFFER."
+  (declare (type buffer buffer))
+  (with-slots (data start end) buffer
+    (subseq data start end)))
+
 (defun buffer-append-octet (buffer octet)
   "Add an octet to the end of BUFFER."
   (declare (type buffer buffer)
@@ -151,5 +157,15 @@ content and return the position of the first free octet in the buffer."
              n (- end start)))
     (incf start n)
     (when (= start end)
-      (setf end (- end start)
-            start 0))))
+      (setf start 0
+            end 0))))
+
+(defun buffer-skip-to (buffer position)
+  "Remove all octets before POSITION in BUFFER."
+  (declare (type buffer buffer)
+           (type (integer 0) position))
+  (with-slots (data start end) buffer
+    (setf start position)
+    (when (= start end)
+      (setf start 0
+            end 0))))

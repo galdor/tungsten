@@ -11,10 +11,12 @@
     :reader io-stream-file-descriptor)
    (read-buffer
     :type core:buffer
-    :initform (core:make-buffer 4096))
+    :initform (core:make-buffer 4096)
+    :reader io-stream-read-buffer)
    (write-buffer
     :type core:buffer
-    :initform (core:make-buffer 4096))
+    :initform (core:make-buffer 4096)
+    :reader io-stream-write-buffer)
    (external-format
     :type text:external-format
     :initarg :external-format
@@ -23,13 +25,13 @@
 
 (defgeneric read-io-stream (stream octets start end)
   (:documentation
-   "Attempt to read the stream to an octet vector and return the number of octets
-actually read. Return 0 if end-of-file was reached."))
+   "Read data from an IO stream to an octet vector and return the number of
+octets read. Return 0 if end-of-file was reached."))
 
 (defgeneric write-io-stream (stream octets start end)
   (:documentation
-   "Attempt to write an octet vector to the stream and return the number of
-octets actually written."))
+   "Write an octet vector to an IO stream and return the number of octets
+written."))
 
 (defmethod close ((stream io-stream) &key abort)
   (declare (ignore abort))
@@ -306,3 +308,20 @@ octets actually written."))
         (dotimes (i nb-spaces)
           (streams:stream-write-char stream #\Space)))
       t)))
+
+(defun io-stream-read-more (stream)
+  "Read more data from STREAM and store them in the read buffer. Return both the
+number of octets read and the position of the first octet read in the read
+buffer.
+
+Note that the number of octets read will be zero if end-of-file was reached."
+  (declare (type io-stream stream))
+  (with-slots (read-buffer) stream
+    (let* ((read-size 4096)
+           (position (core:buffer-reserve read-buffer read-size))
+           (nb-read (read-io-stream stream
+                                    (core:buffer-data read-buffer)
+                                    position
+                                    (+ position read-size))))
+      (incf (core:buffer-end read-buffer) nb-read)
+      (values nb-read position))))

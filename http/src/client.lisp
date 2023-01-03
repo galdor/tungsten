@@ -105,11 +105,11 @@
   (declare (type client client)
            (type request request))
   (let* ((key (request-connection-key request))
-         (connection (client-connection client key)))
+         (connection (client-connection client key))
+         (stream (client-connection-stream connection)))
     (finalize-request request)
-    (write-request request (client-connection-stream connection)))
-  ;; TODO read and return the response
-  nil)
+    (write-request request stream)
+    (read-response stream)))
 
 (defun finalize-request (request)
   (with-slots (body) request

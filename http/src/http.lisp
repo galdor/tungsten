@@ -1,5 +1,15 @@
 (in-package :http)
 
+(define-condition http-error (error)
+  ())
+
+(define-condition connection-closed (http-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "HTTP connection closed."))))
+
 (deftype request-method ()
   '(or symbol string))
 
@@ -101,3 +111,10 @@
      (symbol-name name))
     (string
      name)))
+
+(defun header-field (header name)
+  (declare (type header header)
+           (type header-field-name name))
+  (let ((name-string (header-field-name-string name)))
+    (cdr (assoc name-string header :key 'header-field-name-string
+                                   :test #'equalp))))

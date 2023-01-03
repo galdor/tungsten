@@ -21,11 +21,15 @@
    #:format-socket-address
    #:socket-address-equal
 
+   #:write-io-stream
+   #:read-io-stream
    #:io-stream
    #:io-stream-file-descriptor
    #:io-stream-address
-   #:write-io-stream
-   #:read-io-stream
+   #:io-stream-read-buffer
+   #:io-stream-write-buffer
+   #:io-stream-external-format
+   #:io-stream-read-more
 
    #:network-stream
    #:network-stream-address

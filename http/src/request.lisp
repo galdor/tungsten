@@ -41,10 +41,7 @@
 (defun request-header-field (request name)
   (declare (type request request)
            (type header-field-name name))
-  (with-slots (header) request
-    (let ((name-string (header-field-name-string name)))
-      (cdr (assoc name-string header :key 'header-field-name-string
-                                     :test #'equalp)))))
+  (header-field (request-header request) name))
 
 (defun (setf request-header-field) (value request name)
   (declare (type request request)
