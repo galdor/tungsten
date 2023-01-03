@@ -6,6 +6,9 @@
 (deftype request-target ()
   '(or uri:uri string))
 
+(deftype response-status ()
+  '(integer 0 999))
+
 (deftype protocol-version ()
   '(or (member :http-1.0 :http-1.1) string))
 

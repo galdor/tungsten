@@ -3,6 +3,7 @@
   (:export
    #:request-method
    #:request-target
+   #:response-status
    #:protocol-version
    #:body
    #:header
@@ -18,6 +19,13 @@
    #:request-body
    #:make-request
    #:request-header-field
+
+   #:response
+   #:response-status
+   #:response-reason
+   #:response-version
+   #:response-header
+   #:response-body
 
    #:client
    #:make-client
