@@ -108,32 +108,48 @@
 
 (defvar *client* (make-client))
 
-(defun send-request (method uri &key header
-                                     body
-                                     (client *client*))
+(defun send-request (method uri &key header body
+                                     (client *client*)
+                                     (follow-redirections t)
+                                     (max-redirection-count 10))
   (declare (type client client)
            (type request-method method)
            (type (or uri:uri string) uri)
            (type header header)
            (type (or body null) body))
   (let* ((uri (when (stringp uri) (uri:parse uri)))
-         (target (uri:make-uri :path (or (uri:uri-path uri) "/")
-                               :query (uri:uri-query uri)
-                               :fragment (uri:uri-fragment uri)))
          (body (when (and body (stringp body))
                  (text:encode-string body)))
          (request (make-instance 'request :method method
-                                          :target target
+                                          :target uri
                                           :version :http-1.1
                                           :header header
-                                          :body body))
-         (key (uri-connection-key uri))
-         (connection (client-connection client key))
-         (stream (client-connection-stream connection)))
-    (add-new-request-header-field request "Host" (host-header-field uri))
+                                          :body body)))
     (when body
       (add-new-request-header-field request "Content-Length"
                                     (princ-to-string (length body))))
+    (let ((response (send-request* request :client client)))
+      (cond
+        (follow-redirections
+         (do ((redirection-count 0))
+             ((>= redirection-count max-redirection-count)
+              (error 'too-many-redirections))
+           (let ((location (response-redirection-location response)))
+             (unless location
+               (return response))
+             (redirect-request request response location uri)
+             (setf response (send-request* request :client client))
+             (incf redirection-count))))
+        (t
+         response)))))
+
+(defun send-request* (request &key (client *client*))
+  (let* ((target-uri (request-target request))
+         (key (uri-connection-key target-uri))
+         (connection (client-connection client key))
+         (stream (client-connection-stream connection)))
+    (setf (request-target request) (make-request-target target-uri))
+    (setf (request-header-field request "Host") (host-header-field target-uri))
     (core:abort-protect
         (handler-case
             (progn

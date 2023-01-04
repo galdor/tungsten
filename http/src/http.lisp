@@ -10,6 +10,22 @@
      (declare (ignore condition))
      (format stream "HTTP connection closed."))))
 
+(define-condition invalid-redirection-location (http-error)
+  ((location
+    :type string
+    :initarg :location))
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "Invalid Location header field in HTTP response."))))
+
+(define-condition too-many-redirections (http-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "Too many HTTP redirections."))))
+
 (deftype request-method ()
   '(or symbol string))
 
@@ -50,6 +66,11 @@
      (symbol-name method))
     (string
      method)))
+
+(defun make-request-target (uri)
+  (uri:make-uri :path (or (uri:uri-path uri) "/")
+                :query (uri:uri-query uri)
+                :fragment (uri:uri-fragment uri)))
 
 (defun host-header-field (uri)
   (declare (type uri:uri uri))
@@ -93,3 +114,8 @@
   (let ((name-string (header-field-name-string name)))
     (cdr (assoc name-string header :key 'header-field-name-string
                                    :test #'equalp))))
+
+(defun delete-header-fields (header names)
+  (delete-if (lambda (field)
+               (member (car field) names :test #'string=))
+             header))

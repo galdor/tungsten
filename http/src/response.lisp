@@ -139,3 +139,17 @@
       (when (< nb-read content-length)
         (http-parse-error "truncated body"))
       body)))
+
+(defun response-redirection-location (response)
+  (declare (type response response))
+  (with-slots (status header) response
+    (case status
+      ((301 302 303 307 308)
+       (let ((location (header-field header "Location")))
+         (when location
+           (handler-case
+               (uri:parse location)
+             (uri:uri-parse-error ()
+               (error 'invalid-redirection-location :location location))))))
+      (t
+       nil))))
