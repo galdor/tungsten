@@ -3,14 +3,17 @@
 (define-condition system-error (error)
   ((function
     :type string
-    :initarg :function)
+    :initarg :function
+    :reader system-error-function)
    (value
     :type (or keyword integer)
-    :initarg :value)
+    :initarg :value
+    :reader system-error-value)
    (description
     :type (or string null)
     :initarg :description
-    :initform nil))
+    :initform nil
+    :reader system-error-description))
   (:report
    (lambda (c stream)
      (with-slots (function value description) c

@@ -21,4 +21,11 @@
            (type (integer 0) start end))
   (with-slots (file-descriptor write-buffer) stream
     (ffi:with-pinned-vector-data (%data octets start)
-      (write-fd file-descriptor %data (- end start)))))
+      (handler-case
+          (write-fd file-descriptor %data (- end start))
+        (system-error (condition)
+          (case (system-error-value condition)
+            (:epipe
+             (error 'end-of-file :stream stream))
+            (t
+             (error condition))))))))

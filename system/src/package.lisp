@@ -1,6 +1,11 @@
 (defpackage :system
   (:use :cl)
   (:export
+   #:system-error
+   #:system-error-function
+   #:system-error-value
+   #:system-error-description
+
    #:size-t
    #:ssize-t
 
