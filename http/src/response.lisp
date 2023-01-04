@@ -123,22 +123,12 @@
 (defun read-body (header stream)
   (declare (type header header)
            (type system:io-stream stream))
-  (let* ((content-length-string (header-field header "Content-Length"))
-         (content-length
-           (progn
-             (unless content-length-string
-               (http-parse-error "missing Content-Length header field"))
-             (handler-case
-                 (parse-integer content-length-string)
-               (error ()
-                 (http-parse-error "invalid Content-Length header field"))))))
-    (when (< content-length 0)
-      (http-parse-error "invalid negative Content-Length header field"))
-    (let* ((body (make-array content-length :element-type 'core:octet))
-           (nb-read (read-sequence body stream)))
-      (when (< nb-read content-length)
-        (http-parse-error "truncated body"))
-      body)))
+  (let* ((content-length (header-content-length header))
+         (body (make-array content-length :element-type 'core:octet))
+         (nb-read (read-sequence body stream)))
+    (when (< nb-read content-length)
+      (http-parse-error "truncated body"))
+    body))
 
 (defun response-redirection-location (response)
   (declare (type response response))

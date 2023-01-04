@@ -7,7 +7,6 @@
   :components
   ((:file "package")
    (:file "http")
-   (:file "parsing")
    (:file "request")
    (:file "response")
    (:file "client"))
