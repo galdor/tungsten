@@ -302,9 +302,8 @@ written."))
       t)))
 
 (defun io-stream-read-more (stream)
-  "Read more data from STREAM and store them in the read buffer. Return both the
-number of octets read and the position of the first octet read in the read
-buffer.
+  "Read more data from STREAM and store them in the read buffer. Return the
+number of octets read.
 
 Note that the number of octets read will be zero if end-of-file was reached."
   (declare (type io-stream stream))
@@ -316,4 +315,4 @@ Note that the number of octets read will be zero if end-of-file was reached."
                                     position
                                     (+ position read-size))))
       (incf (core:buffer-end read-buffer) nb-read)
-      (values nb-read position))))
+      nb-read)))
