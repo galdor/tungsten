@@ -111,7 +111,7 @@
 (defun send-request (method uri &key header body
                                      (client *client*)
                                      (follow-redirections t)
-                                     (max-redirection-count 10))
+                                     (max-redirections 10))
   (declare (type client client)
            (type request-method method)
            (type (or uri:uri string) uri)
@@ -131,15 +131,15 @@
     (let ((response (send-request* request :client client)))
       (cond
         (follow-redirections
-         (do ((redirection-count 0))
-             ((>= redirection-count max-redirection-count)
+         (do ((nb-redirections 0))
+             ((>= nb-redirections max-redirections)
               (error 'too-many-redirections))
            (let ((location (response-redirection-location response)))
              (unless location
                (return response))
              (redirect-request request response location uri)
              (setf response (send-request* request :client client))
-             (incf redirection-count))))
+             (incf nb-redirections))))
         (t
          response)))))
 
