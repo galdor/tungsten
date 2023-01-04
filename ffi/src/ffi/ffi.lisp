@@ -174,17 +174,14 @@ zero."
   (let* ((octets (text:encode-string string :encoding encoding
                                             :start start :end end))
          (nb-octets (length octets))
-         (%pointer (allocate-foreign-memory (1+ (length octets))))
-         (success nil))
-    (unwind-protect
-         (progn
-           (dotimes (i nb-octets)
-             (setf (foreign-value %pointer :uint8 i) (aref octets i)))
-           (setf (foreign-value %pointer :uint8 nb-octets) 0)
-           (setf success t)
-           (values %pointer nb-octets))
-      (unless success
-        (free-foreign-memory %pointer)))))
+         (%pointer (allocate-foreign-memory (1+ (length octets)))))
+    (core:abort-protect
+        (progn
+          (dotimes (i nb-octets)
+            (setf (foreign-value %pointer :uint8 i) (aref octets i)))
+          (setf (foreign-value %pointer :uint8 nb-octets) 0)
+          (values %pointer nb-octets))
+      (free-foreign-memory %pointer))))
 
 (defmacro with-foreign-string ((var-or-vars string
                                 &key (encoding *default-string-encoding*)

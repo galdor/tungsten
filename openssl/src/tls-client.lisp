@@ -60,43 +60,39 @@
            (type list ca-certificate-paths ca-certificate-directory-paths)
            (type (or pathname string null) certificate-path private-key-path))
   (let ((%context nil)
-        (%ssl nil)
-        (success nil))
+        (%ssl nil))
     (multiple-value-bind (socket address)
         (system::tcp-connect host port)
-      (unwind-protect
-           (progn
-             (setf %context (ssl-ctx-new (tls-client-method)))
-             (ssl-ctx-set-options %context '(:ssl-op-all))
-             (ssl-ctx-set-min-proto-version %context :tls1-2-version)
-             (ssl-ctx-set-cipher-list %context ciphers)
-             (when peer-verification
-               (ssl-ctx-set-verify %context '(:ssl-verify-peer) nil))
-             (when peer-verification-depth
-               (ssl-ctx-set-verify-depth %context peer-verification-depth))
-             (dolist (path ca-certificate-paths)
-               (ssl-ctx-load-verify-file %context path))
-             (dolist (path ca-certificate-directory-paths)
-               (ssl-ctx-load-verify-dir %context path))
-             (when certificate-path
-               (ssl-ctx-use-certificate-file %context certificate-path
-                                             :ssl-filetype-pem))
-             (when private-key-path
-               (ssl-ctx-use-private-key-file %context private-key-path
-                                             :ssl-filetype-pem))
-             (setf %ssl (ssl-new %context))
-             (ssl-set-fd %ssl socket)
-             (ssl-connect %ssl)
-             (prog1
-                 (make-instance 'tls-client :file-descriptor socket
-                                            :address address
-                                            :external-format external-format
-                                            :host host :port port
-                                            :%context %context :%ssl %ssl)
-               (setf success t)))
-        (unless success
-          (when %ssl
-            (ssl-free %ssl))
-          (when %context
-            (ssl-ctx-free %context))
-          (system::close-fd socket))))))
+      (core:abort-protect
+          (progn
+            (setf %context (ssl-ctx-new (tls-client-method)))
+            (ssl-ctx-set-options %context '(:ssl-op-all))
+            (ssl-ctx-set-min-proto-version %context :tls1-2-version)
+            (ssl-ctx-set-cipher-list %context ciphers)
+            (when peer-verification
+              (ssl-ctx-set-verify %context '(:ssl-verify-peer) nil))
+            (when peer-verification-depth
+              (ssl-ctx-set-verify-depth %context peer-verification-depth))
+            (dolist (path ca-certificate-paths)
+              (ssl-ctx-load-verify-file %context path))
+            (dolist (path ca-certificate-directory-paths)
+              (ssl-ctx-load-verify-dir %context path))
+            (when certificate-path
+              (ssl-ctx-use-certificate-file %context certificate-path
+                                            :ssl-filetype-pem))
+            (when private-key-path
+              (ssl-ctx-use-private-key-file %context private-key-path
+                                            :ssl-filetype-pem))
+            (setf %ssl (ssl-new %context))
+            (ssl-set-fd %ssl socket)
+            (ssl-connect %ssl)
+            (make-instance 'tls-client :file-descriptor socket
+                                       :address address
+                                       :external-format external-format
+                                       :host host :port port
+                                       :%context %context :%ssl %ssl))
+        (when %ssl
+          (ssl-free %ssl))
+        (when %context
+          (ssl-ctx-free %context))
+        (system::close-fd socket)))))
