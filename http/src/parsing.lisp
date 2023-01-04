@@ -30,6 +30,15 @@
   (:default-initargs
    :description "header too large"))
 
+(declaim (inline htab-octet-p))
+(defun htab-octet-p (octet)
+  (or (= octet #.(char-code #\Space))
+      (= octet #.(char-code #\Tab))))
+
+(declaim (inline digit-octet-p))
+(defun digit-octet-p (octet)
+  (<= #.(char-code #\0) octet #.(char-code #\9)))
+
 (defun parse-protocol-version (data start end)
   (declare (type core:octet-vector data)
            (type (integer 0) start end))
@@ -79,12 +88,3 @@
             (position-if-not 'htab-octet-p data :start (1+ colon) :end end)))
       (values (text:decode-string data :start start :end (1+ name-end))
               (text:decode-string data :start value-start :end end)))))
-
-(declaim (inline htab-octet-p))
-(defun htab-octet-p (octet)
-  (or (= octet #.(char-code #\Space))
-      (= octet #.(char-code #\Tab))))
-
-(declaim (inline digit-octet-p))
-(defun digit-octet-p (octet)
-  (<= #.(char-code #\0) octet #.(char-code #\9)))
