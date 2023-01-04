@@ -243,7 +243,10 @@
                                      :start start :end end)
                     end))
     (let* ((comma (or (position #\, string :start start :end end) end))
-           (token (subseq string start comma)))
+           (token-end (position-if-not #'htab-char-p string
+                                       :from-end t
+                                       :start start :end comma))
+           (token (subseq string start (if token-end (1+ token-end) start))))
       (unless (string= token "")
         (push token tokens))
       (setf start (1+ comma)))))

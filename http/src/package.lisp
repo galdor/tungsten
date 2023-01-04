@@ -7,8 +7,10 @@
    #:body
    #:header
    #:missing-request-target-host
-   #:header-field-value
    #:header-field
+   #:header-field-value
+   #:header-field-values
+   #:header-field-tokens
 
    #:request
    #:request-method
