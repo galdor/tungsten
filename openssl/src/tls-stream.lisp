@@ -40,4 +40,12 @@
            (type (or (integer 0) null) end))
   (with-slots (%ssl) stream
     (ffi:with-pinned-vector-data (%data octets start)
-      (ssl-write %ssl %data (- end start)))))
+      (handler-case
+          (ssl-write %ssl %data (- end start))
+        (openssl-error-stack (condition)
+          (let ((errors (openssl-error-stack-errors condition)))
+            (cond
+              ((null errors)
+               (error 'end-of-file :stream stream))
+              (t
+               (error condition)))))))))
