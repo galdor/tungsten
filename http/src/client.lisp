@@ -159,6 +159,23 @@
             (error 'connection-closed)))
       (discard-client-connection client connection))))
 
+(defun redirect-request (request response location uri)
+  (declare (type request request)
+           (type response response)
+           (type uri:uri location uri))
+  (with-slots (method target header body) request
+    (setf target (uri:resolve-reference location uri))
+    (when (eql (http:response-status response) 303)
+      (setf header (delete-header-fields '("Content-Encoding"
+                                           "Content-Language"
+                                           "Content-Location"
+                                           "Content-Type"
+                                           "Content-Length"
+                                           "Digest")
+                                         header))
+      (setf method :get)
+      (setf body nil))))
+
 (defun uri-connection-key (target)
   (declare (type uri:uri target))
   (let* ((scheme (or (uri:uri-scheme target) "http"))
