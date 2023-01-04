@@ -32,17 +32,15 @@
 
 (defun request-header-field (request name)
   (declare (type request request)
-           (type header-field-name name))
+           (type string name))
   (header-field (request-header request) name))
 
 (defun (setf request-header-field) (value request name)
   (declare (type request request)
-           (type header-field-name name)
+           (type string name)
            (type header-field-value value))
   (with-slots (header) request
-    (let* ((name-string (header-field-name-string name))
-           (pair (assoc name-string header :key 'header-field-name-string
-                                           :test #'equalp)))
+    (let ((pair (assoc name header :test #'equalp)))
       (if pair
           (rplacd pair value)
           (push (cons name value) header))
@@ -50,18 +48,16 @@
 
 (defun add-request-header-field (request name value)
   (declare (type request request)
-           (type header-field-name name)
+           (type string name)
            (type header-field-value value))
   (push (cons name value) (request-header request)))
 
 (defun add-new-request-header-field (request name value)
   (declare (type request request)
-           (type header-field-name name)
+           (type string name)
            (type header-field-value value))
   (with-slots (header) request
-    (let* ((name-string (header-field-name-string name))
-           (pair (assoc name-string header :key 'header-field-name-string
-                                           :test #'equalp)))
+    (let ((pair (assoc name header :test #'equalp)))
       (unless pair
         (push (cons name value) header))
       value)))

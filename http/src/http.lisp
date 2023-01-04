@@ -71,14 +71,11 @@
 (deftype header ()
   'list)
 
-(deftype header-field-name ()
-  '(or symbol string))
-
 (deftype header-field-value ()
   '(or core:octet-vector string))
 
 (deftype header-field ()
-  '(cons header-field-name header-field-value))
+  '(cons string header-field-value))
 
 (define-condition missing-request-target-host ()
   ((target
@@ -130,33 +127,22 @@
     ((eq version :http-1.1) "HTTP/1.1")
     ((typep version 'string) version)))
 
-(defun header-field-name-string (name)
-  (declare (type header-field-name name))
-  (etypecase name
-    (symbol
-     (symbol-name name))
-    (string
-     name)))
-
 (defun header-field (header name)
   (declare (type header header)
-           (type header-field-name name))
-  (let ((name-string (header-field-name-string name)))
-    (cdr (assoc name-string header :key 'header-field-name-string
-                                   :test #'equalp))))
+           (type string name))
+  (cdr (assoc name header :test #'equalp)))
 
 (defun header-field-values (header name)
   (declare (type header header)
-           (type header-field-name name))
-  (let ((name-string (header-field-name-string name))
-        (values nil))
+           (type string name))
+  (let ((values nil))
     (dolist (field header (nreverse values))
-      (when (equalp (car field) name-string)
+      (when (equalp (car field) name)
         (push (cdr field) values)))))
 
 (defun header-field-tokens (header name)
   (declare (type header header)
-           (type header-field-name name))
+           (type string name))
   (let ((tokens nil))
     (dolist (value (header-field-values header name) (nreverse tokens))
       (dolist (token (parse-tokens value))
