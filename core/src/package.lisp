@@ -25,4 +25,6 @@
    #:buffer-skip
    #:buffer-skip-to
 
-   #:prompt-eval))
+   #:prompt-eval
+
+   #:abort-protect))

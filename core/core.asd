@@ -8,7 +8,8 @@
    (:file "sequences")
    (:file "binary")
    (:file "buffer")
-   (:file "input"))
+   (:file "input")
+   (:file "conditions"))
   :in-order-to ((test-op (test-op "core/test"))))
 
 (defsystem "core/test"

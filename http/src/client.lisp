@@ -90,6 +90,13 @@
     (setf connections (make-hash-table :test #'equal)))
   nil)
 
+(defun discard-client-connection (client connection)
+  (declare (type client client)
+           (type client-connection connection))
+  (close-client-connection connection)
+  (with-slots (connections) client
+    (remhash (client-connection-key connection) connections)))
+
 (defun client-connection-key (connection)
   (declare (type client-connection connection))
   (with-slots (host port tls) connection
@@ -97,7 +104,7 @@
 
 (defun close-client-connection (connection)
   (declare (type client-connection connection))
-  (close (client-connection-stream connection)))
+  (ignore-errors (close (client-connection-stream connection))))
 
 (defvar *client* (make-client))
 
@@ -108,8 +115,14 @@
          (connection (client-connection client key))
          (stream (client-connection-stream connection)))
     (finalize-request request)
-    (write-request request stream)
-    (read-response stream)))
+    (core:abort-protect
+        (handler-case
+            (progn
+              (write-request request stream)
+              (read-response stream))
+          (end-of-file ()
+            (error 'connection-closed)))
+      (discard-client-connection client connection))))
 
 (defun finalize-request (request)
   (with-slots (body) request
