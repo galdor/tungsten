@@ -25,6 +25,11 @@
     :initform nil
     :accessor response-body)))
 
+(defmethod print-object ((response response) stream)
+  (print-unreadable-object (response stream :type t)
+    (with-slots (status reason) response
+      (format stream "~D ~S" status reason))))
+
 (defun read-response (stream &aux (response (make-instance 'response)))
   (declare (type system:io-stream stream))
   (multiple-value-bind (version status reason)

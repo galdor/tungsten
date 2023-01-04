@@ -27,6 +27,11 @@
     :initform nil
     :accessor request-body)))
 
+(defmethod print-object ((request request) stream)
+  (print-unreadable-object (request stream :type t)
+    (with-slots (method target) request
+      (format stream "~A ~S" method target))))
+
 (defun make-request (method target &key (version :http-1.1) header body)
   (declare (type request-method method)
            (type request-target target)
