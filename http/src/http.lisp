@@ -13,9 +13,6 @@
 (deftype request-method ()
   '(or symbol string))
 
-(deftype request-target ()
-  '(or uri:uri string))
-
 (deftype response-status ()
   '(integer 0 999))
 
@@ -39,7 +36,7 @@
 
 (define-condition missing-request-target-host ()
   ((target
-    :type request-target
+    :type uri:uri
     :initarg :target))
   (:report
    (lambda (c stream)
@@ -54,42 +51,20 @@
     (string
      method)))
 
-(defun request-target-string (target)
-  (declare (type request-target target))
-  (etypecase target
-    (uri:uri
-     (uri:serialize target))
-    (string
-     target)))
-
-(defun request-target-uri (target)
-  (declare (type request-target target))
-  (etypecase target
-    (uri:uri
-     target)
-    (string
-     (uri:parse target))))
-
-(defun normalize-request-target (target)
-  (uri:make-uri :path (or (uri:uri-path target) "/")
-                :query (uri:uri-query target)
-                :fragment (uri:uri-fragment target)))
-
-(defun request-target-host-header-field (target)
-  ;; We assume that TARGET has already been normalized
-  (declare (type uri:uri target))
+(defun host-header-field (uri)
+  (declare (type uri:uri uri))
   ;; We take care not to include the port in the value if this is the default
   ;; port for the transport used; infortunately, some servers will respond
   ;; with a Location header field based on the value of the Host header field
   ;; without any host/port analysis. For example, GitHub will redirect a
   ;; request for http://github.com with a Host header field set to
   ;; "github.com:80" to "https://github.com:80/".
-  (let* ((scheme (uri:uri-scheme target))
-         (host (let ((host (uri:uri-host target)))
+  (let* ((scheme (uri:uri-scheme uri))
+         (host (let ((host (uri:uri-host uri)))
                  (if (find #\: host)
                      (concatenate 'nil "[" host "]")
                      host)))
-         (port (let ((port (uri:uri-port target)))
+         (port (let ((port (uri:uri-port uri)))
                  (if (or (null port)
                          (and (= port 80) (equalp scheme "http"))
                          (and (= port 443) (equalp scheme "https")))

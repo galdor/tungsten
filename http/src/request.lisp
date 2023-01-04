@@ -4,12 +4,10 @@
   ((method
      :type request-method
      :initarg :method
-     :initform :get
      :accessor request-method)
    (target
-    :type request-target
+    :type uri:uri
     :initarg :target
-    :initform (uri:make-uri :path "/")
     :accessor request-target)
    (version
     :type protocol-version
@@ -30,18 +28,7 @@
 (defmethod print-object ((request request) stream)
   (print-unreadable-object (request stream :type t)
     (with-slots (method target) request
-      (format stream "~A ~S" method target))))
-
-(defun make-request (method target &key (version :http-1.1) header body)
-  (declare (type request-method method)
-           (type request-target target)
-           (type header header)
-           (type (or body null) body))
-  (make-instance 'request :method method
-                          :target target
-                          :version version
-                          :header header
-                          :body body))
+      (format stream "~A ~S" method (uri:serialize target)))))
 
 (defun request-header-field (request name)
   (declare (type request request)
@@ -79,26 +66,6 @@
         (push (cons name value) header))
       value)))
 
-(defun request-connection-key (request)
-  (declare (type request request))
-  (let* ((target (request-target-uri (request-target request)))
-         (scheme (or (uri:uri-scheme target) "http"))
-         (host (restart-case
-                   (let ((host (uri:uri-host target)))
-                     (or host
-                         (error 'missing-request-target-host :target target)))
-                 (set-host (host)
-                   :report "Set the host to connect to."
-                   :interactive (lambda () (core:prompt-eval "Host string: "))
-                   host)))
-         (port (let ((port (uri:uri-port target)))
-                 (cond
-                   (port port)
-                   ((equalp scheme "http") 80)
-                   ((equalp scheme "https") 443))))
-         (tls (equalp scheme "https")))
-    (list host port tls)))
-
 (defun write-request (request stream)
   (declare (type request request)
            (type streams:fundamental-binary-output-stream stream)
@@ -107,7 +74,7 @@
     ;; Request line
     (format stream "~A ~A ~A~%"
             (request-method-string method)
-            (request-target-string target)
+            (uri:serialize target)
             (protocol-version-string version))
     ;; Header
     (dolist (field header)

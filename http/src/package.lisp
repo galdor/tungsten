@@ -2,7 +2,6 @@
   (:use :cl)
   (:export
    #:request-method
-   #:request-target
    #:response-status
    #:protocol-version
    #:body
@@ -17,7 +16,6 @@
    #:request-version
    #:request-header
    #:request-body
-   #:make-request
    #:request-header-field
 
    #:response

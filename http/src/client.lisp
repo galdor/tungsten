@@ -108,13 +108,32 @@
 
 (defvar *client* (make-client))
 
-(defun send-request (request &key (client *client*))
+(defun send-request (method uri &key header
+                                     body
+                                     (client *client*))
   (declare (type client client)
-           (type request request))
-  (let* ((key (request-connection-key request))
+           (type request-method method)
+           (type (or uri:uri string) uri)
+           (type header header)
+           (type (or body null) body))
+  (let* ((uri (when (stringp uri) (uri:parse uri)))
+         (target (uri:make-uri :path (or (uri:uri-path uri) "/")
+                               :query (uri:uri-query uri)
+                               :fragment (uri:uri-fragment uri)))
+         (body (when (and body (stringp body))
+                 (text:encode-string body)))
+         (request (make-instance 'request :method method
+                                          :target target
+                                          :version :http-1.1
+                                          :header header
+                                          :body body))
+         (key (uri-connection-key uri))
          (connection (client-connection client key))
          (stream (client-connection-stream connection)))
-    (finalize-request request)
+    (add-new-request-header-field request "Host" (host-header-field uri))
+    (when body
+      (add-new-request-header-field request "Content-Length"
+                                    (princ-to-string (length body))))
     (core:abort-protect
         (handler-case
             (progn
@@ -124,19 +143,21 @@
             (error 'connection-closed)))
       (discard-client-connection client connection))))
 
-(defun finalize-request (request)
-  (with-slots (body) request
-    (let ((target (request-target-uri (request-target request))))
-      ;; Target
-      (setf (request-target request) (normalize-request-target target))
-      ;; Host header field
-      (add-new-request-header-field request "Host"
-                                    (request-target-host-header-field target))
-      ;; Body
-      (when (and body (stringp body))
-        (setf body (text:encode-string body)))
-      ;; Content-Length header field
-      (when body
-        (add-new-request-header-field request "Content-Length"
-                                      (princ-to-string (length body))))))
-  request)
+(defun uri-connection-key (target)
+  (declare (type uri:uri target))
+  (let* ((scheme (or (uri:uri-scheme target) "http"))
+         (host (restart-case
+                   (let ((host (uri:uri-host target)))
+                     (or host
+                         (error 'missing-request-target-host :target target)))
+                 (set-host (host)
+                   :report "Set the host to connect to."
+                   :interactive (lambda () (core:prompt-eval "Host string: "))
+                   host)))
+         (port (let ((port (uri:uri-port target)))
+                 (cond
+                   (port port)
+                   ((equalp scheme "http") 80)
+                   ((equalp scheme "https") 443))))
+         (tls (equalp scheme "https")))
+    (list host port tls)))
