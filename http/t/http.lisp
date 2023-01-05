@@ -29,3 +29,13 @@
     (check-equal '("4") (http:header-field-tokens header "B"))
     (check-equal '("7" "8") (http:header-field-tokens header "c"))
     (check-null (http:header-field-tokens header "d"))))
+
+(deftest body-chunked-p ()
+  (check-true (http::body-chunked-p '(("Transfer-Encoding" . "chunked"))))
+  (check-true (http::body-chunked-p '(("Transfer-Encoding" . "gzip")
+                                      ("Transfer-Encoding" . "chunked"))))
+  (check-false (http::body-chunked-p '(("Transfer-Encoding" . "gzip"))))
+  (check-false (http::body-chunked-p nil))
+  (check-signals http:http-parse-error
+                 (http::body-chunked-p '(("Transfer-Encoding" . "chunked")
+                                         ("Transfer-Encoding" . "gzip")))))

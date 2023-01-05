@@ -154,19 +154,17 @@
              header))
 
 (defun header-content-length (header)
-  (let* ((string (header-field header "Content-Length"))
-         (content-length
-           (progn
-             (unless string
-               (http-parse-error "missing Content-Length header field"))
-             (handler-case
-                 (parse-integer string)
-               (error ()
-                 (http-parse-error
-                  "invalid Content-Length header field ~S" string))))))
-    (when (< content-length 0)
-      (http-parse-error "invalid negative Content-Length header field"))
-    content-length))
+  (let ((string (header-field header "Content-Length")))
+    (when string
+      (let ((content-length
+              (handler-case
+                  (parse-integer string)
+                (error ()
+                  (http-parse-error
+                   "invalid Content-Length header field ~S" string)))))
+        (when (< content-length 0)
+          (http-parse-error "invalid negative Content-Length header field"))
+        content-length))))
 
 (declaim (inline htab-octet-p))
 (defun htab-octet-p (octet)
@@ -250,3 +248,104 @@
       (unless (string= token "")
         (push token tokens))
       (setf start (1+ comma)))))
+
+(defun body-chunked-p (header)
+  ;; RFC 9112 6.3.
+  ;;
+  ;; If a Transfer-Encoding header field is present in a request and the
+  ;; chunked transfer coding is not the final encoding, the message body
+  ;; length cannot be determined reliably; the server MUST respond with the
+  ;; 400 (Bad Request) status code and then close the connection.
+  (mapl (lambda (list)
+          (when (equalp (car list) "chunked")
+            (if (null (cdr list))
+                (return-from body-chunked-p t)
+                (http-parse-error "invalid intermediary chunked encoding"))))
+        (header-field-tokens header "Transfer-Encoding"))
+  nil)
+
+(defun read-header (stream)
+  (declare (type stream stream))
+  (do ((buffer (system:io-stream-read-buffer stream))
+       (eol-octets (text:eol-octets :crlf))
+       (eol nil)
+       (header nil))
+      ((and eol (= eol (core:buffer-start buffer)))
+       (core:buffer-skip buffer (length eol-octets))
+       (nreverse header))
+    (when (>= (core:buffer-length buffer) *max-header-length*)
+      (error 'header-too-large :data (core:buffer-content buffer)))
+    (setf eol (search eol-octets (core:buffer-data buffer)
+                      :start2 (core:buffer-start buffer)
+                      :end2 (core:buffer-end buffer)))
+    (cond
+      ((and eol (> eol (core:buffer-start buffer)))
+       (cond
+         ((htab-octet-p
+           (aref (core:buffer-data buffer) (core:buffer-start buffer)))
+          ;; Header field continuation
+          (when (null header)
+            (http-parse-error "invalid header field continuation"))
+          (let ((start (position-if-not 'htab-octet-p (core:buffer-data buffer)
+                                        :start (core:buffer-start buffer)
+                                        :end eol)))
+            (rplacd (car header)
+                    (concatenate 'vector (cdar header)
+                                 (core:octet-vector* #.(char-code #\Space))
+                                 (subseq (core:buffer-data buffer)
+                                         start eol)))))
+         (t
+          ;; Header field
+          (multiple-value-bind (name value)
+              (parse-header-field (core:buffer-data buffer)
+                                  (core:buffer-start buffer) eol)
+            (push (cons name value) header))))
+       (core:buffer-skip-to buffer (+ eol (length eol-octets))))
+      ((null eol)
+       (when (zerop (system:io-stream-read-more stream))
+         (error 'connection-closed))))))
+
+(defun read-body (header stream)
+  (declare (type header header)
+           (type stream stream))
+  (let ((content-length (header-content-length header))
+        (chunked (body-chunked-p header)))
+    (when (and chunked content-length)
+      (http-parse-error "Content-Length set with chunked body"))
+    (cond
+      (chunked
+       (do ((body (make-array 0 :element-type 'core:octet :adjustable t))
+            (body-length 0)
+            (chunk-length nil))
+           ((eql chunk-length 0)
+            (adjust-array body body-length))
+         (setf chunk-length (read-chunk-header stream))
+         (when (> chunk-length 0)
+           (setf body (adjust-array body (+ body-length chunk-length)))
+           (when (< (read-sequence body stream :start body-length)
+                    chunk-length)
+             (http-parse-error "truncated chunk"))
+           (incf body-length chunk-length))
+         (unless (and (= (read-byte stream) #.(char-code #\Return))
+                      (= (read-byte stream) #.(char-code #\Newline)))
+           (http-parse-error "missing chunk end-of-line sequence"))))
+      (content-length
+       (let* ((body (make-array content-length :element-type 'core:octet))
+              (nb-read (read-sequence body stream)))
+         (when (< nb-read content-length)
+           (http-parse-error "truncated body"))
+         body))
+      (t
+       (http-parse-error "missing Content-Length header field")))))
+
+(defun read-chunk-header (stream)
+  (declare (type stream stream))
+  (let* ((line (read-line stream))
+         (end (or (position #\; line) (length line))))
+    (handler-case
+        (let ((length (parse-integer line :end end :radix 16)))
+          (unless (>= length 0)
+            (http-parse-error "invalid negative chunk length ~S" line))
+          length)
+      (error ()
+        (http-parse-error "invalid chunk header ~S" line)))))
