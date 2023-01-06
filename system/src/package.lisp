@@ -40,6 +40,10 @@
    #:network-stream-address
 
    #:host
+   #:tcp-connection-failure
+   #:tcp-connection-failure-host
+   #:tcp-connection-failure-port
+   #:tcp-connection-failure-address-errors
    #:tcp-client
    #:tcp-client-host
    #:tcp-client-port

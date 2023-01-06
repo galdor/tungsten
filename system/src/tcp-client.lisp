@@ -3,6 +3,29 @@
 (deftype host ()
   '(or string ip-address))
 
+(define-condition tcp-connection-failure ()
+  ((host
+    :type host
+    :initarg :host
+    :reader tcp-connection-failure-host)
+   (port
+    :type port-number
+    :initarg :port
+    :reader tcp-connection-failure-port)
+   (address-errors
+    :type list
+    :initarg :errors
+    :reader tcp-connection-failure-address-errors))
+  (:report
+   (lambda (condition stream)
+     (with-slots (host port address-errors) condition
+       (format stream "Cannot connect to ~A port ~D.~%" host port)
+       (dolist (address-error address-errors)
+         (terpri stream)
+         (destructuring-bind (address . error) address-error
+           (format stream "~A~%~A~%"
+                   (format-socket-address address) error)))))))
+
 (defclass tcp-client (tcp-stream)
   ((host
     :type host
@@ -45,14 +68,16 @@ If HOST is a hostname, unsuccessful connection attempts are logged to
            (type port-number port))
   (etypecase host
     (string
-     (let ((addresses (resolve-net-service host port)))
+     (let ((addresses (resolve-net-service host port))
+           (errors nil))
        (dolist (address (core:nshuffle addresses))
          (handler-case
              (return-from tcp-connect
                (values (tcp-connect-to-address address) address))
-           (error (c)
-             (format *error-output* "cannot connect to ~A: ~A~%" address c))))
-       (error "cannot connect to ~A port ~D" host port)))
+           (error (condition)
+             (push (cons address condition) errors))))
+       (error 'tcp-connection-failure :host host :port port
+                                      :errors (nreverse errors))))
     (ip-address
      (let ((address (make-ip-socket-address host port)))
        (values (tcp-connect-to-address address) address)))))
