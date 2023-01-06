@@ -128,7 +128,7 @@
     (when body
       (add-new-request-header-field request "Content-Length"
                                     (princ-to-string (length body))))
-    (let ((response (send-request* request :client client)))
+    (let ((response (finalize-and-send-request request client)))
       (cond
         (follow-redirections
          (do ((nb-redirections 0))
@@ -138,21 +138,48 @@
              (unless location
                (return response))
              (redirect-request request response location uri)
-             (setf response (send-request* request :client client))
+             (setf response (finalize-and-send-request request client))
              (incf nb-redirections))))
         (t
          response)))))
 
-(defun send-request* (request &key (client *client*))
+(defun finalize-and-send-request (request client)
+  (declare (type request request)
+           (type client client))
   (let* ((target-uri (request-target request))
-         (key (uri-connection-key target-uri))
-         (connection (client-connection client key))
-         (stream (client-connection-stream connection)))
+         (key (uri-connection-key target-uri)))
     (setf (request-target request) (make-request-target target-uri))
     (setf (request-header-field request "Host") (host-header-field target-uri))
+    ;; We cannot detect if a connection in the pool has timed out or failed
+    ;; due to a random IO error. When that happens, we will be notified while
+    ;; reading the response (read() will return zero). It makes sense to
+    ;; automatically retry at least once in this case.
+    (do ((nb-attempts 1 (1+ nb-attempts)))
+        (nil)
+      (flet ((maybe-reconnect ()
+               (lambda (condition)
+                 (declare (ignore condition))
+                 (when (= nb-attempts 1)
+                   (invoke-restart 'reconnect)))))
+        (restart-case
+            (handler-bind
+                ((connection-closed (maybe-reconnect))
+                 (system:system-error (maybe-reconnect))
+                 (openssl:openssl-error-stack (maybe-reconnect)))
+              (return-from finalize-and-send-request
+                (send-finalized-request request client key)))
+          (reconnect ()
+            :report "Reconnect and try to send the request again."
+            nil))))))
+
+(defun send-finalized-request (request client connection-key)
+  (declare (type request request)
+           (type connection-key connection-key)
+           (type client client))
+  (let ((connection (client-connection client connection-key)))
     (core:abort-protect
         (handler-case
-            (progn
+            (let ((stream (client-connection-stream connection)))
               (write-request request stream)
               (read-response stream))
           (end-of-file ()
