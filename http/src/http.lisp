@@ -305,7 +305,10 @@
        (when (zerop (system:io-stream-read-more stream))
          (error 'connection-closed))))))
 
-(defun read-body (header stream)
+(defun read-trailer (stream)
+  (read-header stream))
+
+(defun read-body-and-trailer (header stream)
   (declare (type header header)
            (type stream stream))
   (let ((content-length (header-content-length header))
@@ -318,23 +321,25 @@
             (body-length 0)
             (chunk-length nil))
            ((eql chunk-length 0)
-            (adjust-array body body-length))
+            (values
+             (adjust-array body body-length)
+             (read-trailer stream)))
          (setf chunk-length (read-chunk-header stream))
          (when (> chunk-length 0)
            (setf body (adjust-array body (+ body-length chunk-length)))
            (when (< (read-sequence body stream :start body-length)
                     chunk-length)
              (http-parse-error "truncated chunk"))
-           (incf body-length chunk-length))
-         (unless (and (= (read-byte stream) #.(char-code #\Return))
-                      (= (read-byte stream) #.(char-code #\Newline)))
-           (http-parse-error "missing chunk end-of-line sequence"))))
+           (incf body-length chunk-length)
+           (unless (and (= (read-byte stream) #.(char-code #\Return))
+                        (= (read-byte stream) #.(char-code #\Newline)))
+             (http-parse-error "missing chunk end-of-line sequence")))))
       (content-length
        (let* ((body (make-array content-length :element-type 'core:octet))
               (nb-read (read-sequence body stream)))
          (when (< nb-read content-length)
            (http-parse-error "truncated body"))
-         body))
+         (values body nil)))
       (t
        (http-parse-error "missing Content-Length header field")))))
 

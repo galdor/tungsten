@@ -23,7 +23,12 @@
     :type (or body null)
     :initarg :body
     :initform nil
-    :accessor response-body)))
+    :accessor response-body)
+   (trailer
+    :type header
+    :initarg :trailer
+    :initform nil
+    :accessor response-trailer)))
 
 (defmethod print-object ((response response) stream)
   (print-unreadable-object (response stream :type t)
@@ -37,8 +42,12 @@
     (setf (response-status response) status
           (response-reason response) reason
           (response-version response) version))
-  (setf (response-header response) (read-header stream))
-  (setf (response-body response) (read-body (response-header response) stream))
+  (let ((header (read-header stream)))
+    (setf (response-header response) header)
+    (multiple-value-bind (body trailer)
+        (read-body-and-trailer header stream)
+      (setf (response-body response) body
+            (response-trailer response) trailer)))
   response)
 
 (defun read-status-line (stream)
