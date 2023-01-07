@@ -3,6 +3,7 @@
   (:export
    #:*default-encoding*
    #:unencodable-character
+   #:invalid-octet
    #:decoding-error
    #:encoding
    #:encoding-name
@@ -26,8 +27,6 @@
    #:external-format-encoding
    #:external-format-eol-style
    #:eol-octets
-
-   #:invalid-ascii-octet
 
    #:invalid-utf8-leading-octet
    #:invalid-utf8-continuation-octet

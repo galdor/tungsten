@@ -1,14 +1,5 @@
 (in-package :text)
 
-(define-condition invalid-ascii-octet (decoding-error)
-  ((octet
-    :type core:octet
-    :initarg :octet))
-  (:report
-   (lambda (condition stream)
-     (with-slots (octet) condition
-       (format stream "Invalid ASCII octet ~S." octet)))))
-
 (defun encoded-character-length/ascii (character)
   (declare (type character character))
   (let ((code (char-code character)))
@@ -56,8 +47,8 @@
            ((< octet #x80)
             (values (code-char octet) 1))
            (t
-            (error 'invalid-ascii-octet :octets octets :offset start
-                                        :octet octet))))))))
+            (error 'invalid-octet :octets octets :offset start
+                                  :octet octet :encoding :ascii))))))))
 
 (define-encoding :ascii ()
   :name "ASCII"

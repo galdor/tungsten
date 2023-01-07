@@ -29,5 +29,5 @@
 (deftest decode-string/ascii/invalid-octets ()
   (check-decode-string-error
    :ascii
-   (text:invalid-ascii-octet #(128))
-   (text:invalid-ascii-octet #(97 98 99 255))))
+   (text:invalid-octet #(128))
+   (text:invalid-octet #(97 98 99 255))))

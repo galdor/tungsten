@@ -25,6 +25,19 @@
     :type index
     :initarg :offset)))
 
+(define-condition invalid-octet (decoding-error)
+  ((octet
+    :type core:octet
+    :initarg :octet)
+   (encoding
+    :type symbol
+    :initarg :encoding))
+  (:report
+   (lambda (condition stream)
+     (with-slots (octet encoding) condition
+       (format stream "Octet ~S does not represent a character in encoding ~S."
+               octet encoding)))))
+
 (deftype encoded-character-length-function ()
   '(function (character) vector-length))
 
