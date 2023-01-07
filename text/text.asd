@@ -10,8 +10,10 @@
    (:file "encodings")
    (:file "strings")
    (:file "external-formats")
+   (:file "character-mapping")
    (:file "ascii")
-   (:file "utf-8"))
+   (:file "utf-8")
+   (:file "iso-8859-1"))
   :in-order-to ((test-op (test-op "text/test"))))
 
 (defsystem "text/test"
@@ -24,6 +26,7 @@
   ((:file "package")
    (:file "utils")
    (:file "ascii")
-   (:file "utf-8"))
+   (:file "utf-8")
+   (:file "iso-8859-1"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :text-test)))
