@@ -43,6 +43,7 @@
 
 (defun make-tls-client (host port
                         &key (external-format text:*default-external-format*)
+                             read-timeout write-timeout
                              (ciphers *default-tls-client-ciphers*)
                              (peer-verification t)
                              (peer-verification-depth 20)
@@ -54,6 +55,7 @@
   "Create and return a TLS client connected to HOST and PORT."
   (declare (type system:host host)
            (type system:port-number port)
+           (type (or (integer 0) null) read-timeout write-timeout)
            (type list ciphers)
            (type boolean peer-verification)
            (type (integer 0) peer-verification-depth)
@@ -90,6 +92,8 @@
                                        :address address
                                        :external-format external-format
                                        :host host :port port
+                                       :read-timeout read-timeout
+                                       :write-timeout write-timeout
                                        :%context %context :%ssl %ssl))
         (when %ssl
           (ssl-free %ssl))
