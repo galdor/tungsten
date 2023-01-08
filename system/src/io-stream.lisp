@@ -150,7 +150,7 @@ written."))
             (return-from streams:stream-read-char :eof)))))))
 
 (defmethod streams:stream-unread-char ((stream io-stream) character)
-  (declare (type (character character)))
+  (declare (type character character))
   (with-slots (read-buffer external-format) stream
     (let* ((encoding (text:external-format-encoding external-format))
            (nb-octets
