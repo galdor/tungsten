@@ -148,6 +148,17 @@
   (:ipproto-udp "IPPROTO_UDP")))
 
 (enum
+ (socket-option-level :int)
+ ((:sol-socket "SOL_SOCKET")))
+
+(enum
+ (socket-option :int)
+ ((:so-reuseaddr "SO_REUSEADDR")
+  (:so-keepalive "SO_KEEPALIVE")
+  (:so-rcvtimeo "SO_RCVTIMEO")
+  (:so-sndtimeo "SO_SNDTIMEO")))
+
+(enum
  (address-family :int)
  ((:af-inet "AF_INET")
   (:af-inet6 "AF_INET6")

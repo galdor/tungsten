@@ -1,8 +1,20 @@
 (in-package :system)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defconstant ni-maxhost 1025)
-  (defconstant ni-maxserv 32))
+;;;
+;;; Time
+;;;
+
+(defun initialize-timeval (%pointer microseconds)
+  (declare (type ffi:pointer %pointer)
+           (type (integer 0) microseconds))
+  (setf (ffi:struct-member %pointer 'timeval :sec)
+        (floor microseconds 1000000))
+  (setf (ffi:struct-member %pointer 'timeval :usec)
+        (mod microseconds 1000000)))
+
+;;;
+;;; File descriptors
+;;;
 
 (defun close-fd (fd)
   (system-funcall ("close" ((:int) :int) fd)))
@@ -12,6 +24,10 @@
 
 (defun write-fd (fd %data size)
   (system-funcall ("write" ((:int :pointer size-t) ssize-t) fd %data size)))
+
+;;;
+;;; Sockets
+;;;
 
 (defun socket (domain type protocol)
   (system-funcall ("socket" ((address-family socket-type socket-protocol) :int)
@@ -23,6 +39,20 @@
 
 (defun shutdown (fd shutdown-type)
   (system-funcall ("shutdown" ((:int shutdown-type) :int) fd shutdown-type)))
+
+(defun setsockopt (fd level option %value value-length)
+  (system-funcall
+   ("setsockopt"
+    ((:int socket-option-level socket-option :pointer socklen-t) :int)
+    fd level option %value value-length)))
+
+;;;
+;;; DNS
+;;;
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defconstant ni-maxhost 1025)
+  (defconstant ni-maxserv 32))
 
 (defmacro with-getaddrinfo ((%info host service
                              &key (%hints (ffi:null-pointer)))

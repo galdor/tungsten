@@ -42,17 +42,21 @@
       (write-string (format-socket-address address) stream))))
 
 (defun make-tcp-client (host port
-                        &key (external-format text:*default-external-format*))
+                        &key (external-format text:*default-external-format*)
+                             read-timeout write-timeout)
   "Create and return a TCP client connected to HOST and PORT."
   (declare (type host host)
-           (type port-number port))
+           (type port-number port)
+           (type (or (integer 0) null) read-timeout write-timeout))
   (multiple-value-bind (socket address)
       (tcp-connect host port)
     (core:abort-protect
         (make-instance 'tcp-client :file-descriptor socket
                                    :address address
                                    :external-format external-format
-                                   :host host :port port)
+                                   :host host :port port
+                                   :read-timeout read-timeout
+                                   :write-timeout write-timeout)
       (when socket
         (close-fd socket)))))
 

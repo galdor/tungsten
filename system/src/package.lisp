@@ -44,6 +44,8 @@
 
    #:network-stream
    #:network-stream-address
+   #:network-stream-read-timeout
+   #:network-stream-write-timeout
 
    #:host
    #:tcp-connection-failure

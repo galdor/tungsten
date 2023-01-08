@@ -215,22 +215,14 @@ written."))
                                       :start (core:buffer-start read-buffer)
                                       :end eol)))
             (core:buffer-skip-to read-buffer (+ eol (length eol-octets)))
-            (return (values line nil))))
-        (let* ((read-size 4096)
-               (position (core:buffer-reserve read-buffer read-size))
-               (nb-read (read-io-stream stream
-                                        (core:buffer-data read-buffer)
-                                        position
-                                        (+ position read-size))))
-          (incf (core:buffer-end read-buffer) nb-read)
-          (when (zerop nb-read)
-            (let ((line
-                    (text:decode-string (core:buffer-data read-buffer)
+            (return (values line nil)))))
+      (when (zerop (io-stream-read-more stream))
+        (let ((line (text:decode-string (core:buffer-data read-buffer)
                                         :encoding encoding
                                         :start (core:buffer-start read-buffer)
                                         :end (core:buffer-end read-buffer))))
-              (core:buffer-reset read-buffer)
-              (return (values line t)))))))))
+          (core:buffer-reset read-buffer)
+          (return (values line t)))))))
 
 (defmethod streams:stream-clear-input ((stream io-stream))
   (with-slots (read-buffer) stream
