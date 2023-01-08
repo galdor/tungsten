@@ -14,7 +14,14 @@
            (type (integer 0) start end))
   (with-slots (file-descriptor) stream
     (ffi:with-pinned-vector-data (%data octets start)
-      (read-fd file-descriptor %data (- end start)))))
+      (handler-case
+          (read-fd file-descriptor %data (- end start))
+        (system-error (condition)
+          (case (system-error-value condition)
+            (:econnreset
+             (error 'end-of-file :stream stream))
+            (t
+             (error condition))))))))
 
 (defmethod write-io-stream ((stream tcp-stream) octets start end)
   (declare (type core:octet-vector octets)
@@ -25,7 +32,7 @@
           (write-fd file-descriptor %data (- end start))
         (system-error (condition)
           (case (system-error-value condition)
-            (:epipe
+            ((:econnreset :epipe)
              (error 'end-of-file :stream stream))
             (t
              (error condition))))))))
