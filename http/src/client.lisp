@@ -6,7 +6,10 @@
 (defclass client ()
   ((connections
     :type hash-table
-    :initform (make-hash-table :test #'equal))))
+    :initform (make-hash-table :test #'equal))
+   (mutex
+    :type system:mutex
+    :initform (system:make-mutex :name "http-client"))))
 
 (defclass client-connection ()
   ((host
@@ -40,18 +43,21 @@
 (defun client-connections (client)
   (declare (type client client))
   (let ((connection-list nil))
-    (with-slots (connections) client
-      (maphash (lambda (key connection)
-                 (declare (ignore key))
-                 (push connection connection-list))
-               connections))
+    (with-slots (connections mutex) client
+      (system:with-mutex (mutex)
+        (maphash (lambda (key connection)
+                   (declare (ignore key))
+                   (push connection connection-list))
+                 connections)))
     connection-list))
 
 (defun client-connection (client key)
   (declare (type client client)
            (type connection-key key))
-  (with-slots (connections) client
-    (or (gethash key connections)
+  (with-slots (connections mutex) client
+    ;; Careful, CONNECT-CLIENT uses the mutex
+    (or (system:with-mutex (mutex)
+          (gethash key connections))
         (destructuring-bind (host port tls) key
           (connect-client client host port tls)))))
 
@@ -73,29 +79,32 @@
            (make-instance 'client-connection :host host :port port :tls tls
                                              :stream stream))
          (key (client-connection-key connection)))
-    (with-slots (connections) client
-      (let ((previous-connection (gethash key connections)))
-        (when previous-connection
-          (close-client-connection previous-connection)))
-      (setf (gethash key connections) connection))
+    (with-slots (connections mutex) client
+      (system:with-mutex (mutex)
+        (let ((previous-connection (gethash key connections)))
+          (when previous-connection
+            (close-client-connection previous-connection)))
+        (setf (gethash key connections) connection)))
     connection))
 
 (defun disconnect-client (client)
   (declare (type client client))
-  (with-slots (connections) client
-    (maphash (lambda (key connection)
-               (declare (ignore key))
-               (close-client-connection connection))
-             connections)
-    (setf connections (make-hash-table :test #'equal)))
+  (with-slots (connections mutex) client
+    (system:with-mutex (mutex)
+      (maphash (lambda (key connection)
+                 (declare (ignore key))
+                 (close-client-connection connection))
+               connections)
+      (setf connections (make-hash-table :test #'equal))))
   nil)
 
 (defun discard-client-connection (client connection)
   (declare (type client client)
            (type client-connection connection))
   (close-client-connection connection)
-  (with-slots (connections) client
-    (remhash (client-connection-key connection) connections)))
+  (with-slots (connections mutex) client
+    (system:with-mutex (mutex)
+      (remhash (client-connection-key connection) connections))))
 
 (defun client-connection-key (connection)
   (declare (type client-connection connection))
