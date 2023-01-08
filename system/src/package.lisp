@@ -9,6 +9,12 @@
    #:size-t
    #:ssize-t
 
+   #:mutex
+   #:make-mutex
+   #:acquire-mutex
+   #:release-mutex
+   #:with-mutex
+
    #:ipv4-address
    #:ipv6-address
    #:ip-address
