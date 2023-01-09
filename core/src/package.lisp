@@ -27,4 +27,6 @@
 
    #:prompt-eval
 
+   #:unsupported-feature
+   #:unsupported-feature-name
    #:abort-protect))
