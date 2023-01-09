@@ -15,15 +15,12 @@
     (with-slots (address) acceptor
       (write-string (format-socket-address address) stream))))
 
-(defun make-tcp-acceptor (ip-address port)
-  (declare (type ip-address ip-address)
-           (type port-number port))
-  (multiple-value-bind (socket address)
-      (tcp-listen ip-address port)
+(defun make-tcp-acceptor (address)
+  (declare (type socket-address address))
+  (let ((socket (tcp-listen address)))
     (core:abort-protect
         (make-instance 'tcp-acceptor :socket socket :address address)
-      (when socket
-        (close-fd socket)))))
+      (close-fd socket))))
 
 (defun close-tcp-acceptor (acceptor)
   (declare (type tcp-acceptor acceptor))
@@ -33,13 +30,7 @@
       (setf socket nil)
       t)))
 
-(defun tcp-listen (ip-address port)
-  (declare (type ip-address ip-address)
-           (type port-number port))
-  (let ((address (make-ip-socket-address ip-address port)))
-    (values (tcp-listen-on-address address) address)))
-
-(defun tcp-listen-on-address (address)
+(defun tcp-listen (address)
   (declare (type socket-address address))
   (let* ((sockaddr-type
            (etypecase address
