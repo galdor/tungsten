@@ -62,4 +62,5 @@
    #:tcp-connection-failure-address-errors
    #:tcp-client
    #:tcp-client-host
-   #:tcp-client-port))
+   #:tcp-client-port
+   #:make-tcp-client))
