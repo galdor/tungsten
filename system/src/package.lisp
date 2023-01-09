@@ -16,6 +16,12 @@
    #:release-mutex
    #:with-mutex
 
+   #:thread
+   #:current-thread
+   #:list-threads
+   #:make-thread
+   #:join-thread
+
    #:ipv4-address
    #:ipv6-address
    #:ip-address
