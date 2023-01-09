@@ -138,7 +138,8 @@
                   (ldb (byte 8 8) group))
             (setf (ffi:struct-member %in6 'in6-addr :s6-addr (1+ offset))
                   (ldb (byte 8 0) group)))))
-      (setf (ffi:struct-member %addr 'sockaddr-in6 :sin6-scope-id) scope-id))
+      (setf (ffi:struct-member %addr 'sockaddr-in6 :sin6-scope-id)
+            (or scope-id 0)))
     %addr))
 
 (defun resolve-net-service (host service-or-port)
