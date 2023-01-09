@@ -1,8 +1,5 @@
 (in-package :system)
 
-(deftype host ()
-  '(or string ip-address))
-
 (define-condition tcp-connection-failure ()
   ((host
     :type host
@@ -19,7 +16,8 @@
   (:report
    (lambda (condition stream)
      (with-slots (host port address-errors) condition
-       (format stream "Cannot connect to ~A port ~D.~%" host port)
+       (format stream "Cannot connect to ~A.~%"
+               (format-host-and-port host port))
        (dolist (address-error address-errors)
          (terpri stream)
          (destructuring-bind (address . error) address-error

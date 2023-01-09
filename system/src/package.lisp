@@ -27,7 +27,9 @@
    #:ip-address
    #:format-ip-address
 
+   #:host
    #:port-number
+   #:format-host-and-port
    #:socket-address
    #:ip-socket-address
    #:ip-socket-address-port
@@ -54,7 +56,6 @@
    #:network-stream-read-timeout
    #:network-stream-write-timeout
 
-   #:host
    #:tcp-connection-failure
    #:tcp-connection-failure-host
    #:tcp-connection-failure-port

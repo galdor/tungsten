@@ -1,7 +1,17 @@
 (in-package :system)
 
+(deftype host ()
+  '(or string ip-address))
+
 (deftype port-number ()
   '(unsigned-byte 16))
+
+(defun format-host-and-port (host port &optional stream)
+  (declare (type host host)
+           (type port-number port))
+  (when (position #\: host)
+    (format stream "[~A]:~D" host port)
+    (format stream "~A:~D" host port)))
 
 (defclass socket-address ()
   ())
