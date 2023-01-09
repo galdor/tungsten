@@ -13,6 +13,19 @@
         (mod microseconds 1000000)))
 
 ;;;
+;;; IO multiplexing
+;;;
+
+#+linux
+(defun epoll-create1 (flags)
+  (system-funcall ("epoll_create1" ((epoll-flags) :int) flags)))
+
+#+linux
+(defun epoll-ctl (epoll-fd operation fd %event)
+  (system-funcall ("epoll_ctl" ((:int epoll-op :int :pointer) :int)
+                               epoll-fd operation fd %event)))
+
+;;;
 ;;; File descriptors
 ;;;
 

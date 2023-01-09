@@ -118,6 +118,49 @@
  ((:sec 'time-t "tv_sec")
   (:usec 'suseconds-t "tv_usec")))
 
+;;;
+;;; IO multiplexing
+;;;
+
+#+linux
+(include "sys/epoll.h")
+
+#+linux
+(bitset
+ (epoll-flags :int)
+ ((:epoll-cloexec "EPOLL_CLOEXEC")))
+
+#+linux
+(enum
+ (epoll-op :int)
+ ((:epoll-ctl-add "EPOLL_CTL_ADD")
+  (:epoll-ctl-mod "EPOLL_CTL_MOD")
+  (:epoll-ctl-del "EPOLL_CTL_DEL")))
+
+#+linux
+(bitset
+ (epoll-events :uint32)
+ ((:epollin "EPOLLIN")
+  (:epollout "EPOLLOUT")
+  (:epollrdhup "EPOLLRDHUP")
+  (:epollpri "EPOLLPRI")
+  (:epollerr "EPOLLERR")
+  (:epollhup "EPOLLHUP")))
+
+#+linux
+(union
+ (epoll-data "union epoll_data")
+ ((:ptr :pointer "ptr")
+  (:fd :int "fd")
+  (:u32 :uint32 "u32")
+  (:u64 :uint64 "uint64")))
+
+#+linux
+(struct
+ (epoll-event "struct epoll_event")
+ ((:events 'epoll-events "events")
+  (:data 'epoll-data "data")))
+
 ;;
 ;; Sockets
 ;;
