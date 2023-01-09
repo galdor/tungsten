@@ -12,6 +12,7 @@
    #:mutex
    #:make-mutex
    #:acquire-mutex
+   #:maybe-acquire-mutex
    #:release-mutex
    #:with-mutex
 

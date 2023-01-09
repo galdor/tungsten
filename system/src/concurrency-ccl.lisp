@@ -10,10 +10,11 @@
 (defun %make-mutex (&key name)
   (ccl:make-lock name))
 
-(defun %acquire-mutex (mutex &key (wait t))
-  (if wait
-      (ccl:grab-lock mutex)
-      (ccl:try-lock mutex)))
+(defun %acquire-mutex (mutex)
+  (ccl:grab-lock mutex))
+
+(defun %maybe-acquire-mutex (mutex)
+  (ccl:try-lock mutex))
 
 (defun %release-mutex (mutex)
   (ccl:release-lock mutex))

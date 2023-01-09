@@ -10,8 +10,11 @@
 (defun %make-mutex (&key name)
   (sb-thread:make-mutex :name name))
 
-(defun %acquire-mutex (mutex &key (wait t))
-  (sb-thread:grab-mutex mutex :waitp wait))
+(defun %acquire-mutex (mutex)
+  (sb-thread:grab-mutex mutex :waitp t))
+
+(defun %maybe-acquire-mutex (mutex)
+  (sb-thread:grab-mutex mutex :waitp nil))
 
 (defun %release-mutex (mutex)
   (sb-thread:release-mutex mutex))

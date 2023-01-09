@@ -11,8 +11,11 @@
   (declare (type (or string null) name))
   (%make-mutex :name name))
 
-(defun acquire-mutex (mutex &key (wait t))
-  (%acquire-mutex mutex :wait wait))
+(defun acquire-mutex (mutex)
+  (%acquire-mutex mutex))
+
+(defun maybe-acquire-mutex (mutex)
+  (%maybe-acquire-mutex mutex))
 
 (defun release-mutex (mutex)
   (%release-mutex mutex))
