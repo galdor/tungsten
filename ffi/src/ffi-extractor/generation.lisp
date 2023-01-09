@@ -53,6 +53,8 @@
        (generate-c-bitset (cdr form) stream))
       (struct
        (generate-c-struct (cdr form) stream))
+      (union
+       (generate-c-union (cdr form) stream))
       (t
        (error "invalid manifest form ~S" form))))
   (format stream "}~%"))
@@ -112,6 +114,23 @@
                                  ~A, offsetof(~A, ~A));~%"
                   member-name type
                   count-expr c-name member-c-name))))
+    (format stream "puts(\"))\");~%")))
+
+(defun generate-c-union (form stream)
+  (destructuring-bind ((name c-name) (&rest members)) form
+    (format stream "printf(\"\\n(ffi:define-foreign-union (~A :size %zu)\", ~
+                           sizeof(~A));~%"
+            name c-name)
+    (format stream "puts(\"(\");~%")
+    (dolist (member members)
+      (destructuring-bind (member-name type member-c-name &key (count 1))
+          member
+        (let ((count-expr (if (eq count 'auto)
+                              (format nil "FFI_MEMBER_COUNT(~A, ~A)"
+                                      c-name member-c-name)
+                              (format nil "(size_t)~D" count))))
+          (format stream "printf(\"  (~S ~S :count %Zu)\\n\", ~A);~%"
+                  member-name type count-expr))))
     (format stream "puts(\"))\");~%")))
 
 (defun integer-printf-string (base-type)

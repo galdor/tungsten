@@ -41,6 +41,10 @@
    #:struct-member-pointer
    #:with-struct-members
 
+   #:define-foreign-union
+   #:foreign-union-member
+   #:with-foreign-union-members
+
    #:defcallback
    #:callback-pointer
 

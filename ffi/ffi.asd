@@ -17,6 +17,7 @@
      (:file "enumerations")
      (:file "bitsets")
      (:file "structures")
+     (:file "unions")
      (:file "libraries")
      (:file "errno")))
    (:module "ffi-extractor"
@@ -49,6 +50,7 @@
    (:file "foreign-funcall")
    (:file "callbacks")
    (:file "structures")
+   (:file "unions")
    (:file "errno"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :ffi-test)))

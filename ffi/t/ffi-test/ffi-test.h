@@ -41,6 +41,12 @@ struct ffi_test_struct_nested {
         struct ffi_test_struct_packed *ps;
 };
 
+union ffi_test_union {
+        const char *a;
+        uint8_t b;
+        int32_t c[4];
+};
+
 void ffi_test_void(void);
 int ffi_test_add2_int(int, int);
 void ffi_test_add2_int_ptr(int, int, int *);

@@ -33,3 +33,8 @@
     ((:s 'test-struct-packed)
      (:s2 'test-struct-padding :count 2)
      (:ps :pointer)))
+
+(ffi:define-foreign-union (test-union)
+  ((:a :pointer)
+   (:b :uint8)
+   (:c :int32 :count 4)))
