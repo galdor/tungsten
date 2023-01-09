@@ -44,7 +44,7 @@
    #:write-io-stream
    #:read-io-stream
    #:io-stream
-   #:io-stream-file-descriptor
+   #:io-stream-fd
    #:io-stream-address
    #:io-stream-read-buffer
    #:io-stream-write-buffer

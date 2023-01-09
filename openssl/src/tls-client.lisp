@@ -88,7 +88,7 @@
             (setf %ssl (ssl-new %context))
             (ssl-set-fd %ssl socket)
             (ssl-connect %ssl)
-            (make-instance 'tls-client :file-descriptor socket
+            (make-instance 'tls-client :fd socket
                                        :address address
                                        :external-format external-format
                                        :host host :port port

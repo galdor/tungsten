@@ -49,7 +49,7 @@
   (multiple-value-bind (socket address)
       (tcp-connect host port)
     (core:abort-protect
-        (make-instance 'tcp-client :file-descriptor socket
+        (make-instance 'tcp-client :fd socket
                                    :address address
                                    :external-format external-format
                                    :host host :port port

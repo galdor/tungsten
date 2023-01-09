@@ -4,11 +4,11 @@
                      streams:fundamental-character-input-stream
                      streams:fundamental-binary-output-stream
                      streams:fundamental-character-output-stream)
-  ((file-descriptor
+  ((fd
     :type (or (integer 0) null)
-    :initarg :file-descriptor
+    :initarg :fd
     :initform nil
-    :reader io-stream-file-descriptor)
+    :reader io-stream-fd)
    (read-buffer
     :type core:buffer
     :initform (core:make-buffer 4096)
@@ -35,17 +35,17 @@ written."))
 
 (defmethod close ((stream io-stream) &key abort)
   (declare (ignore abort))
-  (with-slots (file-descriptor) stream
-    (when file-descriptor
-      (close-fd file-descriptor)
-      (setf file-descriptor nil)
+  (with-slots (fd) stream
+    (when fd
+      (close-fd fd)
+      (setf fd nil)
       t)))
 
 (defmethod open-stream-p ((stream io-stream))
-  (not (null (io-stream-file-descriptor stream))))
+  (not (null (io-stream-fd stream))))
 
 (defmethod streams:stream-read-byte ((stream io-stream))
-  (with-slots (file-descriptor read-buffer) stream
+  (with-slots (fd read-buffer) stream
     (when (core:buffer-empty-p read-buffer)
       (let* ((read-size 4096)
              (position (core:buffer-reserve read-buffer read-size))
@@ -64,7 +64,7 @@ written."))
   (declare (type core:octet-vector octets)
            (type (integer 0) start)
            (type (or (integer 0) null) end))
-  (with-slots (file-descriptor read-buffer) stream
+  (with-slots (fd read-buffer) stream
     (do ((nb-octets (- end start))
          (eof nil))
         ((or eof (>= (core:buffer-length read-buffer) nb-octets))
@@ -102,7 +102,7 @@ written."))
   octets)
 
 (defmethod streams:stream-force-output ((stream io-stream))
-  (with-slots (file-descriptor write-buffer) stream
+  (with-slots (fd write-buffer) stream
     (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
                                         (core:buffer-start write-buffer))
       (let ((nb-written
@@ -114,7 +114,7 @@ written."))
   nil)
 
 (defmethod streams:stream-finish-output ((stream io-stream))
-  (with-slots (file-descriptor write-buffer) stream
+  (with-slots (fd write-buffer) stream
     (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
                                         (core:buffer-start write-buffer))
       (do ()
@@ -144,7 +144,7 @@ written."))
         (let* ((read-size 4096)
                (position (core:buffer-reserve read-buffer read-size))
                (nb-read (read-io-stream stream (core:buffer-data read-buffer)
-                                         position (+ position read-size))))
+                                        position (+ position read-size))))
           (incf (core:buffer-end read-buffer) nb-read)
           (when (zerop nb-read)
             (return-from streams:stream-read-char :eof)))))))
