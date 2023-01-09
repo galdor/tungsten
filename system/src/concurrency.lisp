@@ -20,3 +20,22 @@
 (defmacro with-mutex ((mutex) &body body)
   `(%with-mutex (,mutex)
      ,@body))
+
+;;;
+;;; Threads
+;;;
+
+(deftype thread ()
+  '%thread)
+
+(defun current-thread ()
+  (%current-thread))
+
+(defun list-threads ()
+  (%list-threads))
+
+(defun make-thread (name function)
+  (%make-thread name function))
+
+(defun join-thread (thread)
+  (%join-thread thread))

@@ -21,3 +21,22 @@
 (defmacro %with-mutex ((mutex) &body body)
   `(ccl:with-lock-grabbed (,mutex)
      ,@body))
+
+;;;
+;;; Threads
+;;;
+
+(deftype %thread ()
+  'ccl:process)
+
+(defun %current-thread ()
+  ccl:*current-process*)
+
+(defun %list-threads ()
+  (ccl:all-processes))
+
+(defun %make-thread (name function)
+  (ccl:process-run-function name function))
+
+(defun %join-thread (thread)
+  (ccl:join-process thread))
