@@ -20,7 +20,8 @@
    (:file "io-stream")
    (:file "network-stream")
    (:file "tcp-stream")
-   (:file "tcp-client"))
+   (:file "tcp-client")
+   (:file "tcp-acceptor"))
   :in-order-to ((test-op (test-op "system/test"))))
 
 (defsystem "system/test"

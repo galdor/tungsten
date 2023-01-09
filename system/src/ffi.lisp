@@ -33,18 +33,52 @@
   (system-funcall ("socket" ((address-family socket-type socket-protocol) :int)
                             domain type protocol)))
 
-(defun connect (fd %address address-length)
-  (system-funcall ("connect" ((:int :pointer socklen-t) :int)
-                             fd %address address-length)))
-
-(defun shutdown (fd shutdown-type)
-  (system-funcall ("shutdown" ((:int shutdown-type) :int) fd shutdown-type)))
-
-(defun setsockopt (fd level option %value value-length)
+(defun setsockopt (socket level option %value value-length)
   (system-funcall
    ("setsockopt"
     ((:int socket-option-level socket-option :pointer socklen-t) :int)
-    fd level option %value value-length)))
+    socket level option %value value-length)))
+
+(defun connect (socket %address address-length)
+  (system-funcall ("connect" ((:int :pointer socklen-t) :int)
+                             socket %address address-length)))
+
+(defun shutdown (socket shutdown-type)
+  (system-funcall ("shutdown" ((:int shutdown-type) :int)
+                              socket shutdown-type)))
+
+(defun bind (socket %address address-length)
+  (system-funcall ("bind" ((:int :pointer socklen-t) :int)
+                          socket %address address-length)))
+
+(defun socket-listen (socket backlog)
+  (system-funcall ("listen" ((:int :int) :int) socket backlog)))
+
+(defun accept (socket)
+  (ffi:with-foreign-values ((%address 'sockaddr-storage)
+                            (%address-length 'socklen-t))
+    (let ((address-length (ffi:foreign-type-size 'sockaddr-storage)))
+      (ffi:clear-foreign-memory %address address-length)
+      (setf (ffi:foreign-value %address-length 'socklen-t) address-length)
+      (let ((connection-socket
+              (system-funcall ("accept" ((:int :pointer :pointer) :int)
+                                        socket %address %address-length))))
+        (core:abort-protect
+            (let* ((family
+                     (ffi:decode-foreign-value
+                      (ffi:struct-member %address 'sockaddr-storage :ss-family)
+                      'address-family))
+                   (address-class
+                     (case family
+                       (:af-inet 'ipv4-socket-address)
+                       (:af-inet6 'ipv6-socket-address)
+                       (t (error "unknown socket family ~S" family))))
+                   (address
+                     (let ((address (make-instance address-class)))
+                       (initialize-socket-address-from-sockaddr
+                        address %address))))
+              (values connection-socket address))
+          (close connection-socket))))))
 
 ;;;
 ;;; DNS

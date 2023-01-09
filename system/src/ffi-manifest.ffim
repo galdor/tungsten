@@ -193,6 +193,10 @@
   (:sin6-addr 'in6-addr "sin6_addr")
   (:sin6-scope-id ':uint32 "sin6_scope_id")))
 
+(struct
+ (sockaddr-storage "struct sockaddr_storage")
+ ((:ss-family 'sa-family-t "ss_family")))
+
 ;;;
 ;;; DNS
 ;;;
