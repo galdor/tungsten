@@ -56,6 +56,21 @@
 (defun write-fd (fd %data size)
   (system-funcall ("write" ((:int :pointer size-t) ssize-t) fd %data size)))
 
+(defmacro fcntl (fd command &rest args)
+  `(system-funcall ("fcntl" ((:int fcntl-command ,@(mapcar #'first args)) :int)
+                            ,fd ,command ,@(mapcar #'second args))))
+
+(defun fcntl-getfl (fd)
+  (fcntl fd :f-getfl))
+
+(defun fcntl-setfl (fd flags)
+  (fcntl fd :f-setfl (fcntl-fd-flags flags)))
+
+(defun fcntl-setfl-add-flags (fd flags)
+  (let ((old-flags (fcntl-getfl fd))
+        (new-flags (ffi:encode-foreign-value flags 'fcntl-fd-flags)))
+    (fcntl-setfl fd (logior old-flags new-flags))))
+
 ;;;
 ;;; Sockets
 ;;;

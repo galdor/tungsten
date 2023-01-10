@@ -161,6 +161,34 @@
  ((:events 'epoll-events "events")
   (:data 'epoll-data "data")))
 
+;;;
+;;; File descriptors
+;;;
+
+(include "fcntl.h")
+
+(enum
+ (fcntl-command :int)
+ ((:f-dupfd "F_DUPFD")
+  (:f-dupfd-cloexec "F_DUPFD_CLOEXEC")
+  (:f-getfd "F_GETFD")
+  (:f-setfd "F_SETFD")
+  (:f-getfl "F_GETFL")
+  (:f-setfl "F_SETFL")
+  (:f-getown "F_GETOWN")
+  (:f-setwon "F_SETOWN")
+  (:f-getlk "F_GETLK")
+  (:f-setlk "F_SETLK")
+  (:f-setlw "F_SETLKW")))
+
+(bitset
+ (fcntl-fd-flags :int)
+ ((:o-append "O_APPEND")
+  (:o-dsync "O_DSYNC")
+  (:o-nonblock "O_NONBLOCK")
+  (:o-rsync "O_RSYNC")
+  (:o-sync "O_SYNC")))
+
 ;;
 ;; Sockets
 ;;
