@@ -22,7 +22,7 @@
   (with-slots (fd events) watcher
     (ffi:with-foreign-value (%event 'epoll-event)
       (setf (ffi:struct-member %event 'epoll-event :events)
-            (ffi:encode-foreign-value (epoll-events events) 'epoll-events))
+            (epoll-events events))
       (let ((%data (ffi:struct-member-pointer %event 'epoll-event :data)))
         (setf (ffi:foreign-union-member %data 'epoll-data :fd) fd))
       (epoll-ctl (epoll-io-base-fd base) :epoll-ctl-add fd %event))))
@@ -31,7 +31,7 @@
   (with-slots (fd) watcher
     (ffi:with-foreign-value (%event 'epoll-event)
       (setf (ffi:struct-member %event 'epoll-event :events)
-            (ffi:encode-foreign-value (epoll-events events) 'epoll-events))
+            (epoll-events events))
       (let ((%data (ffi:struct-member-pointer %event 'epoll-event :data)))
         (setf (ffi:foreign-union-member %data 'epoll-data :fd) fd))
       (epoll-ctl (epoll-io-base-fd base) :epoll-ctl-mod fd %event))))
@@ -49,3 +49,12 @@
               (:write :epollout)
               (:hangup :epollhup))
             epoll-events))))
+
+(defmethod read-and-dispatch-io-events ((base epoll-io-base) &key timeout)
+  (declare (type (or (integer 0) null) timeout))
+  (with-slots ((epoll-fd fd)) base
+    (with-epoll-wait (%event epoll-fd 32 (or timeout -1))
+      (let* ((events (ffi:struct-member %event 'epoll-event :events))
+             (%data (ffi:struct-member-pointer %event 'epoll-event :data))
+             (fd (ffi:foreign-union-member %data 'epoll-data :fd)))
+        (dispatch-fd-event base fd events)))))

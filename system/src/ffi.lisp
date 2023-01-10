@@ -25,6 +25,24 @@
   (system-funcall ("epoll_ctl" ((:int epoll-op :int :pointer) :int)
                                epoll-fd operation fd %event)))
 
+#+linux
+(defmacro with-epoll-wait ((%event epoll-fd max-nb-events timeout) &body body)
+  (assert (constantp max-nb-events))
+  (let ((%events (gensym "%EVENTS-"))
+        (nb-events (gensym "NB-EVENTS-"))
+        (i (gensym "I-")))
+    `(ffi:with-foreign-value
+         (,%events 'epoll-event :count ,max-nb-events)
+       (let ((,nb-events
+               (system-funcall
+                ("epoll_wait" ((:int :pointer :int :int) :int)
+                              ,epoll-fd ,%events ,max-nb-events ,timeout))))
+         (dotimes (,i ,nb-events)
+           (let ((,%event
+                   (ffi:pointer+ ,%events
+                                 (* ,i (ffi:foreign-type-size 'epoll-event)))))
+             ,@body))))))
+
 ;;;
 ;;; File descriptors
 ;;;
