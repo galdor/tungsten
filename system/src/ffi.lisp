@@ -47,6 +47,9 @@
 ;;; File descriptors
 ;;;
 
+(deftype fd ()
+  '(integer 0))
+
 (defun close-fd (fd)
   (system-funcall ("close" ((:int) :int) fd)))
 
@@ -66,10 +69,14 @@
 (defun fcntl-setfl (fd flags)
   (fcntl fd :f-setfl (fcntl-fd-flags flags)))
 
-(defun fcntl-setfl-add-flags (fd flags)
-  (let ((old-flags (fcntl-getfl fd))
-        (new-flags (ffi:encode-foreign-value flags 'fcntl-fd-flags)))
-    (fcntl-setfl fd (logior old-flags new-flags))))
+(defun fcntl-setfl-add-remove-flags (fd added-flags removed-flags)
+  (let ((old-bitset (fcntl-getfl fd))
+        (added-bitset
+          (ffi:encode-foreign-value added-flags 'fcntl-fd-flags))
+        (removed-bitset
+          (ffi:encode-foreign-value removed-flags 'fcntl-fd-flags)))
+    (fcntl-setfl fd (logand (logior old-bitset added-bitset)
+                            (lognot removed-bitset)))))
 
 ;;;
 ;;; Sockets

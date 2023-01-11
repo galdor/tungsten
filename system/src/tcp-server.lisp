@@ -8,11 +8,16 @@
    (sockets
     :type list
     :initform nil
-    :accessor tcp-server-sockets)))
+    :accessor tcp-server-sockets)
+   (connection-handler
+    :type (or symbol function)
+    :initarg :connection-handler
+    :accessor tcp-server-connection-handler)))
 
-(defun make-tcp-server (host port)
+(defun make-tcp-server (host port connection-handler)
   (declare (type host host)
-           (type port-number port))
+           (type port-number port)
+           (type (or symbol function) connection-handler))
   (let ((io-base nil)
         (server nil))
     (core:abort-protect
@@ -21,11 +26,13 @@
             (error "no socket address found for ~S"
                    (format-host-and-port host port)))
           (setf io-base (make-io-base))
-          (setf server (make-instance 'tcp-server :io-base io-base))
+          (setf server (make-instance 'tcp-server
+                                      :io-base io-base
+                                      :connection-handler connection-handler))
           (dolist (address addresses)
             (let ((socket (tcp-listen address)))
               (push socket (tcp-server-sockets server))
-              (fcntl-setfl-add-flags socket '(:o-nonblock))
+              (fcntl-setfl-add-remove-flags socket '(:o-nonblock) nil)
               (watch-fd io-base socket '(:read)
                         (lambda (events)
                           (declare (ignore events))
@@ -46,11 +53,16 @@
 
 (defun accept-tcp-connection (server socket)
   (declare (type tcp-server server)
-           (type (integer 0) socket)
-           (ignore server))
-  (let ((connection-socket (accept socket)))
-    ;; TODO
-    (close-fd connection-socket)))
+           (type (integer 0) socket))
+  (multiple-value-bind (connection-socket address)
+      (accept socket)
+    (with-slots (connection-handler) server
+      (core:abort-protect
+          (let ((stream (make-instance 'tcp-stream :fd connection-socket
+                                                   :address address)))
+            (fcntl-setfl-add-remove-flags socket nil '(:o-nonblock))
+            (funcall connection-handler stream))
+        (close-fd connection-socket)))))
 
 (defun tcp-listen (address)
   (declare (type socket-address address))

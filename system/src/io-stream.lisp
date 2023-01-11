@@ -5,7 +5,7 @@
                      streams:fundamental-binary-output-stream
                      streams:fundamental-character-output-stream)
   ((fd
-    :type (or (integer 0) null)
+    :type (or fd null)
     :initarg :fd
     :initform nil
     :reader io-stream-fd)
@@ -21,7 +21,7 @@
     :type text:external-format
     :initarg :external-format
     :initform text:*default-external-format*
-    :reader io-stream-external-format)))
+    :accessor io-stream-external-format)))
 
 (defgeneric read-io-stream (stream octets start end)
   (:documentation

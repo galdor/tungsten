@@ -44,9 +44,9 @@
    #:format-socket-address
    #:socket-address-equal
 
+   #:io-stream
    #:write-io-stream
    #:read-io-stream
-   #:io-stream
    #:io-stream-fd
    #:io-stream-address
    #:io-stream-read-buffer
