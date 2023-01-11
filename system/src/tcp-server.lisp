@@ -1,7 +1,16 @@
 (in-package :system)
 
 (defclass tcp-server ()
-  ((io-base
+  ((thread
+    :type (or thread null))
+   (mutex
+    :type mutex
+    :initform (make-mutex :name "tcp-server")
+    :reader tcp-server-mutex)
+   (closingp
+    :type boolean
+    :initform nil)
+   (io-base
     :type (or io-base null)
     :initarg :io-base
     :reader tcp-server-io-base)
@@ -14,7 +23,7 @@
     :initarg :connection-handler
     :accessor tcp-server-connection-handler)))
 
-(defun make-tcp-server (host port connection-handler)
+(defun start-tcp-server (host port connection-handler)
   (declare (type host host)
            (type port-number port)
            (type (or symbol function) connection-handler))
@@ -37,9 +46,38 @@
                         (lambda (events)
                           (declare (ignore events))
                           (accept-tcp-connection server socket)))))
+          (make-thread "tcp-server"
+                       (lambda ()
+                         (setf (slot-value server 'thread) (current-thread))
+                         (run-tcp-server server)))
           server)
       (when server
         (close-tcp-server server)))))
+
+(defun stop-tcp-server (server)
+  (declare (type tcp-server server))
+  (with-slots (thread mutex closingp) server
+    (with-mutex (mutex)
+      (when closingp
+        (return-from stop-tcp-server nil))
+      (setf closingp t))
+    (join-thread thread)
+    (setf thread nil)
+    t))
+
+(defun run-tcp-server (server)
+  (declare (type tcp-server server))
+  (unwind-protect
+       (do ((io-base (tcp-server-io-base server)))
+           ((tcp-server-closingp server)
+            nil)
+         (read-and-dispatch-io-events io-base :timeout 1000))
+    (close-tcp-server server)))
+
+(defun tcp-server-closingp (server)
+  (declare (type tcp-server server))
+  (with-mutex ((tcp-server-mutex server))
+    (slot-value server 'closingp)))
 
 (defun close-tcp-server (server)
   (declare (type tcp-server server))

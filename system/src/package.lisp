@@ -66,4 +66,8 @@
    #:tcp-client
    #:tcp-client-host
    #:tcp-client-port
-   #:make-tcp-client))
+   #:make-tcp-client
+
+   #:tcp-server
+   #:start-tcp-server
+   #:stop-tcp-server))
