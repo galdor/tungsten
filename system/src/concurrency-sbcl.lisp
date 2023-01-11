@@ -24,6 +24,22 @@
      ,@body))
 
 ;;;
+;;; Semaphores
+;;;
+
+(deftype %semaphore ()
+  'sb-thread:semaphore)
+
+(defun %make-semaphore (&key name (count 0))
+  (sb-thread:make-semaphore :name name :count count))
+
+(defun %signal-semaphore (semaphore n)
+  (sb-thread:signal-semaphore semaphore n))
+
+(defun %wait-on-semaphore (semaphore)
+  (sb-thread:wait-on-semaphore semaphore))
+
+;;;
 ;;; Threads
 ;;;
 

@@ -24,6 +24,24 @@
      ,@body))
 
 ;;;
+;;; Semaphores
+;;;
+
+(deftype %semaphore ()
+  'ccl:semaphore)
+
+(defun %make-semaphore (&key name (count 0))
+  (declare (ignore name))
+  (ccl:make-semaphore :count count))
+
+(defun %signal-semaphore (semaphore n)
+  (dotimes (i n)
+    (ccl:signal-semaphore semaphore)))
+
+(defun %wait-on-semaphore (semaphore)
+  (ccl:wait-on-semaphore semaphore))
+
+;;;
 ;;; Threads
 ;;;
 

@@ -28,6 +28,26 @@
      ,@body))
 
 ;;;
+;;; Semaphores
+;;;
+
+(deftype semaphore ()
+  '%semaphore)
+
+(defun make-semaphore (&key name (count 0))
+  (declare (type (or string null) name)
+           (type (integer 0) count))
+  (%make-semaphore :name name :count count))
+
+(defun signal-semaphore (semaphore &optional (n 1))
+  (declare (type semaphore semaphore)
+           (type (integer 1) n))
+  (%signal-semaphore semaphore n))
+
+(defun wait-on-semaphore (semaphore)
+  (%wait-on-semaphore semaphore))
+
+;;;
 ;;; Threads
 ;;;
 

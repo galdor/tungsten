@@ -15,7 +15,10 @@
    #:maybe-acquire-mutex
    #:release-mutex
    #:with-mutex
-
+   #:semaphore
+   #:make-semaphore
+   #:signal-semaphore
+   #:wait-on-semaphore
    #:thread
    #:current-thread
    #:list-threads
