@@ -12,12 +12,15 @@
   (%make-mutex :name name))
 
 (defun acquire-mutex (mutex)
+  (declare (type mutex mutex))
   (%acquire-mutex mutex))
 
 (defun maybe-acquire-mutex (mutex)
+  (declare (type mutex mutex))
   (%maybe-acquire-mutex mutex))
 
 (defun release-mutex (mutex)
+  (declare (type mutex mutex))
   (%release-mutex mutex))
 
 (defmacro with-mutex ((mutex) &body body)
@@ -38,7 +41,10 @@
   (%list-threads))
 
 (defun make-thread (name function)
+  (declare (type string name)
+           (type function function))
   (%make-thread name function))
 
 (defun join-thread (thread)
+  (declare (type thread thread))
   (%join-thread thread))
