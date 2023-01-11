@@ -44,8 +44,10 @@
            (type (integer 1) n))
   (%signal-semaphore semaphore n))
 
-(defun wait-on-semaphore (semaphore)
-  (%wait-on-semaphore semaphore))
+(defun wait-on-semaphore (semaphore &key timeout)
+  (declare (type semaphore semaphore)
+           (type (or (integer 0) null) timeout))
+  (%wait-on-semaphore semaphore :timeout timeout))
 
 ;;;
 ;;; Threads
