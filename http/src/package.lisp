@@ -40,4 +40,8 @@
    #:client-connections
    #:disconnect-client
    #:*client*
-   #:send-request))
+   #:send-request
+
+   #:server
+   #:start-server
+   #:stop-server))

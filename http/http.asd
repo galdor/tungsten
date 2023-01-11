@@ -9,7 +9,8 @@
    (:file "http")
    (:file "request")
    (:file "response")
-   (:file "client"))
+   (:file "client")
+   (:file "server"))
   :in-order-to ((test-op (test-op "http/test"))))
 
 (defsystem "http/test"
