@@ -46,7 +46,7 @@
 
 (defun wait-semaphore (semaphore &key timeout)
   (declare (type semaphore semaphore)
-           (type (or (integer 0) null) timeout))
+           (type (or real null) timeout))
   (%wait-semaphore semaphore :timeout timeout))
 
 ;;;

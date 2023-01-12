@@ -40,7 +40,7 @@
 
 (defun %wait-semaphore (semaphore &key timeout)
   (if timeout
-      (ccl:timed-wait-on-semaphore semaphore (/ timeout 1000))
+      (ccl:timed-wait-on-semaphore semaphore timeout)
       (ccl:wait-on-semaphore semaphore)))
 
 ;;;
