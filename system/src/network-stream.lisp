@@ -24,26 +24,26 @@
     (when write-timeout
       (setf (network-stream-write-timeout stream) write-timeout))))
 
-(defun (setf network-stream-read-timeout) (microseconds stream)
+(defun (setf network-stream-read-timeout) (milliseconds stream)
   (declare (type network-stream stream)
-           (type (or (integer 0) null) microseconds))
-  (when (null microseconds)
-    (setf microseconds 0))
+           (type (or (integer 0) null) milliseconds))
+  (when (null milliseconds)
+    (setf milliseconds 0))
   (with-slots (fd read-timeout) stream
     (ffi:with-foreign-value (%timeval 'timeval)
-      (initialize-timeval %timeval (* microseconds 1000))
+      (initialize-timeval %timeval (* milliseconds 1000))
       (setsockopt fd :sol-socket :so-rcvtimeo
                   %timeval (ffi:foreign-type-size 'timeval))
-      (setf read-timeout microseconds))))
+      (setf read-timeout milliseconds))))
 
-(defun (setf network-stream-write-timeout) (microseconds stream)
+(defun (setf network-stream-write-timeout) (milliseconds stream)
   (declare (type network-stream stream)
-           (type (or (integer 0) null) microseconds))
-  (when (null microseconds)
-    (setf microseconds 0))
+           (type (or (integer 0) null) milliseconds))
+  (when (null milliseconds)
+    (setf milliseconds 0))
   (with-slots (fd write-timeout) stream
     (ffi:with-foreign-value (%timeval 'timeval)
-      (initialize-timeval %timeval (* microseconds 1000))
+      (initialize-timeval %timeval (* milliseconds 1000))
       (setsockopt fd :sol-socket :so-sndtimeo
                   %timeval (ffi:foreign-type-size 'timeval))
-      (setf write-timeout microseconds))))
+      (setf write-timeout milliseconds))))
