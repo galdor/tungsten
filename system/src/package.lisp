@@ -19,6 +19,11 @@
    #:make-semaphore
    #:signal-semaphore
    #:wait-semaphore
+   #:condition-variable
+   #:make-condition-variable
+   #:wait-condition-variable
+   #:signal-condition-variable
+   #:broadcast-condition-variable
    #:thread
    #:current-thread
    #:list-threads

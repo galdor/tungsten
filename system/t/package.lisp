@@ -1,3 +1,3 @@
 (defpackage :system-test
-  (:use :cl)
+  (:use :cl :check)
   (:export))

@@ -50,6 +50,31 @@
   (%wait-semaphore semaphore :timeout timeout))
 
 ;;;
+;;; Condition variables
+;;;
+
+(deftype condition-variable ()
+  '%condition-variable)
+
+(defun make-condition-variable (&key name)
+  (declare (type (or string null) name))
+  (%make-condition-variable :name name))
+
+(defun wait-condition-variable (variable mutex &key timeout)
+  (declare (type condition-variable variable)
+           (type mutex mutex)
+           (type (or real null) timeout))
+  (%wait-condition-variable variable mutex :timeout timeout))
+
+(defun signal-condition-variable (variable)
+  (declare (type condition-variable variable))
+  (%signal-condition-variable variable))
+
+(defun broadcast-condition-variable (variable)
+  (declare (type condition-variable variable))
+  (%broadcast-condition-variable variable))
+
+;;;
 ;;; Threads
 ;;;
 

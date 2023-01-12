@@ -33,6 +33,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "concurrency"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :system-test)))

@@ -40,6 +40,25 @@
   (sb-thread:wait-on-semaphore semaphore :timeout timeout))
 
 ;;;
+;;; Condition variables
+;;;
+
+(deftype %condition-variable ()
+  'sb-thread:waitqueue)
+
+(defun %make-condition-variable (&key name)
+  (sb-thread:make-waitqueue :name name))
+
+(defun %wait-condition-variable (variable mutex &key timeout)
+  (sb-thread:condition-wait variable mutex :timeout timeout))
+
+(defun %signal-condition-variable (variable)
+  (sb-thread:condition-notify variable))
+
+(defun %broadcast-condition-variable (variable)
+  (sb-thread:condition-broadcast variable))
+
+;;;
 ;;; Threads
 ;;;
 
