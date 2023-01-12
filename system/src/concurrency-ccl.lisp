@@ -38,7 +38,7 @@
   (dotimes (i n)
     (ccl:signal-semaphore semaphore)))
 
-(defun %wait-on-semaphore (semaphore &key timeout)
+(defun %wait-semaphore (semaphore &key timeout)
   (if timeout
       (ccl:timed-wait-on-semaphore semaphore (/ timeout 1000))
       (ccl:wait-on-semaphore semaphore)))

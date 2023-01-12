@@ -18,7 +18,7 @@
    #:semaphore
    #:make-semaphore
    #:signal-semaphore
-   #:wait-on-semaphore
+   #:wait-semaphore
    #:thread
    #:current-thread
    #:list-threads

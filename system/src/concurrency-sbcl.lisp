@@ -36,7 +36,7 @@
 (defun %signal-semaphore (semaphore n)
   (sb-thread:signal-semaphore semaphore n))
 
-(defun %wait-on-semaphore (semaphore &key timeout)
+(defun %wait-semaphore (semaphore &key timeout)
   (sb-thread:wait-on-semaphore semaphore :timeout (/ timeout 1000)))
 
 ;;;
