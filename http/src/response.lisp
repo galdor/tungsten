@@ -35,6 +35,32 @@
     (with-slots (status reason) response
       (format stream "~D ~S" status reason))))
 
+(defun write-response (response stream)
+  (declare (type response response)
+           (type streams:fundamental-binary-output-stream stream)
+           (type streams:fundamental-character-output-stream stream))
+  (with-slots (status reason version header body) response
+    (format stream "~D ~A ~A~%"
+            status
+            reason
+            (protocol-version-string version))
+    ;; Header
+    (dolist (field header)
+      (let ((name (car field))
+            (value (cdr field)))
+        (format stream "~A: ~A~%" name value)))
+    (terpri stream)
+    (finish-output stream)
+    ;; Body
+    (etypecase body
+      (null
+       nil)
+      (core:octet-vector
+       (write-sequence body stream))
+      (string
+       (write-string body stream)))
+    (finish-output stream)))
+
 (defun read-response (stream &aux (response (make-instance 'response)))
   (declare (type system:io-stream stream))
   (multiple-value-bind (version status reason)

@@ -33,11 +33,11 @@
     (core:abort-protect
         (flet ((handle-connection (stream)
                  (let ((connection (make-instance 'connection :stream stream)))
-                   (server-handle-connection server connection))))
+                   (server-handle-new-connection server connection))))
           (dotimes (i nb-threads)
             (push (system:make-thread "http-connection-handler"
                                       (lambda ()
-                                        (connection-handler server)))
+                                        (server-connection-handler server)))
                   connection-handlers))
           (setf (slot-value server 'connection-handlers) connection-handlers)
           (setf (slot-value server 'tcp-server)
@@ -59,7 +59,7 @@
       (setf tcp-server nil)
       t)))
 
-(defun server-handle-connection (server connection)
+(defun server-handle-new-connection (server connection)
   (declare (type server server)
            (type connection connection))
   (with-slots (stream) connection
@@ -89,7 +89,7 @@
                                       :timeout 1.0)
       (pop connections))))
 
-(defun connection-handler (server)
+(defun server-connection-handler (server)
   (declare (type server server))
   (do ((mutex (server-mutex server)))
       ((system:with-mutex (mutex) (slot-value server 'closingp))
@@ -97,26 +97,34 @@
     (let ((connection (server-pop-connection server)))
       (when connection
         (core:abort-protect
-            (handle-connection server connection)
+            (restart-case
+                (server-handle-connection server connection)
+              (continue ()
+                :report "Close the HTTP connection and continue."
+                (close-connection connection)))
           (close-connection connection))))))
 
-(defun handle-connection (server connection)
+(defun server-handle-connection (server connection)
   (declare (type server server)
            (type connection connection))
-  (let* ((stream (connection-stream connection))
-         (request (read-request stream)))
-    (handle-request server connection request))
-  (close-connection connection) ; TODO See Connection header field
-  ;; (server-enqueue-connection server connection)
-  nil)
+  (handler-bind
+      ((http:connection-closed (core:invoke-restart-function 'continue)))
+    (let* ((stream (connection-stream connection))
+           (request (read-request stream)))
+      (server-handle-request server connection request)
+      (cond
+        ((request-keep-connection-alive-p request)
+         (server-enqueue-connection server connection))
+        (t
+         (close-connection connection))))))
 
-(defun handle-request (server connection request)
+(defun server-handle-request (server connection request)
   (declare (type server server)
            (type connection connection)
            (type request request)
            (ignore server connection))
   ;; TODO
-  (format t "processing request ~S~%" request))
+  (format t "XXX processing request ~S~%" request))
 
 (defun close-connection (connection)
   (declare (type connection connection))

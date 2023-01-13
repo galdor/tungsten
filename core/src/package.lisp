@@ -29,4 +29,5 @@
 
    #:unsupported-feature
    #:unsupported-feature-name
-   #:abort-protect))
+   #:abort-protect
+   #:invoke-restart-function))

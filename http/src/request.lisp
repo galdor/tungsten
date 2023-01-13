@@ -67,6 +67,13 @@
         (push (cons name value) header))
       value)))
 
+(defun request-keep-connection-alive-p (request)
+  (declare (type request request))
+  (let ((version (request-version request))
+        (connection (request-header-field request "Connection")))
+    (or (equalp connection "keep-alive")
+        (and (null connection) (eq version :http-1.1)))))
+
 (defun write-request (request stream)
   (declare (type request request)
            (type streams:fundamental-binary-output-stream stream)

@@ -25,3 +25,8 @@ CLEANING-FORMS."
               (setf ,aborted nil))
          (when ,aborted
            ,@cleaning-forms)))))
+
+(defun invoke-restart-function (restart)
+  (lambda (condition)
+    (declare (ignore condition))
+    (invoke-restart restart)))
