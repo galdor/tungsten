@@ -75,4 +75,8 @@
   (sb-thread:make-thread function :name name))
 
 (defun %join-thread (thread)
-  (sb-thread:join-thread thread))
+  (handler-case
+      (sb-thread:join-thread thread)
+    (sb-thread:join-thread-error ()
+      ;; Why would joining a thread which aborted cause an error?
+      nil)))
