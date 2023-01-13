@@ -1,5 +1,6 @@
 (in-package :http)
 
+(defparameter *max-request-line-length* 256)
 (defparameter *max-status-line-length* 256)
 (defparameter *max-header-length* 8192)
 
@@ -48,6 +49,13 @@
     :initarg :data))
   (:default-initargs
    :description "status line too long"))
+
+(define-condition request-line-too-long (http-parse-error)
+  ((data
+    :type core:octet-vector
+    :initarg :data))
+  (:default-initargs
+   :description "request line too long"))
 
 (define-condition header-too-large (http-parse-error)
   ((data
@@ -192,6 +200,33 @@
        :http-1.1)
       ((equalp string "http/1.0")
        :http-1.0)
+      (t
+       string))))
+
+(defun parse-request-method (data start end)
+  (declare (type core:octet-vector data)
+           (type (integer 0) start end))
+  (let ((string (text:decode-string data :encoding :ascii
+                                         :start start :end end)))
+    (cond
+      ((string= string "")
+       (http-parse-error "empty method"))
+      ((equalp string "get")
+       :get)
+      ((equalp string "head")
+       :head)
+      ((equalp string "post")
+       :post)
+      ((equalp string "put")
+       :put)
+      ((equalp string "delete")
+       :delete)
+      ((equalp string "connect")
+       :connect)
+      ((equalp string "options")
+       :options)
+      ((equalp string "trace")
+       :trace)
       (t
        string))))
 
@@ -341,7 +376,7 @@
            (http-parse-error "truncated body"))
          (values body nil)))
       (t
-       (http-parse-error "missing Content-Length header field")))))
+       (values nil nil)))))
 
 (defun read-chunk-header (stream)
   (declare (type stream stream))

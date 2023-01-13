@@ -90,6 +90,7 @@
       (pop connections))))
 
 (defun connection-handler (server)
+  (declare (type server server))
   (do ((mutex (server-mutex server)))
       ((system:with-mutex (mutex) (slot-value server 'closingp))
        nil)
@@ -100,9 +101,22 @@
           (close-connection connection))))))
 
 (defun handle-connection (server connection)
+  (declare (type server server)
+           (type connection connection))
+  (let* ((stream (connection-stream connection))
+         (request (read-request stream)))
+    (handle-request server connection request))
+  (close-connection connection) ; TODO See Connection header field
+  ;; (server-enqueue-connection server connection)
+  nil)
+
+(defun handle-request (server connection request)
+  (declare (type server server)
+           (type connection connection)
+           (type request request)
+           (ignore server connection))
   ;; TODO
-  (sleep 0.25)
-  (server-enqueue-connection server connection))
+  (format t "processing request ~S~%" request))
 
 (defun close-connection (connection)
   (declare (type connection connection))

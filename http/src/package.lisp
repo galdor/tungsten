@@ -1,6 +1,7 @@
 (defpackage :http
   (:use :cl)
   (:export
+   #:*max-request-line-length*
    #:*max-status-line-length*
    #:*max-header-length*
    #:http-error
@@ -8,6 +9,7 @@
    #:invalid-redirection-location
    #:too-many-redirections
    #:http-parse-error
+   #:request-line-too-long
    #:status-line-too-long
    #:header-too-large
    #:request-method
