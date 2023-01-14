@@ -6,7 +6,9 @@
   :serial t
   :components
   ((:file "package")
+   (:file "time")
    (:file "http")
+   (:file "statuses")
    (:file "request")
    (:file "response")
    (:file "client")

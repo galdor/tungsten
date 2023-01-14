@@ -19,7 +19,11 @@
     :initform (system:make-condition-variable :name "http-server-connections"))
    (connection-handlers
     :type list
-    :initform nil)))
+    :initform nil)
+   (request-handler
+    :type (or symbol function)
+    :initarg :request-handler
+    :reader server-request-handler)))
 
 (defclass connection ()
   ((stream
@@ -27,8 +31,8 @@
     :initarg :stream
     :reader connection-stream)))
 
-(defun start-server (host port &key (nb-threads 1))
-  (let ((server (make-instance 'server))
+(defun start-server (host port request-handler &key (nb-threads 1))
+  (let ((server (make-instance 'server :request-handler request-handler))
         (connection-handlers nil))
     (core:abort-protect
         (flet ((handle-connection (stream)
@@ -121,10 +125,12 @@
 (defun server-handle-request (server connection request)
   (declare (type server server)
            (type connection connection)
-           (type request request)
-           (ignore server connection))
-  ;; TODO
-  (format t "XXX processing request ~S~%" request))
+           (type request request))
+  ;; (format t "XXX processing request ~S~%" request)
+  (let ((response (funcall (server-request-handler server) request)))
+    (finalize-response response)
+    ;; (format t "XXX sending response   ~S~%" response)
+    (write-response response (connection-stream connection))))
 
 (defun close-connection (connection)
   (declare (type connection connection))

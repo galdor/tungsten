@@ -6,8 +6,9 @@
     :initarg :status
     :accessor response-status)
    (reason
-    :type string
+    :type (or string null)
     :initarg :reason
+    :initform nil
     :accessor response-reason)
    (version
     :type protocol-version
@@ -35,15 +36,55 @@
     (with-slots (status reason) response
       (format stream "~D ~S" status reason))))
 
+(defun make-response (status &key header body)
+  (declare (type response-status status)
+           (type header header)
+           (type (or body null) body))
+  (make-instance 'response :status status
+                           :header header
+                           :body body))
+
+(defun response-header-field (response name)
+  (declare (type response response)
+           (type string name))
+  (header-field (response-header response) name))
+
+(defun (setf response-header-field) (value response name)
+  (declare (type response response)
+           (type string name)
+           (type header-field-value value))
+  (with-slots (header) response
+    (let ((pair (assoc name header :test #'equalp)))
+      (if pair
+          (rplacd pair value)
+          (push (cons name value) header))
+      value)))
+
+(defun add-response-header-field (response name value)
+  (declare (type response response)
+           (type string name)
+           (type header-field-value value))
+  (push (cons name value) (response-header response)))
+
+(defun add-new-response-header-field (response name value)
+  (declare (type response response)
+           (type string name)
+           (type header-field-value value))
+  (with-slots (header) response
+    (let ((pair (assoc name header :test #'equalp)))
+      (unless pair
+        (push (cons name value) header))
+      value)))
+
 (defun write-response (response stream)
   (declare (type response response)
            (type streams:fundamental-binary-output-stream stream)
            (type streams:fundamental-character-output-stream stream))
   (with-slots (status reason version header body) response
-    (format stream "~D ~A ~A~%"
+    (format stream "~A ~D ~A~%"
+            (protocol-version-string version)
             status
-            reason
-            (protocol-version-string version))
+            reason)
     ;; Header
     (dolist (field header)
       (let ((name (car field))
@@ -127,3 +168,40 @@
                (error 'invalid-redirection-location :location location))))))
       (t
        nil))))
+
+(defun finalize-response (response)
+  (declare (type response response))
+  (mapc (lambda (function) (funcall function response))
+        '(finalize-response/reason
+          finalize-response/date
+          finalize-response/body
+          finalize-response/content-length)))
+
+(defun finalize-response/reason (response)
+  (declare (type response response))
+  (with-slots (status reason) response
+    (unless reason
+      (setf reason (response-status-reason status)))))
+
+(defun finalize-response/date (response)
+  (declare (type response response))
+  (add-new-response-header-field response "Date"
+                                 (format-rfc7231-date (get-universal-time))))
+
+(defun finalize-response/body (response)
+  (declare (type response response))
+  (with-slots (body) response
+    (when body
+      (etypecase body
+        (core:octet-vector
+         nil)
+        (string
+         (setf body (text:encode-string body)))))))
+
+(defun finalize-response/content-length (response)
+  (declare (type response response))
+  ;; We assume that FINALIZE-RESPONSE/BODY has already been called
+  (with-slots (body) response
+    (let ((body-length (if body (length body) 0)))
+      (add-new-response-header-field response "Content-Length"
+                                     (princ-to-string body-length)))))

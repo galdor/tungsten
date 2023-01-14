@@ -36,6 +36,10 @@
    #:response-version
    #:response-header
    #:response-body
+   #:make-response
+   #:response-header-field
+   #:add-response-header-field
+   #:add-new-response-header-field
 
    #:client
    #:make-client

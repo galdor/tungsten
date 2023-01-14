@@ -4,6 +4,8 @@
    #:shuffle
    #:nshuffle
 
+   #:alist-to-hash-table
+
    #:octet
    #:octet-vector
    #:octet-vector*

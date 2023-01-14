@@ -6,6 +6,7 @@
   :components
   ((:file "package")
    (:file "sequences")
+   (:file "hash-tables")
    (:file "binary")
    (:file "buffer")
    (:file "input")
