@@ -8,6 +8,14 @@
    (closingp
     :type boolean
     :initform nil)
+   (host
+    :type system:host
+    :initarg :host
+    :reader server-host)
+   (port
+    :type system:port-number
+    :initarg :port
+    :reader server-port)
    (tcp-server
     :type (or system:tcp-server null)
     :initform nil)
@@ -31,8 +39,18 @@
     :initarg :stream
     :reader connection-stream)))
 
+(defmethod print-object ((server server) stream)
+  (print-unreadable-object (server stream :type t)
+    (with-slots (host port) server
+      (system:format-host-and-port host port stream))))
+
 (defun start-server (host port request-handler &key (nb-threads 1))
-  (let ((server (make-instance 'server :request-handler request-handler))
+  (declare (type system:host host)
+           (type system:port-number port)
+           (type (or symbol function) request-handler)
+           (type (integer 1) nb-threads))
+  (let ((server (make-instance 'server :host host :port port
+                                       :request-handler request-handler))
         (connection-handlers nil))
     (core:abort-protect
         (flet ((handle-connection (stream)
