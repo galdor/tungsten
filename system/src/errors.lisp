@@ -78,7 +78,8 @@ again with the same arguments."
                       (go retry)
                       (error 'system-error
                              :function ,name
-                             :value ,error-value
+                             :value
+                             (ffi:decode-foreign-value ,error-value 'errno)
                              :description (funcall ,error-description-function
                                                    ,error-value)))))
               (return-from body ,value)))))))
