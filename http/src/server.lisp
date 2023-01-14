@@ -107,8 +107,9 @@
   (declare (type server server))
   (with-slots (mutex connections connections-condition-variable) server
     (system:with-mutex (mutex)
-      (system:wait-condition-variable connections-condition-variable mutex
-                                      :timeout 1.0)
+      (unless connections
+        (system:wait-condition-variable connections-condition-variable mutex
+                                        :timeout 1.0))
       (pop connections))))
 
 (defun server-connection-handler (server)
