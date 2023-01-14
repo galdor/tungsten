@@ -131,9 +131,12 @@
   (declare (type server server)
            (type connection connection))
   (handler-bind
-      ((http:connection-closed (core:invoke-restart-function 'continue)))
+      ((connection-closed (core:invoke-restart-function 'continue)))
     (let* ((stream (connection-stream connection))
-           (request (read-request stream)))
+           (request (handler-case
+                        (read-request stream)
+                      (end-of-file ()
+                        (error 'connection-closed)))))
       (server-handle-request server connection request)
       (cond
         ((request-keep-connection-alive-p request)
