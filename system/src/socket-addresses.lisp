@@ -9,9 +9,9 @@
 (defun format-host-and-port (host port &optional stream)
   (declare (type host host)
            (type port-number port))
-  (when (position #\: host)
-    (format stream "[~A]:~D" host port)
-    (format stream "~A:~D" host port)))
+  (if (position #\: host)
+      (format stream "[~A]:~D" host port)
+      (format stream "~A:~D" host port)))
 
 (defclass socket-address ()
   ())
