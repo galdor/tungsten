@@ -44,6 +44,19 @@
                            :header header
                            :body body))
 
+(defun make-plain-text-response (status body &key header)
+  (declare (type response-status status)
+           (type string body)
+           (type header header))
+  (make-response status
+                 :header (cons (cons "Content-Type" "text/plain") header)
+                 :body body))
+
+(defun make-error-response (status error)
+  (declare (type response-status status)
+           (type error error))
+  (make-plain-text-response status (princ-to-string error)))
+
 (defun response-header-field (response name)
   (declare (type response response)
            (type string name))

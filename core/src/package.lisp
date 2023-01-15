@@ -1,6 +1,8 @@
 (defpackage :core
   (:use :cl)
   (:export
+   #:*interactive*
+
    #:shuffle
    #:nshuffle
 
@@ -31,5 +33,4 @@
 
    #:unsupported-feature
    #:unsupported-feature-name
-   #:abort-protect
-   #:invoke-restart-function))
+   #:abort-protect))

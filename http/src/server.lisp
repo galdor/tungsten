@@ -122,7 +122,7 @@
         (core:abort-protect
             (restart-case
                 (server-handle-connection server connection)
-              (continue ()
+              (close-connection ()
                 :report "Close the HTTP connection and continue."
                 (close-connection connection)))
           (close-connection connection))))))
@@ -130,27 +130,49 @@
 (defun server-handle-connection (server connection)
   (declare (type server server)
            (type connection connection))
+  (flet ((close-connection-restart (condition)
+           (declare (ignore condition))
+           (invoke-restart 'close-connection)))
+    (handler-bind
+        (((or end-of-file connection-closed)
+           #'close-connection-restart)
+         (error
+           (lambda (condition)
+             (send-response (make-error-response 500 condition) connection)
+             (unless core:*interactive*
+               (invoke-restart 'close-connection)))))
+      (let ((request (server-read-request server connection)))
+        (server-handle-request server connection request)
+        (cond
+          ((request-keep-connection-alive-p request)
+           (server-enqueue-connection server connection))
+          (t
+           (close-connection connection)))))))
+
+(defun server-read-request (server connection)
+  (declare (type server server)
+           (type connection connection)
+           (ignore server))
   (handler-bind
-      ((connection-closed (core:invoke-restart-function 'continue))
-       (end-of-file (core:invoke-restart-function 'continue)))
-    (let* ((stream (connection-stream connection))
-           (request (read-request stream)))
-      (server-handle-request server connection request)
-      (cond
-        ((request-keep-connection-alive-p request)
-         (server-enqueue-connection server connection))
-        (t
-         (close-connection connection))))))
+      ((http-parse-error
+         (lambda (condition)
+           (send-response (make-error-response 400 condition) connection)
+           (invoke-restart 'close-connection))))
+    (read-request (connection-stream connection))))
 
 (defun server-handle-request (server connection request)
   (declare (type server server)
            (type connection connection)
            (type request request))
-  ;; (format t "XXX processing request ~S~%" request)
   (let ((response (funcall (server-request-handler server) request)))
-    (finalize-response response)
-    ;; (format t "XXX sending response   ~S~%" response)
-    (write-response response (connection-stream connection))))
+    (send-response response connection)))
+
+(defun send-response (response connection)
+  (declare (type response response)
+           (type connection connection))
+  (finalize-response response)
+  (with-slots (stream) connection
+    (write-response response stream)))
 
 (defun close-connection (connection)
   (declare (type connection connection))

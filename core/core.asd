@@ -5,6 +5,7 @@
   :serial t
   :components
   ((:file "package")
+   (:file "environment")
    (:file "sequences")
    (:file "hash-tables")
    (:file "binary")
