@@ -1,7 +1,7 @@
 (defsystem "http"
   :description "An implementation of the HTTP 1.1 protocol"
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("system" "openssl" "uri")
+  :depends-on ("core" "text" "system" "openssl" "uri")
   :pathname "src"
   :serial t
   :components
