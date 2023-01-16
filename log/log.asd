@@ -1,10 +1,14 @@
 (defsystem "log"
   :description "Utilities for flexible logging."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
+  :depends-on ("core")
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "logging")
+   (:file "sink")
+   (:file "logger"))
   :in-order-to ((test-op (test-op "log/test"))))
 
 (defsystem "log/test"
