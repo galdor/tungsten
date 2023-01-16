@@ -16,6 +16,8 @@
    #:write-message
    #:default-sink
 
+   #:make-terminal-sink
+
    #:*default-stream*
    #:*logger*
    #:logger

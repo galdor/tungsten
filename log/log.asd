@@ -9,8 +9,8 @@
    (:file "logging")
    (:file "message")
    (:file "sink")
-   (:file "logger")
-   (:file "terminal-sink"))
+   (:file "terminal-sink")
+   (:file "logger"))
   :in-order-to ((test-op (test-op "log/test"))))
 
 (defsystem "log/test"

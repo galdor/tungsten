@@ -17,7 +17,12 @@
     :type boolean
     :initarg :color
     :initform t
-    :reader terminal-sink-color)))
+    :reader terminal-sink-color)
+   (print-length
+    :type (or (integer 0) null)
+    :initarg :print-length
+    :initform 16
+    :reader terminal-sink-print-length)))
 
 (defun make-terminal-sink (&key (stream *error-output*)
                                 (color t))
@@ -30,22 +35,23 @@
   (normalize-message-data message)
   (with-slots (mutex stream color) sink
     (system:with-mutex (mutex)
-      (with-slots (domain level text data) message
-        (let* ((*print-case* :downcase)
+      (with-slots (domain level text-format text-arguments data) message
+        (let* ((*print-length* (terminal-sink-print-length sink))
                (green (ecma48-foreground-color-sequence :green))
                (blue (ecma48-foreground-color-sequence :blue))
                (reset (ecma48-reset-sequence))
-               (domain (format nil "~24@<~{~A~^.~}~>" domain)))
+               (domain (let ((*print-case* :downcase))
+                         (format nil "~24@<~{~A~^.~}~>" domain))))
           (format stream "~&~5@<~A~>  ~
                           ~:[~*~A~*~;~A~A~A~]  ~
-                          ~A~%"
-                  level
+                          ~<~@;~?~:>"
+                  (string-downcase (symbol-name level))
                   color green domain reset
-                  text)
+                  (list text-format text-arguments))
           (unless (null data)
-            (write-string "      " stream)
+            (format stream "~%      ")
             (dolist (datum data)
-              (format stream " ~:[~*~A~*~;~A~A~A~]=~A"
+              (format stream " ~:[~*~A:~*~;~A~A:~A~]~A"
                       color blue (car datum) reset
                       (cdr datum))))
           (terpri stream)
