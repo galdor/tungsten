@@ -56,35 +56,41 @@
     (setf (message-data message) (append (message-data message) data))
     (write-message message sink)))
 
-(defun log-debug (format &rest args)
+(defun log-debug (format &rest arguments)
   (log-message
    (make-instance 'message :level :debug
-                           :text (apply #'format nil format args))))
+                           :text-format format
+                           :text-arguments arguments)))
 
-(defun log-debug-data (data format &rest args)
+(defun log-debug-data (data format &rest arguments)
   (log-message
    (make-instance 'message :level :debug
-                           :text (apply #'format nil format args)
+                           :text-format format
+                           :text-arguments arguments
                            :data data)))
 
-(defun log-info (format &rest args)
+(defun log-info (format &rest arguments)
   (log-message
    (make-instance 'message :level :info
-                           :text (apply #'format nil format args))))
+                           :text-format format
+                           :text-arguments arguments)))
 
-(defun log-info-data (data format &rest args)
+(defun log-info-data (data format &rest arguments)
   (log-message
    (make-instance 'message :level :info
-                           :text (apply #'format nil format args)
+                           :text-format format
+                           :text-arguments arguments
                            :data data)))
 
-(defun log-error (format &rest args)
+(defun log-error (format &rest arguments)
   (log-message
    (make-instance 'message :level :error
-                           :text (apply #'format nil format args))))
+                           :text-format format
+                           :text-arguments arguments)))
 
-(defun log-error-data (data format &rest args)
+(defun log-error-data (data format &rest arguments)
   (log-message
    (make-instance 'message :level :error
-                           :text (apply #'format nil format args)
+                           :text-format format
+                           :text-arguments arguments
                            :data data)))

@@ -14,10 +14,14 @@
     :type level
     :initarg :level
     :accessor message-level)
-   (text
+   (text-format
     :type string
-    :initarg :text
-    :accessor message-text)
+    :initarg :text-format
+    :accessor message-text-format)
+   (text-arguments
+    :type list
+    :initarg :text-arguments
+    :accessor message-text-arguments)
    (data
     :type list
     :initarg :data
@@ -34,11 +38,13 @@
           (string
            nil)
           (symbol
-           (rplaca datum (symbol-name key))))
+           (rplaca datum (string-downcase (symbol-name key)))))
         (typecase value
           (string
            nil)
           (t
-           (rplacd datum (princ-to-string value))))))
+           (rplacd datum (write-to-string value :case :downcase
+                                                :escape nil
+                                                :pretty nil))))))
     (setf data (sort data #'string< :key #'car)))
   message)
