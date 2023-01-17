@@ -48,6 +48,8 @@
   (declare (type response-status status)
            (type string body)
            (type header header))
+  (unless (char= (char body (1- (length body))) #\Newline)
+    (setf body (concatenate 'string body (string #\Newline))))
   (make-response status
                  :header (cons (cons "Content-Type" "text/plain") header)
                  :body body))

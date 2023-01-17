@@ -1,136 +1,93 @@
 (in-package :http)
 
-(deftype route-path-segment ()
-  '(or string symbol))
+(defvar *routers* (make-hash-table))
 
-(deftype route-path ()
-  'list)
+(defvar *router* nil)
 
-(defclass route ()
+(defvar *route* nil)
+
+(defvar *request* nil)
+
+(define-condition unknown-router (error)
   ((name
     :type symbol
     :initarg :name
-    :reader route-name)
-   (method
-    :type (or request-method null)
-    :initarg :method
-    :initform nil
-    :reader route-method)
-   (path
-    :type (or route-path null)
-    :initarg :path
-    :initform nil
-    :reader route-path)
-   (request-handler
-    :type request-handler
-    :initarg :request-handler
-    :accessor route-request-handler)))
+    :reader unknown-router-name))
+  (:report
+   (lambda (condition stream)
+     (with-slots (name) condition
+       (format stream "Unknown HTTP router ~S." name)))))
 
 (defclass router ()
-  ((routes
+  ((name
+    :type symbol
+    :initarg :name
+    :accessor router-name)
+   (routes
     :type list
     :initarg :routes
     :initform nil
     :accessor router-routes)))
 
-(defun route-path-segment-equal (segment1 segment2)
-  (cond
-    ((and (stringp segment1) (stringp segment2))
-     (string= segment1 segment2))
-    ((and (symbolp segment1) (symbolp segment2))
-     (eq segment1 segment2))
-    (t
-     nil)))
+(defmethod print-object ((router router) stream)
+  (print-unreadable-object (router stream :type t)
+    (princ (router-name router) stream)))
 
-(defun route-path-equal (path1 path2)
-  (and (= (length path1) (length path2))
-       (every 'route-path-segment-equal path1 path2)))
+(defmacro defrouter (name)
+  (let ((name-var (gensym "NAME-"))
+        (router (gensym "ROUTER-")))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (let* ((,name-var ,name)
+              (,router (make-instance 'router :name ,name-var)))
+         (setf (gethash ,name-var *routers*) ,router)))))
 
-(defun parse-route-path (string)
-  (declare (type string string))
-  (when (= (length string) 0)
-    (error "empty route path"))
-  (unless (char= (char string 0) #\/)
-    (error "route path does not start with a ~S" #\/))
-  (do ((segments nil)
-       (start 1)
-       (end (if (char= (char string (1- (length string))) #\/)
-                (1- (length string))
-                (length string))))
-      ((> start end)
-       (nreverse segments))
-    (let* ((slash (position #\/ string :start start :end end))
-           (segment-end (or slash end))
-           (segment (cond
-                      ((= start segment-end)
-                       (error "invalid empty route path segment"))
-                      ((string= string "*" :start1 start :end1 segment-end)
-                       (unless (= segment-end end)
-                         (error "wildcard can only be used for the last ~
-                                 path segment"))
-                       :*)
-                      ((char= (char string start) #\:)
-                       (when (string= string ":*"
-                                      :start1 start :end1 segment-end)
-                         (error "reserved path variable name \":*"))
-                       (intern
-                        (string-upcase (subseq string (1+ start) segment-end))
-                        :keyword))
-                      (t
-                       (subseq string start segment-end)))))
-      (push segment segments)
-      (setf start (1+ segment-end)))))
+(defmacro in-router (name)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (setf *router* (find-router ,name))))
 
-(defmethod print-object ((route route) stream)
-  (print-unreadable-object (route stream :type t)
-    (princ (route-name route) stream)))
+(defun find-router (name)
+  (etypecase name
+    (symbol
+     (or (gethash name *routers*)
+         (error 'unknown-router :name name)))
+    (router
+     name)))
 
-(defun match-route (route request)
-  (declare (type route route)
-           (type request request))
-  (when (match-route-method route (request-method request))
-    (match-route-path route (request-target request))))
+(defun delete-router (name)
+  (unless (remhash name *routers*)
+    (error 'unknown-router :name name)))
 
-(defun match-route-method (route method)
-  (declare (type route route)
-           (type request-method method))
-  (if (route-method route)
-      (request-method-equal (route-method route) method)
-      t))
+(defun router-request-handler (router)
+  (lambda (request)
+    (router-handle-request router request)))
 
-(defun match-route-path (route target)
-  (declare (type route route)
-           (type uri:uri target))
-  (do ((route-segments (route-path route) (cdr route-segments))
-       (request-segments (uri:uri-path-segments target) (cdr request-segments))
-       (path-variables nil))
-      ((and (null request-segments) (null route-segments))
-       (values t (nreverse path-variables)))
-    (let ((route-segment (car route-segments))
-          (request-segment (car request-segments)))
-      (cond
-        ((and (stringp route-segment) (equal route-segment request-segment))
-         nil)
-        ((and (eq route-segment :*) request-segments)
-         (push (cons :* (format nil "~{~A~^/~}" request-segments))
-               path-variables)
-         (setf request-segments nil))
-        ((and route-segment (symbolp route-segment) request-segment)
-         (push (cons route-segment request-segment) path-variables))
-        (t
-         (return-from match-route-path nil))))))
+(defun router-handle-request (router request)
+  (let ((route (router-find-matching-route router request)))
+    (if route
+        (let ((*route* route))
+          (funcall (route-request-handler route) request))
+        (make-plain-text-response 404 "Route not found."))))
 
 (defun router-find-matching-route (router request)
   (find-if (lambda (route)
              (match-route route request))
            (router-routes router)))
 
-(defun router-handle-request (router request)
-  (let ((route (router-find-matching-route router request)))
-    (if route
-        (funcall (route-request-handler route) request)
-        (make-error-response 404 "Route not found."))))
+(defmacro defroute (name (method path) &body body)
+  (let ((function (gensym "FUNCTION-"))
+        (route (gensym "ROUTE-")))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (let* ((,function
+                (lambda (request)
+                  (let ((*request* request))
+                    ,@body)))
+              (,route (make-instance 'route
+                                     :name ',name
+                                     ,@(when method (list :method method))
+                                     :path (parse-route-path ,path)
+                                     :request-handler ,function)))
+         (push ,route (router-routes *router*))))))
 
-(defun router-request-handler (router)
-  (lambda (request)
-    (router-handle-request router request)))
+(defun delete-route (name &optional (router *router*))
+  (with-slots (routes) (find-router router)
+    (setf routes (delete name routes :key 'route-name))))

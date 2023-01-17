@@ -13,6 +13,7 @@
    (:file "response")
    (:file "client")
    (:file "server")
+   (:file "routes")
    (:file "router"))
   :in-order-to ((test-op (test-op "http/test"))))
 
@@ -25,6 +26,6 @@
   :components
   ((:file "package")
    (:file "http")
-   (:file "router"))
+   (:file "routes"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :http-test)))

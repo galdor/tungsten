@@ -63,4 +63,18 @@
    #:route-method
    #:route-path
    #:route-request-handler
-   #:router-request-handler))
+
+   #:*routers*
+   #:*router*
+   #:*route*
+   #:*request*
+   #:unknown-router
+   #:unknown-router-name
+   #:defrouter
+   #:in-router
+   #:find-router
+   #:delete-router
+   #:router-handle-request
+   #:router-request-handler
+   #:defroute
+   #:delete-route))
