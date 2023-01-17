@@ -18,6 +18,10 @@
    #:uri-fragment
    #:make-uri
    #:copy-uri
+   #:uri-absolute-path-p
+   #:absolute-path-p
+   #:uri-path-segments
+   #:path-segments
 
    #:serialize
 

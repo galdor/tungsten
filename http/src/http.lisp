@@ -94,6 +94,15 @@
      (with-slots (target) c
        (format stream "Missing host in HTTP request target ~S." target)))))
 
+(defun request-method-equal (method1 method2)
+  (cond
+    ((and (symbolp method1) (symbolp method2))
+     (eq method1 method2))
+    ((and (stringp method1) (stringp method2))
+     (string= method1 method2))
+    (t
+     (equalp (string method1) (string method2)))))
+
 (defun request-method-string (method)
   (declare (type request-method method))
   (etypecase method

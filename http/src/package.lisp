@@ -13,6 +13,7 @@
    #:status-line-too-long
    #:header-too-large
    #:request-method
+   #:request-method-equal
    #:response-status
    #:protocol-version
    #:body
@@ -48,6 +49,18 @@
    #:*client*
    #:send-request
 
+   #:request-handler
    #:server
    #:start-server
-   #:stop-server))
+   #:stop-server
+
+   #:route-path-segment
+   #:route-path-segment-equal
+   #:route-path
+   #:route-path-equal
+   #:parse-route-path
+   #:route
+   #:route-method
+   #:route-path
+   #:route-request-handler
+   #:router-request-handler))

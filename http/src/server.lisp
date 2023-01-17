@@ -1,5 +1,8 @@
 (in-package :http)
 
+(deftype request-handler ()
+  '(or symbol (function (request) response)))
+
 (defclass server ()
   ((mutex
     :type system:mutex
@@ -29,7 +32,7 @@
     :type list
     :initform nil)
    (request-handler
-    :type (or symbol function)
+    :type request-handler
     :initarg :request-handler
     :reader server-request-handler)))
 
