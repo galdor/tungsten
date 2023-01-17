@@ -29,3 +29,13 @@
    (:file "routes"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :http-test)))
+
+(defsystem "http/example"
+  :description "Examples for the http system."
+  :author "Nicolas Martyanoff <nicolas@n16f.net>"
+  :depends-on ("system" "http")
+  :pathname "example"
+  :serial t
+  :components
+  ((:file "package")
+   (:file "message-board")))
