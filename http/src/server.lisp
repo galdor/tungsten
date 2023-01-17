@@ -1,7 +1,7 @@
 (in-package :http)
 
 (deftype request-handler ()
-  '(or symbol (function (request) response)))
+  '(or symbol function))
 
 (defclass server ()
   ((mutex
