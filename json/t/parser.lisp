@@ -5,8 +5,7 @@
     ,@(mapcar
        (lambda (test)
          (destructuring-bind (value string &rest args) test
-           `(,predicate ,value (json:parse ,string ,@args)
-                        :label ,string)))
+           `(,predicate ,value (json:parse ,string ,@args))))
        tests)))
 
 (deftest parse/null ()
@@ -92,6 +91,26 @@
      "{\"a\": {}, \"b\": {\"c\": 1}}")
    ('(("a" . 1) ("b" . 2) ("a" . 3))
      "{\"a\": 1, \"b\": 2, \"a\": 3}")))
+
+(deftest parse/duplicate-key-handling ()
+  (let ((json:*duplicate-key-handling* :keep))
+    (check-equalp '(("a" . 1) ("b" . 2) ("a" . 3))
+                  (json:parse "{\"a\": 1, \"b\": 2, \"a\": 3}"))
+    (check-equalp '(("a" . 1) ("a" . 2) ("a" . 3))
+                  (json:parse "{\"a\": 1, \"a\": 2, \"a\": 3}")))
+  (let ((json:*duplicate-key-handling* :first))
+    (check-equalp '(("a" . 1) ("b" . 2))
+                  (json:parse "{\"a\": 1, \"b\": 2, \"a\": 3}"))
+    (check-equalp '(("a" . 1))
+                  (json:parse "{\"a\": 1, \"a\": 2, \"a\": 3}")))
+  (let ((json:*duplicate-key-handling* :last))
+    (check-equalp '(("b" . 2) ("a" . 3))
+                  (json:parse "{\"a\": 1, \"b\": 2, \"a\": 3}"))
+    (check-equalp '(("a" . 3))
+                  (json:parse "{\"a\": 1, \"a\": 2, \"a\": 3}")))
+  (let ((json:*duplicate-key-handling* :error))
+    (check-signals json:json-parse-error
+                   (json:parse "{\"a\": 1, \"b\": 2, \"a\": 3}"))))
 
 (deftest parse/boundaries ()
   (check-parser

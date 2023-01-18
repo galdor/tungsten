@@ -262,6 +262,12 @@
         (let ((key (parse-value parser)))
           (unless (stringp key)
             (parser-error parser "invalid non-string object key"))
+          (case *duplicate-key-handling*
+            (:last
+             (setf members (delete key members  :key #'car :test #'string=)))
+            (:error
+             (when (member key members :key #'car :test #'string=)
+               (parser-error parser "duplicate object key ~S" key))))
           ;; TODO duplicate-key handling
           (setf (car member) key))
         ;; Colon
@@ -280,7 +286,9 @@
           (parser-error parser "truncated object"))
         (setf (cdr member) (parse-value parser))
         ;; Member
-        (push member members))
+        (unless (and (eq *duplicate-key-handling* :first)
+                     (member (car member) members :key #'car :test #'string=))
+          (push member members)))
       ;; Separator
       (parser-skip-whitespaces parser)
       (when (parser-endp parser)
