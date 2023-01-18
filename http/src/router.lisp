@@ -23,6 +23,9 @@
     :type symbol
     :initarg :name
     :accessor router-name)
+   (mutex
+    :type system:mutex
+    :initform (system:make-mutex :name "http-router"))
    (routes
     :type list
     :initarg :routes
@@ -69,9 +72,11 @@
         (make-plain-text-response 404 "Route not found."))))
 
 (defun router-find-matching-route (router request)
-  (find-if (lambda (route)
-             (match-route route request))
-           (router-routes router)))
+  (with-slots (mutex routes) router
+    (system:with-mutex (mutex)
+      (find-if (lambda (route)
+                 (match-route route request))
+               routes))))
 
 (defmacro defroute (name (method path) &body body)
   (let ((function (gensym "FUNCTION-"))
@@ -86,8 +91,11 @@
                                      ,@(when method (list :method method))
                                      :path (parse-route-path ,path)
                                      :request-handler ,function)))
-         (push ,route (router-routes *router*))))))
+         (with-slots (mutex routes) *router*
+           (system:with-mutex (mutex)
+             (push ,route routes)))))))
 
 (defun delete-route (name &optional (router *router*))
-  (with-slots (routes) (find-router router)
-    (setf routes (delete name routes :key 'route-name))))
+  (with-slots (mutex routes) (find-router router)
+    (system:with-mutex (mutex)
+      (setf routes (delete name routes :key 'route-name)))))
