@@ -40,13 +40,13 @@
   (let ((name-var (gensym "NAME-"))
         (router (gensym "ROUTER-")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (let* ((,name-var ,name)
+       (let* ((,name-var ',name)
               (,router (make-instance 'router :name ,name-var)))
          (setf (gethash ,name-var *routers*) ,router)))))
 
 (defmacro in-router (name)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (setf *router* (find-router ,name))))
+     (setf *router* (find-router ',name))))
 
 (defun find-router (name)
   (etypecase name

@@ -3,9 +3,9 @@
 (defvar *message-board-server* nil)
 (defvar *message-board* nil)
 
-(http:defrouter 'message-board)
+(http:defrouter message-board)
 
-(http:in-router 'message-board)
+(http:in-router message-board)
 
 (defclass message-board ()
   ((messages
