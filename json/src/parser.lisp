@@ -13,14 +13,17 @@
    (column
     :type (integer 1)
     :initarg :column)
-   (description
+   (format-control
     :type string
-    :initarg :description))
+    :initarg :format-control)
+   (format-arguments
+    :type list
+    :initarg :format-arguments))
   (:report
-   (lambda (c stream)
-     (with-slots (row column description) c
-       (format stream "Invalid JSON string: ~D:~D: ~A."
-               row column description)))))
+   (lambda (condition stream)
+     (with-slots (row column format-control format-arguments) condition
+       (format stream "Invalid JSON string: ~D:~D: ~?."
+               row column format-control format-arguments)))))
 
 (defclass parser ()
   ((string
@@ -50,12 +53,12 @@
       (setf end (length string)))
     (setf i start)))
 
-(defun parser-error (parser format &rest args)
+(defun parser-error (parser format &rest arguments)
   (declare (type parser parser))
   (with-slots (row column) parser
-    (let ((description (apply #'format nil format args)))
-      (error 'json-parse-error :row row :column column
-                               :description description))))
+    (error 'json-parse-error :row row :column column
+                             :format-control format
+                             :format-arguments arguments)))
 
 (defun parser-endp (parser)
   (declare (type parser parser))
