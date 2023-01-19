@@ -6,7 +6,8 @@
   :serial t
   :components
   ((:file "package")
-   (:file "parser"))
+   (:file "parser")
+   (:file "serialization"))
   :in-order-to ((test-op (test-op "json/test"))))
 
 (defsystem "json/test"

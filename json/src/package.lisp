@@ -5,4 +5,9 @@
    #:*duplicate-key-handling*
    #:*max-depth*
    #:json-parse-error
-   #:parse))
+   #:parse
+
+   #:large-integer-representation
+   #:*large-integer-representation*
+   #:unserializable-value
+   #:serialize))
