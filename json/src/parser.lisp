@@ -25,33 +25,16 @@
        (format stream "Invalid JSON string: ~D:~D: ~?."
                row column format-control format-arguments)))))
 
-(defclass parser ()
-  ((string
-    :type string
-    :initarg :string)
-   (start
-    :type (integer 0)
-    :initarg :start)
-   (end
-    :type (integer 0)
-    :initarg :end)
-   (i
-    :type (integer 0))
-   (depth
-    :type (integer 0)
-    :initform 0)
-   (row
-    :type (integer 1)
-    :initform 1)
-   (column
-    :type (integer 1)
-    :initform 1)))
-
-(defmethod initialize-instance :after ((parser parser) &key &allow-other-keys)
-  (with-slots (string start end i) parser
-    (unless (slot-boundp parser 'end)
-      (setf end (length string)))
-    (setf i start)))
+(defstruct (parser
+            (:copier nil)
+            (:predicate nil))
+  (string nil :type (or string null) :read-only t)
+  (start 0 :type (integer 0))
+  (end nil :type (or (integer 0) null))
+  (i 0 :type (integer 0))
+  (depth 0 :type (integer 0))
+  (row 1 :type (integer 1))
+  (column 1 :type (integer 1)))
 
 (defun parser-error (parser format &rest arguments)
   (declare (type parser parser))
@@ -92,10 +75,8 @@
            (return-from parser-skip-whitespaces)))))))
 
 (defun parse (string &key (start 0) (end (length string)))
-  (let ((parser
-          (make-instance 'parser :string string
-                                 :start start
-                                 :end end)))
+  (let ((parser (make-parser :string string
+                             :start start :end end :i start)))
     (let ((value (parse-value parser)))
       (parser-skip-whitespaces parser)
       (with-slots (i end) parser
