@@ -89,8 +89,8 @@
      "{ \"abc\"	:2 , \"def\":  \"ghi\"}")
    ('(("a" . nil) ("b" ("c" . 1)))
      "{\"a\": {}, \"b\": {\"c\": 1}}")
-   ('(("a" . 1) ("b" . 2) ("a" . 3))
-     "{\"a\": 1, \"b\": 2, \"a\": 3}")))
+   ('(("a" . 1) ("b" . 2) ("a" . 3.14d0))
+     "{\"a\": 1, \"b\": 2, \"a\": 3.14}")))
 
 (deftest parse/duplicate-key-handling ()
   (let ((json:*duplicate-key-handling* :keep))

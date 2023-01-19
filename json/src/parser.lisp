@@ -36,6 +36,16 @@
   (row 1 :type (integer 1))
   (column 1 :type (integer 1)))
 
+(declaim (inline float-char-p))
+(defun float-char-p (char)
+  (declare (type character char))
+  (or (digit-char-p char)
+      (char= char #\-)
+      (char= char #\+)
+      (char= char #\.)
+      (char= char #\e)
+      (char= char #\E)))
+
 (defun parser-error (parser format &rest arguments)
   (declare (type parser parser))
   (with-slots (row column) parser
@@ -285,9 +295,8 @@
 (defun parse-number (parser)
   (with-slots (string i end) parser
     (let* ((digits-start (if (char= (char string i) #\-) (1+ i) i))
-           (digits-end (or (position-if-not #'digit-char-p
-                                            string :start digits-start
-                                            :end end)
+           (digits-end (or (position-if-not #'digit-char-p string
+                                            :start digits-start :end end)
                            end))
            (is-float (and (< digits-end end)
                           (or (char= (char string digits-end) #\.)
@@ -296,12 +305,15 @@
       (cond
         (is-float
          (handler-case
-             (multiple-value-bind (float n)
-                 (float:parse string :start i :end end)
-               (parser-skip parser n)
-               float)
-           (float:float-parse-error (c)
-             (parser-error parser "invalid floating point number: ~A" c))))
+             (let ((float-end (position-if-not #'float-char-p string
+                                               :start i :end end)))
+               (multiple-value-bind (float n)
+                   (float:parse string :start i :end (or float-end end))
+                 (parser-skip parser n)
+                 float))
+           (float:float-parse-error (condition)
+             (parser-error parser "invalid floating point number: ~A"
+                           (float:float-parse-error-description condition)))))
         (t
          (let ((integer (parse-integer string :start i :end digits-end)))
            (parser-skip parser (- digits-end i))

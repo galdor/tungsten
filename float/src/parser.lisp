@@ -3,10 +3,12 @@
 (define-condition float-parse-error (parse-error)
   ((string
     :type string
-    :initarg :string)
+    :initarg :string
+    :reader float-parse-error-string)
    (description
     :type string
-    :initarg :description))
+    :initarg :description
+    :reader float-parse-error-description))
   (:report
    (lambda (c stream)
      (with-slots (string description) c
