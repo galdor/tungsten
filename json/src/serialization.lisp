@@ -72,7 +72,7 @@
          (serialize-string (princ-to-string i) stream)))))
 
 (defun serialize-float (f stream)
-  (format stream "~F" f))
+  (format stream "~G" f))
 
 (defun serialize-string (string stream)
   (write-char #\" stream)
