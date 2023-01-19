@@ -22,7 +22,7 @@
     :initform nil
     :reader route-path)
    (request-handler
-    :type request-handler
+    :type (or symbol function)
     :initarg :request-handler
     :accessor route-request-handler)))
 

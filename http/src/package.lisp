@@ -49,8 +49,10 @@
    #:*client*
    #:send-request
 
-   #:request-handler
    #:server
+   #:connection
+   #:connection-stream
+   #:connection-address
    #:start-server
    #:stop-server
 

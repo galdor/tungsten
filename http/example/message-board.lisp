@@ -18,10 +18,10 @@
     (error "message board already started"))
   (let* ((message-board (make-instance 'message-board))
          (request-handler
-           (lambda (request)
+           (lambda (request connection)
              (let ((router (http:find-router 'message-board))
                    (*message-board* message-board))
-               (http:router-handle-request router request)))))
+               (http:router-handle-request router request connection)))))
     (setf *message-board-server*
           (http:start-server "localhost" 8080 request-handler))))
 

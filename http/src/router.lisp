@@ -61,10 +61,15 @@
     (error 'unknown-router :name name)))
 
 (defun router-request-handler (router)
-  (lambda (request)
-    (router-handle-request router request)))
+  (declare (type router router))
+  (lambda (request connection)
+    (router-handle-request router request connection)))
 
-(defun router-handle-request (router request)
+(defun router-handle-request (router request connection)
+  (declare (type router router)
+           (type request request)
+           (type connection connection)
+           (ignore connection))
   (let ((route (router-find-matching-route router request)))
     (if route
         (let ((*route* route))

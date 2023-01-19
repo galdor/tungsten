@@ -1,8 +1,5 @@
 (in-package :http)
 
-(deftype request-handler ()
-  '(or symbol function))
-
 (defclass server ()
   ((mutex
     :type system:mutex
@@ -32,7 +29,7 @@
     :type list
     :initform nil)
    (request-handler
-    :type request-handler
+    :type (or symbol function)
     :initarg :request-handler
     :reader server-request-handler)))
 
@@ -41,6 +38,15 @@
     :type system:network-stream
     :initarg :stream
     :reader connection-stream)))
+
+(defun connection-address (connection)
+  (declare (type connection connection))
+  (system:network-stream-address (connection-stream connection)))
+
+(defmethod print-object ((connection connection) stream)
+  (print-unreadable-object (connection stream :type t)
+    (let ((address (connection-address connection)))
+      (system:format-socket-address address stream))))
 
 (defmethod print-object ((server server) stream)
   (print-unreadable-object (server stream :type t)
@@ -167,7 +173,8 @@
   (declare (type server server)
            (type connection connection)
            (type request request))
-  (let ((response (funcall (server-request-handler server) request)))
+  (let ((response (funcall (server-request-handler server)
+                           request connection)))
     (send-response response connection)))
 
 (defun send-response (response connection)
