@@ -4,9 +4,8 @@
 
 (defvar *router* nil)
 
-(defvar *route* nil)
-
 (defvar *request* nil)
+(defvar *request-context* nil)
 
 (define-condition unknown-router (error)
   ((name
@@ -31,6 +30,21 @@
     :initarg :routes
     :initform nil
     :accessor router-routes)))
+
+(defclass request-context ()
+  ((client-address
+    :type system:socket-address
+    :initarg :client-address
+    :reader request-context-client-address)
+   (route
+    :type route
+    :initarg :route
+    :reader request-context-route)
+   (path-variables
+    :type list
+    :initarg :path-variables
+    :initform nil
+    :reader request-context-path-variables)))
 
 (defmethod print-object ((router router) stream)
   (print-unreadable-object (router stream :type t)
@@ -68,28 +82,40 @@
 (defun router-handle-request (router request connection)
   (declare (type router router)
            (type request request)
-           (type connection connection)
-           (ignore connection))
-  (let ((route (router-find-matching-route router request)))
+           (type connection connection))
+  (multiple-value-bind (route path-variables)
+      (router-find-matching-route router request)
     (if route
-        (let ((*route* route))
-          (funcall (route-request-handler route) request))
+        (let* ((client-address (connection-address connection))
+               (context (make-instance 'request-context
+                                       :client-address client-address
+                                       :route route
+                                       :path-variables path-variables)))
+          (funcall (route-request-handler route) request context))
         (make-plain-text-response 404 "Route not found."))))
 
 (defun router-find-matching-route (router request)
   (with-slots (mutex routes) router
     (system:with-mutex (mutex)
-      (find-if (lambda (route)
-                 (match-route route request))
-               routes))))
+      (mapc (lambda (route)
+              (multiple-value-bind (matchp path-variables)
+                  (match-route route request)
+                (when matchp
+                  (return-from router-find-matching-route
+                    (values route path-variables)))))
+            routes)
+      (values nil nil))))
 
 (defmacro defroute (name (method path) &body body)
   (let ((function (gensym "FUNCTION-"))
         (route (gensym "ROUTE-")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (let* ((,function
-                (lambda (request)
-                  (let ((*request* request))
+                (lambda (request context)
+                  (declare (type request request)
+                           (type request-context context))
+                  (let ((*request* request)
+                        (*request-context* context))
                     ,@body)))
               (,route (make-instance 'route
                                      :name ',name
@@ -103,4 +129,19 @@
 (defun delete-route (name &optional (router *router*))
   (with-slots (mutex routes) (find-router router)
     (system:with-mutex (mutex)
-      (setf routes (delete name routes :key 'route-name)))))
+      (setf routes (delete name routes :key 'route-name)))
+    nil))
+
+(defun path-variables ()
+  (request-context-path-variables *request-context*))
+
+(defun path-variable (name &optional default)
+  (declare (type symbol name))
+  (with-slots (path-variables) *request-context*
+    (or (cdr (assoc name path-variables)) default)))
+
+(defun route ()
+  (request-context-route *request-context*))
+
+(defun client-address ()
+  (request-context-client-address *request-context*))

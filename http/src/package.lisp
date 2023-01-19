@@ -68,10 +68,13 @@
 
    #:*routers*
    #:*router*
-   #:*route*
    #:*request*
    #:unknown-router
    #:unknown-router-name
+   #:request-context
+   #:request-context-client-address
+   #:request-context-route
+   #:request-context-path-variables
    #:defrouter
    #:in-router
    #:find-router
@@ -79,4 +82,8 @@
    #:router-handle-request
    #:router-request-handler
    #:defroute
-   #:delete-route))
+   #:delete-route
+   #:path-variables
+   #:path-variable
+   #:route
+   #:client-address))
