@@ -2,7 +2,7 @@
   :description "System programming utilities."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :defsystem-depends-on ("ffi")
-  :depends-on ("core" "ffi" "streams")
+  :depends-on ("core" "ffi" "text" "streams")
   :pathname "src"
   :serial t
   :components
@@ -17,6 +17,7 @@
    (:file "concurrency")
    (:file "io-multiplexing")
    (:file "io-multiplexing-epoll" :if-feature :linux)
+   (:file "filesystem")
    (:file "ip-addresses")
    (:file "socket-addresses")
    (:file "io-stream")
