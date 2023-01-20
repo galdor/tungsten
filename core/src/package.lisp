@@ -9,8 +9,14 @@
    #:alist-to-hash-table
 
    #:octet
+   #:make-octet-vector
    #:octet-vector
    #:octet-vector*
+
+   #:unknown-binary-type
+   #:out-of-bounds-binary-access
+   #:binref
+   #:binref-type-size
 
    #:buffer
    #:buffer-data

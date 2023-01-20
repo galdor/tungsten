@@ -8,6 +8,7 @@
    (:file "environment")
    (:file "sequences")
    (:file "hash-tables")
+   (:file "octets")
    (:file "binary")
    (:file "buffer")
    (:file "input")
@@ -22,6 +23,7 @@
   :serial t
   :components
   ((:file "package")
-   (:file "sequences"))
+   (:file "sequences")
+   (:file "binary"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :core-test)))
