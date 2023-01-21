@@ -252,19 +252,20 @@ written."))
 (defmethod streams:stream-write-string ((stream io-stream) string
                                         &optional (start 0) end)
   (declare (type string string))
-  (when (> (length string) 0)
-    (with-slots (write-buffer external-format) stream
-      (let* ((end (or end (length string)))
-             (encoding (text:external-format-encoding external-format))
-             (nb-octets
-               (text:encoded-string-length string :encoding encoding
-                                                  :start start :end end))
-             (position (core:buffer-reserve write-buffer nb-octets)))
-        (text:encode-string string :encoding encoding
-                                   :start start :end end
-                                   :octets (core:buffer-data write-buffer)
-                                   :offset position)
-        (incf (core:buffer-end write-buffer) nb-octets))))
+  (let* ((end (or end (length string)))
+         (nb-characters (- end start)))
+    (when (> nb-characters 0)
+      (with-slots (write-buffer external-format) stream
+        (let* ((encoding (text:external-format-encoding external-format))
+               (nb-octets
+                 (text:encoded-string-length string :encoding encoding
+                                                    :start start :end end))
+               (position (core:buffer-reserve write-buffer nb-octets)))
+          (text:encode-string string :encoding encoding
+                                     :start start :end end
+                                     :octets (core:buffer-data write-buffer)
+                                     :offset position)
+          (incf (core:buffer-end write-buffer) nb-octets)))))
   string)
 
 (defmethod streams:stream-terpri ((stream io-stream))
