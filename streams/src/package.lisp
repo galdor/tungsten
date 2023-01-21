@@ -32,4 +32,8 @@
    #:stream-advance-to-column
    #:stream-write-byte
    #:stream-write-sequence
-   #:stream-file-position))
+   #:stream-file-position
+
+   #:octet-output-stream
+   #:make-octet-output-stream
+   #:with-output-to-octet-vector))
