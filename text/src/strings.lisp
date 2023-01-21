@@ -14,13 +14,15 @@
              string start end)))
 
 (defun encode-string (string &key (encoding *default-encoding*) start end
-                                  octets (offset 0))
+                                  octets (offset 0)
+                                  nb-octets)
   (declare (type simple-string string)
            (type (or index null) end))
   (let* ((encoding (encoding encoding))
          (nb-octets
-           (funcall (encoding-encoded-string-length-function encoding)
-                    string start end))
+           (or nb-octets
+               (funcall (encoding-encoded-string-length-function encoding)
+                        string start end)))
          (encode-character (encoding-character-encoding-function encoding)))
     (unless octets
       (setf octets (make-array nb-octets :element-type 'core:octet)))
