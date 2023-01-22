@@ -7,13 +7,14 @@
   :components
   ((:file "package")
    (:file "base")
-   (:file "encodings")
+   (:file "character-encodings")
    (:file "strings")
    (:file "external-formats")
    (:file "character-mapping")
    (:file "ascii")
    (:file "utf-8")
-   (:file "iso-8859-1"))
+   (:file "iso-8859-1")
+   (:file "hex-encoding"))
   :in-order-to ((test-op (test-op "text/test"))))
 
 (defsystem "text/test"
@@ -27,6 +28,7 @@
    (:file "utils")
    (:file "ascii")
    (:file "utf-8")
-   (:file "iso-8859-1"))
+   (:file "iso-8859-1")
+   (:file "hex-encoding"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :text-test)))

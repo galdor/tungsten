@@ -32,4 +32,11 @@
    #:invalid-utf8-continuation-octet
    #:truncated-utf8-sequence
    #:overlong-utf8-sequence
-   #:invalid-utf8-sequence))
+   #:invalid-utf8-sequence
+
+   #:invalid-hex-digit
+   #:invalid-hex-digit-character
+   #:invalid-hex-string
+   #:invalid-hex-string-string
+   #:encode-hex-string
+   #:decode-hex-string))
