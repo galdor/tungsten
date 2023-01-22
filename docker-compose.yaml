@@ -1,0 +1,23 @@
+version: "3"
+services:
+  postgres:
+    image: "postgres:15"
+    command: >
+      postgres -c "shared_buffers=1GB"
+               -c "max_connections=40"
+               -c "log_statement=all"
+    container_name: "tungsten-postgres"
+    ports: ["5432:5432"]
+    volumes:
+      - "postgres-data:/var/lib/postgresql/data:rw"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+      POSTGRES_HOST_AUTH_METHOD: "md5"
+    logging: &logging
+      driver: "json-file"
+      options:
+        max-size: "10m"
+volumes:
+  postgres-data:
