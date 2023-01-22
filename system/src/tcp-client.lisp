@@ -1,5 +1,8 @@
 (in-package :system)
 
+(defparameter *default-tcp-client-read-timeout* 10)
+(defparameter *default-tcp-client-write-timeout* 10)
+
 (define-condition tcp-connection-failure ()
   ((host
     :type host
@@ -41,7 +44,9 @@
 
 (defun make-tcp-client (host port
                         &key (external-format text:*default-external-format*)
-                             read-timeout write-timeout)
+                             (read-timeout *default-tcp-client-read-timeout*)
+                             (write-timeout
+                              *default-tcp-client-write-timeout*))
   "Create and return a TCP client connected to HOST and PORT."
   (declare (type host host)
            (type port-number port)
