@@ -154,7 +154,7 @@ zero."
   (dotimes (i size size)
     (setf (foreign-value %pointer :uint8 i) 0)))
 
-(defmacro with-pinned-vector-data ((%pointer vector &optional offset)
+(defmacro with-pinned-vector-data ((%pointer vector &optional (offset 0))
                                    &body body)
   (let ((offset-var (gensym "OFFSET-")))
     `(let ((,offset-var ,offset))
