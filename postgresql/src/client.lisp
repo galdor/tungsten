@@ -73,7 +73,7 @@
          (write-password-message password stream))
         (:authentication-md5-password
          (unless password
-           (authentication-error "Missing password for MD5 authentication"))
+           (authentication-error "Missing password for MD5 authentication."))
          (let* ((salt (cadr message))
                 (hash (compute-password-md5-hash user password salt)))
            (write-password-message hash stream)))
