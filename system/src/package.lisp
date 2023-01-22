@@ -67,6 +67,12 @@
    #:network-stream-read-timeout
    #:network-stream-write-timeout
 
+   #:tcp-timeout
+   #:tcp-timeout-stream
+   #:tcp-read-timeout
+   #:tcp-write-timeout
+   #:tcp-stream
+
    #:*default-tcp-client-read-timeout*
    #:*default-tcp-client-write-timeout*
    #:tcp-connection-failure
