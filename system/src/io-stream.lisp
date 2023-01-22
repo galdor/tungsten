@@ -75,7 +75,7 @@ written."))
                     :start1 start :end1 end
                     :start2 buffer-start :end2 buffer-end)
            (core:buffer-skip-to read-buffer buffer-end)
-           buffer-end))
+           (+ start (- buffer-end buffer-start))))
       (when (zerop (io-stream-read-more stream))
         (setf eof t)))))
 
