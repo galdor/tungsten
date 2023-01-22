@@ -2,7 +2,7 @@
   :description "An interface for the OpenSSL library."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :defsystem-depends-on ("ffi")
-  :depends-on ("system")
+  :depends-on ("core" "system" "text")
   :pathname "src"
   :serial t
   :components
@@ -12,7 +12,8 @@
     :package :openssl)
    (:file "ffi")
    (:file "tls-stream")
-   (:file "tls-client"))
+   (:file "tls-client")
+   (:file "digests"))
   :in-order-to ((test-op (test-op "openssl/test"))))
 
 (defsystem "openssl/test"
@@ -22,6 +23,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "digests"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :openssl-test)))

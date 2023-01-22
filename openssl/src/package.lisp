@@ -19,4 +19,10 @@
    #:tls-client
    #:tls-client-host
    #:tls-client-port
-   #:make-tls-client))
+   #:make-tls-client
+
+   #:unsupported-digest-algorithm
+   #:unsupported-digest-algorithm-name
+   #:with-digest
+   #:update-digest
+   #:compute-digest))

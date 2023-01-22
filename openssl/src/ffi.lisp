@@ -266,3 +266,44 @@
 (defun ssl-write (%ssl %data size)
   (openssl-funcall ("SSL_write" ((:pointer :pointer :int) :int)
                                 %ssl %data size)))
+
+;;;
+;;; Digests
+;;;
+
+(defun evp-get-digest-by-name (name)
+  (ffi:with-foreign-string (%name name)
+    (openssl-funcall ("EVP_get_digestbyname" ((:pointer) :pointer) %name))))
+
+(defun evp-md-ctx-new ()
+  (openssl-funcall ("EVP_MD_CTX_new" (() :pointer))))
+
+(defun evp-md-ctx-free (%context)
+  (openssl-funcall ("EVP_MD_CTX_free" ((:pointer) :void) %context)))
+
+(defun evp-md-ctx-get0-md (%context)
+  (openssl-funcall ("EVP_MD_CTX_get0_md" ((:pointer) :pointer) %context)))
+
+(defun evp-md-get-size (%digest-data)
+  (openssl-funcall ("EVP_MD_get_size" ((:pointer) :int) %digest-data)))
+
+(defun evp-digest-init-ex2 (%context %digest %parameters)
+  (openssl-funcall ("EVP_DigestInit_ex2" ((:pointer :pointer :pointer) :int)
+                                         %context %digest %parameters)))
+
+(defun evp-digest-update (%context octets)
+  (ffi:with-pinned-vector-data (%octets octets)
+    (openssl-funcall
+     ("EVP_DigestUpdate" ((:pointer :pointer system:size-t) :int)
+                         %context %octets (length octets)))))
+
+(defun evp-digest-final-ex (%context)
+  (let* ((size (evp-md-get-size (evp-md-ctx-get0-md %context)))
+         (octets (core:make-octet-vector size)))
+    (ffi:with-pinned-vector-data (%octets octets)
+      (ffi:with-foreign-value (%size :unsigned-int)
+        (setf (ffi:foreign-value %size :unsigned-int) size)
+        (openssl-funcall
+         ("EVP_DigestFinal_ex" ((:pointer :pointer :pointer) :int)
+                               %context %octets %size))))
+    octets))
