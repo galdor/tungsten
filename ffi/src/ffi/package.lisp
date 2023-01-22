@@ -19,7 +19,6 @@
    #:free-foreign-memory
    #:with-foreign-value
    #:with-foreign-values
-   #:with-foreign-memory
    #:foreign-value
    #:read-foreign-memory
    #:clear-foreign-memory
