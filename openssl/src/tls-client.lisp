@@ -55,7 +55,7 @@
   "Create and return a TLS client connected to HOST and PORT."
   (declare (type system:host host)
            (type system:port-number port)
-           (type (or (integer 0) null) read-timeout write-timeout)
+           (type (or (real 0) null) read-timeout write-timeout)
            (type list ciphers)
            (type boolean peer-verification)
            (type (integer 0) peer-verification-depth)
