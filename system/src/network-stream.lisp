@@ -6,12 +6,12 @@
     :initarg :address
     :reader network-stream-address)
    (read-timeout
-    :type (or (integer 0) null)
+    :type (or (real 0) null)
     :initarg :read-timeout
     :initform nil
     :reader network-stream-read-timeout)
    (write-timeout
-    :type (or (integer 0) null)
+    :type (or (real 0) null)
     :initarg :write-timeout
     :initform nil
     :reader network-stream-write-timeout)))

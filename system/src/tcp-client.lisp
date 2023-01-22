@@ -45,7 +45,7 @@
   "Create and return a TCP client connected to HOST and PORT."
   (declare (type host host)
            (type port-number port)
-           (type (or (integer 0) null) read-timeout write-timeout))
+           (type (or (real 0) null) read-timeout write-timeout))
   (multiple-value-bind (socket address)
       (tcp-connect host port)
     (core:abort-protect
