@@ -45,7 +45,9 @@
   (declare (type client client))
   (with-slots (stream) client
     (when stream
-      (ignore-errors (close stream))
+      (ignore-errors
+       (write-termination-message stream)
+       (close stream))
       (setf stream nil)
       t)))
 

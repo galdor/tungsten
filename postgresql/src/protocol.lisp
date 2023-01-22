@@ -226,6 +226,10 @@
            (type stream stream))
   (write-message #\p `(string ,password) stream))
 
+(defun write-termination-message (stream)
+  (declare (type stream stream))
+  (write-message #\X nil stream))
+
 (defun compute-password-md5-hash (user password salt)
   (declare (type string user password)
            (type core:octet-vector salt))
