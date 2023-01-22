@@ -25,4 +25,5 @@
    #:unsupported-digest-algorithm-name
    #:with-digest
    #:update-digest
-   #:compute-digest))
+   #:compute-digest
+   #:compute-hex-digest))

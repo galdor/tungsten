@@ -57,3 +57,8 @@
            (type symbol algorithm))
   (with-digest (%digest algorithm)
     (update-digest %digest data)))
+
+(defun compute-hex-digest (data algorithm)
+  (declare (type (or string core:octet-vector) data)
+           (type symbol algorithm))
+  (text:encode-hex-string (compute-digest data algorithm)))
