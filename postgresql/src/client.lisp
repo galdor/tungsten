@@ -9,7 +9,7 @@
 
 (defclass client ()
   ((stream
-    :type system:network-stream
+    :type (or system:network-stream null)
     :initarg :stream
     :reader client-stream)))
 
@@ -29,7 +29,7 @@
   ;; the future we would like to support UNIX sockets.
   (let ((stream (system:make-tcp-client host port)))
     (core:abort-protect
-        (let ((parameters (list)))
+        (let ((parameters nil))
           (when user
             (push (cons "user" user) parameters))
           (when database
@@ -37,9 +37,8 @@
           (when application-name
             (push (cons "application_name" application-name) parameters))
           (write-startup-message 3 0 parameters stream)
-          (finish-output stream)
           (authenticate user password stream)
-          stream)
+          (make-instance 'client :stream stream))
       (close stream))))
 
 (defun close-client (client)
@@ -52,17 +51,16 @@
 
 (defun authenticate (user password stream)
   (declare (type (or string null) user password)
-           (type stream stream)
-           (ignore user))
+           (type stream stream))
   (do ()
       (nil)
     (let ((message (read-message stream)))
       (case (car message)
         (:error-response
-         ;; TODO
-         nil)
+         (let* ((fields (cdr message))
+                (message (or (cdr (assoc :message fields)) "unknown error")))
+           (authentication-error "Cannot authenticate: ~A." message)))
         (:notice-response
-         ;; TODO
          nil)
         (:authentication-ok
          (return))
@@ -72,7 +70,11 @@
             "Missing password for clear-text authentication"))
          (write-password-message password stream))
         (:authentication-md5-password
-         (authentication-error "Unsupported MD5 authentication scheme."))
+         (unless password
+           (authentication-error "Missing password for MD5 authentication"))
+         (let* ((salt (cadr message))
+                (hash (compute-password-md5-hash user password salt)))
+           (write-password-message hash stream)))
         (:authentication-gss
          (authentication-error "Unsupported GSS authentication scheme."))
         (:authentication-kerberos-v5
@@ -85,4 +87,4 @@
         (:authentication-sasl-credential
          (authentication-error "Unsupported SASL authentication scheme."))
         (t
-         (protocol-error "Unexpected message ~S" message))))))
+         (authentication-error "Unexpected message ~S" message))))))

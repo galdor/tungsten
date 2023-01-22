@@ -6,11 +6,106 @@
 (defun protocol-error (format &rest arguments)
   (error 'protocol-error :format-control format :format-arguments arguments))
 
-(defun check-message-size (data offset expected-size)
-  (when (> (+ offset expected-size) (length data))
-    (protocol-error "Truncated message body: expected ~D octets available ~
-                     from offset ~D, but only ~D are available."
-                    expected-size offset (- (length data) offset))))
+(defstruct (decoder
+            (:copier nil)
+            (:predicate nil))
+  (data nil :type (or core:octet-vector null))
+  (start 0 :type (integer 0))
+  (end 0 :type (integer 0)))
+
+(defun decoder-eof-p (decoder)
+  (declare (type decoder decoder))
+  (with-slots (start end) decoder
+    (>= start end)))
+
+(defun decoder-starts-with (decoder prefix)
+  (declare (type decoder decoder)
+           (type core:octet prefix))
+  (with-slots (data start end) decoder
+    (and (< start end)
+         (= (aref data start) prefix))))
+
+(defun decoder-skip (decoder n)
+  (declare (type decoder decoder)
+           (type (integer 1) n))
+  (incf (decoder-start decoder) n))
+
+(defun decode-int8 (decoder)
+  (declare (type decoder decoder))
+  (with-slots (data start end) decoder
+    (when (>= start end)
+      (protocol-error "Truncated 1 byte integer."))
+    (prog1 (core:binref :int8 data start)
+      (incf start))))
+
+(defun decode-int32 (decoder)
+  (declare (type decoder decoder))
+  (with-slots (data start end) decoder
+    (when (> (+ start 4) end)
+      (protocol-error "Truncated 4 byte integer."))
+    (prog1 (core:binref :int32be data start)
+      (incf start 4))))
+
+(defun decode-string (decoder)
+  (declare (type decoder decoder))
+  (with-slots (data start end) decoder
+    (let ((zero (position 0 data :start start :end end)))
+      (unless zero
+        (protocol-error "Truncated string."))
+      (prog1 (text:decode-string data :start start :end zero)
+        (setf start (1+ zero))))))
+
+(defun decode-string-list (decoder)
+  (declare (type decoder decoder))
+  (do ((strings nil))
+      ((decoder-eof-p decoder)
+       (protocol-error "Truncated string list."))
+    (when (decoder-starts-with decoder 0)
+      (decoder-skip decoder 1)
+      (return (nreverse strings)))
+    (push (decode-string decoder) strings)))
+
+(defun decode-octets (decoder nb-octets)
+  (declare (type decoder decoder))
+  (with-slots (data start end) decoder
+    (when (> (+ start nb-octets) end)
+      (protocol-error "Truncated octet sequence."))
+    (let ((octets (core:make-octet-vector nb-octets)))
+      (replace octets data :start2 start)
+      (incf start nb-octets)
+      octets)))
+
+(defun decode-error-and-notice-fields (decoder)
+  (declare (type decoder decoder))
+  (do ((fields nil))
+      ((decoder-eof-p decoder)
+       (protocol-error "Truncated field list."))
+    (when (decoder-starts-with decoder 0)
+      (decoder-skip decoder 1)
+      (return (nreverse fields)))
+    (let* ((type (code-char (decode-int8 decoder)))
+           (value (decode-string decoder))
+           (field (case type
+                    (#\S (cons :l10n-severity value))
+                    (#\V (cons :severity value))
+                    (#\C (cons :code value))
+                    (#\M (cons :message value))
+                    (#\D (cons :detail value))
+                    (#\H (cons :hint value))
+                    (#\P (cons :position value))
+                    (#\p (cons :internal-position value))
+                    (#\q (cons :internal-query value))
+                    (#\W (cons :where value))
+                    (#\s (cons :schema value))
+                    (#\t (cons :table value))
+                    (#\c (cons :column value))
+                    (#\d (cons :data-type value))
+                    (#\n (cons :constraint value))
+                    (#\F (cons :file value))
+                    (#\L (cons :internal-line value))
+                    (#\R (cons :routine value))
+                    (t (cons type value)))))
+      (push field fields))))
 
 (defun read-message (stream)
   (declare (type stream stream))
@@ -23,16 +118,22 @@
            (body (core:make-octet-vector body-size)))
       (unless (= (read-sequence body stream) body-size)
         (error 'end-of-file :stream stream))
-      (case message-type
-        (#\R
-         (decode-message/authentication body))
-        (t
-         (protocol-error "Unhandled message type ~S." message-type))))))
+      (let ((decoder (make-decoder :data body :start 0 :end (length body))))
+        (case message-type
+          (#\E
+           (decode-message/error-response decoder))
+          (#\R
+           (decode-message/authentication decoder))
+          (t
+           (protocol-error "Unhandled message type ~S." message-type)))))))
 
-(defun decode-message/authentication (data)
-  (declare (type core:octet-vector data))
-  (check-message-size data 0 4)
-  (let ((type (core:binref :int32be data)))
+(defun decode-message/error-response (decoder)
+  (declare (type decoder decoder))
+  `(:error-response . ,(decode-error-and-notice-fields decoder)))
+
+(defun decode-message/authentication (decoder)
+  (declare (type decoder decoder))
+  (let ((type (decode-int32 decoder)))
     (case type
       (0
        '(:authentication-ok))
@@ -41,9 +142,7 @@
       (2
        '(:authentication-cleartext-password))
       (5
-       (check-message-size data 4 4)
-       (let ((salt (core:make-octet-vector 4)))
-         (replace salt data :start2 1)
+       (let ((salt (decode-octets decoder 4)))
          `(:authentication-md5-password ,salt)))
       (6
        '(:authentication-scm-credential))
@@ -52,30 +151,10 @@
       (9
        '(:authentication-sspi))
       (10
-       (let ((mechanisms (decode-string-list data 1)))
+       (let ((mechanisms (decode-string-list decoder)))
          `(:authentication-sasl ,mechanisms)))
       (t
        (protocol-error "Unknown authentication type ~D." type)))))
-
-(defun decode-string-list (data offset)
-  (do ((strings nil)
-       (i offset))
-      ((or (>= i (length data))
-           (= (aref data offset) 0))
-       (when (>= i (length data))
-         (protocol-error "Truncated string list."))
-       (values (nreverse strings) (- i offset)))
-    (multiple-value-bind (string length)
-        (decode-string data i)
-      (push string strings)
-      (incf i length))))
-
-(defun decode-string (data offset)
-  (let ((zero (position 0 data :start offset)))
-    (unless zero
-      (protocol-error "Truncated string."))
-    (values (text:decode-string data :start offset :end zero)
-            (- zero offset))))
 
 (defun write-message (message-type value stream)
   (declare (type (or standard-char null) message-type)
@@ -121,9 +200,13 @@
                           (offset (reserve nb-octets)))
                      (replace data value :start1 offset)))))))))
       (encode-value value))
-    (let ((size-offset (if message-type 1 0)))
-      (setf (core:binref :int32be data size-offset) (fill-pointer data)))
-    (write-sequence data stream)))
+    (let ((size-offset (if message-type 1 0))
+          (size (length data)))
+      (when message-type
+        (decf size))
+      (setf (core:binref :int32be data size-offset) size))
+    (write-sequence data stream)
+    (finish-output stream)))
 
 (defun write-startup-message (major-version minor-version parameters stream)
   (declare (type (signed-byte 16) major-version minor-version)
@@ -142,3 +225,12 @@
   (declare (type string password)
            (type stream stream))
   (write-message #\p `(string ,password) stream))
+
+(defun compute-password-md5-hash (user password salt)
+  (declare (type string user password)
+           (type core:octet-vector salt))
+  (let* ((key (concatenate 'string password user))
+         (hashed-key (openssl:compute-hex-digest key :md5))
+         (salted-key (core:octet-vector* (text:encode-string hashed-key) salt))
+         (hashed-salted-key (openssl:compute-hex-digest salted-key :md5)))
+    (concatenate 'string "md5" hashed-salted-key)))
