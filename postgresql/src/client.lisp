@@ -1,11 +1,29 @@
 (in-package :postgresql)
 
-(define-condition authentication-error (simple-error)
-  ())
+(define-condition missing-password (simple-error)
+  ()
+  (:default-initargs
+   :format-control "Missing password for authentication."))
 
-(defun authentication-error (format &rest arguments)
-  (error 'authentication-error :format-control format
-                               :format-arguments arguments))
+(define-condition unsupported-authentication-scheme (error)
+  ((name
+    :type string
+    :initarg :name
+    :reader unsupported-authentication-scheme-name))
+  (:report
+   (lambda (condition stream)
+     (with-slots (name) condition
+       (format stream "Unsupported PostgreSQL authentication scheme ~A."
+               name)))))
+
+(define-condition unexpected-message (error)
+  ((message
+    :initarg :message
+    :reader unexpected-message-message))
+  (:report
+   (lambda (condition stream)
+     (with-slots (message) condition
+       (format stream "Unexpected PostgreSQL message:~%~%~S~%" message)))))
 
 (defclass client ()
   ((stream
@@ -73,25 +91,23 @@
          (return))
         (:authentication-cleartext-password
          (unless password
-           (authentication-error
-            "Missing password for clear-text authentication"))
+           (error 'missing-password))
          (write-password-message password stream))
         (:authentication-md5-password
          (unless password
-           (authentication-error "Missing password for MD5 authentication."))
+           (error 'missing-password))
          (let* ((salt (cadr message))
                 (hash (compute-password-md5-hash user password salt)))
            (write-password-message hash stream)))
         (:authentication-gss
-         (authentication-error "Unsupported GSS authentication scheme."))
+         (error 'unsupported-authentication-scheme :name "GSS"))
         (:authentication-kerberos-v5
-         (authentication-error
-          "Unsupported Kerberos V5 authentication scheme."))
+         (error 'unsupported-authentication-scheme :name "Kerberos V5"))
         (:authentication-scm-credential
-         (authentication-error "Unsupported SCM authentication scheme."))
+         (error 'unsupported-authentication-scheme :name "SCM"))
         (:authentication-sspi-credential
-         (authentication-error "Unsupported SSPI authentication scheme."))
+         (error 'unsupported-authentication-scheme :name "SSPI"))
         (:authentication-sasl-credential
-         (authentication-error "Unsupported SASL authentication scheme."))
+         (error 'unsupported-authentication-scheme :name "SASL"))
         (t
-         (authentication-error "Unexpected message ~S" message))))))
+         (error 'unexpected-message :message message))))))

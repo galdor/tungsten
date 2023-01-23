@@ -21,7 +21,11 @@
    #:backend-error-line
    #:backend-error-routine
 
-   #:authentication-error
+   #:missing-password
+   #:unsupported-authentication-scheme
+   #:unsupported-authentication-scheme-name
+   #:unexpected-message
+   #:unexpected-message-message
    #:client
    #:client-stream
    #:make-client
