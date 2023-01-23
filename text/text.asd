@@ -14,7 +14,8 @@
    (:file "ascii")
    (:file "utf-8")
    (:file "iso-8859-1")
-   (:file "hex-encoding"))
+   (:file "hex-encoding")
+   (:file "base64"))
   :in-order-to ((test-op (test-op "text/test"))))
 
 (defsystem "text/test"
@@ -29,6 +30,7 @@
    (:file "ascii")
    (:file "utf-8")
    (:file "iso-8859-1")
-   (:file "hex-encoding"))
+   (:file "hex-encoding")
+   (:file "base64"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :text-test)))

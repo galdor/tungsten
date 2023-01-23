@@ -39,4 +39,9 @@
    #:invalid-hex-string
    #:invalid-hex-string-string
    #:encode-hex-string
-   #:decode-hex-string))
+   #:decode-hex-string
+
+   #:invalid-base64-character
+   #:invalid-base64-character-character
+   #:encode-base64
+   #:decode-base64))
