@@ -13,6 +13,7 @@
    (:file "ffi")
    (:file "tls-stream")
    (:file "tls-client")
+   (:file "random")
    (:file "digests"))
   :in-order-to ((test-op (test-op "openssl/test"))))
 

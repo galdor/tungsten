@@ -268,6 +268,16 @@
                                 %ssl %data size)))
 
 ;;;
+;;; Random
+;;;
+
+(defun rand-bytes (n)
+  (let ((octets (core:make-octet-vector n)))
+    (ffi:with-pinned-vector-data (%octets octets)
+      (openssl-funcall ("RAND_bytes" ((:pointer :int) :int) %octets n)))
+    octets))
+
+;;;
 ;;; Digests
 ;;;
 

@@ -21,6 +21,8 @@
    #:tls-client-port
    #:make-tls-client
 
+   #:random-octets
+
    #:unsupported-digest-algorithm
    #:unsupported-digest-algorithm-name
    #:with-digest
