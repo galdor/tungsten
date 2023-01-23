@@ -70,16 +70,15 @@
 
 (defmethod stream-write-char ((stream octet-output-stream) character)
   (declare (type character character))
-  (with-slots (write-buffer external-format) stream
+  (with-slots (data length external-format) stream
     (let* ((encoding (text:external-format-encoding external-format))
            (nb-octets
              (text:encoded-character-length character :encoding encoding))
-           (position (core:buffer-reserve write-buffer nb-octets)))
+           (position (octet-output-stream-reserve stream nb-octets)))
       (text:encode-string (string character)
                           :encoding encoding
-                          :octets (core:buffer-data write-buffer)
-                          :offset position)
-      (incf (core:buffer-end write-buffer) nb-octets)))
+                          :octets data :offset position)
+      (incf length nb-octets)))
   character)
 
 (defmethod streams:stream-line-column ((stream octet-output-stream))
