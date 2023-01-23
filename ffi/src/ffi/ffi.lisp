@@ -23,6 +23,11 @@
   (%free-foreign-memory size))
 
 (defmacro with-foreign-value ((%pointer type-name &key (count 1)) &body body)
+  ;; Note that we do not use %WITH-FOREIGN-VALUE if the type size is not equal
+  ;; to the base type size (e.g. for structures). It is a bit of a hack; we
+  ;; would need to mark types has having a fake base type (:POINTER for
+  ;; structures). But it is not really fake: structures are manipulated as
+  ;; pointers after all.
   (cond
     ((and (constantp type-name) (base-type-p type-name)
           (constantp count) (integerp count))
@@ -32,6 +37,8 @@
     ((and (listp type-name)
           (eq (car type-name) 'cl:quote)
           (symbolp (cadr type-name))
+          (= (foreign-type-size (cadr type-name))
+             (foreign-type-size (foreign-base-type (cadr type-name))))
           (constantp count) (integerp count))
      `(%with-foreign-value (,%pointer ,(foreign-base-type (cadr type-name))
                                       :count ,count)
@@ -187,16 +194,20 @@ zero."
                                 &key (encoding *default-string-encoding*)
                                      start end)
                                &body body)
-  (destructuring-bind (%pointer &optional (length-var (gensym "LENGTH-")))
-      (if (listp var-or-vars) var-or-vars (list var-or-vars))
-    `(multiple-value-bind (,%pointer ,length-var)
-         (allocate-foreign-string ,string :encoding ,encoding
-                                          :start ,start :end ,end)
-       (declare (ignorable ,length-var))
-       (unwind-protect
-            (progn
-              ,@body)
-         (free-foreign-memory ,%pointer)))))
+  (let ((string-var (gensym "STRING-")))
+    (destructuring-bind (%pointer &optional (length-var (gensym "LENGTH-")))
+        (if (listp var-or-vars) var-or-vars (list var-or-vars))
+      `(let ((,string-var ,string))
+         (multiple-value-bind (,%pointer ,length-var)
+             (if ,string-var
+                 (allocate-foreign-string ,string :encoding ,encoding
+                                                  :start ,start :end ,end)
+                 (values (ffi:null-pointer) 0))
+           (declare (ignorable ,length-var))
+           (unwind-protect
+                (progn
+                  ,@body)
+             (free-foreign-memory ,%pointer)))))))
 
 (defmacro with-foreign-strings ((&rest bindings) &body body)
   (if bindings
