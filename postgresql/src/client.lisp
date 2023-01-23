@@ -111,7 +111,7 @@
         (error 'unsupported-authentication-scheme :name "Kerberos V5"))
       (:authentication-scm-credential
         (error 'unsupported-authentication-scheme :name "SCM"))
-      (:authentication-sspi-credential
+      (:authentication-sspi
         (error 'unsupported-authentication-scheme :name "SSPI"))
       (:authentication-sasl-credential
         (error 'unsupported-authentication-scheme :name "SASL")))))
