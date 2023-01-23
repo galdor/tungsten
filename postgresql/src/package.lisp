@@ -25,4 +25,5 @@
    #:client
    #:client-stream
    #:make-client
-   #:close-client))
+   #:close-client
+   #:with-client))

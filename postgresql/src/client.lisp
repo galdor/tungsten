@@ -51,6 +51,13 @@
       (setf stream nil)
       t)))
 
+(defmacro with-client ((client &rest options) &body body)
+  `(let ((,client (make-client ,@options)))
+     (unwind-protect
+          (progn
+            ,@body)
+       (close-client client))))
+
 (defun authenticate (user password stream)
   (declare (type (or string null) user password)
            (type stream stream))
