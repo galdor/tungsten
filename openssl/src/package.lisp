@@ -28,4 +28,6 @@
    #:with-digest
    #:update-digest
    #:compute-digest
-   #:compute-hex-digest))
+   #:compute-hex-digest
+
+   #:pbkdf2))

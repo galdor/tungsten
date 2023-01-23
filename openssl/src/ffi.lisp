@@ -317,3 +317,32 @@
          ("EVP_DigestFinal_ex" ((:pointer :pointer :pointer) :int)
                                %context %octets %size))))
     octets))
+
+;;;
+;;; Key derivation
+;;;
+
+(defun evp-kdf-ctx-new (%kdf)
+  (openssl-funcall ("EVP_KDF_CTX_new" ((:pointer) :pointer) %kdf)))
+
+(defun evp-kdf-ctx-free (%context)
+  (openssl-funcall ("EVP_KDF_CTX_free" ((:pointer) :void) %context)))
+
+(defun evp-kdf-derive (%context key-length %parameters)
+  (let ((key (core:make-octet-vector key-length)))
+    (ffi:with-pinned-vector-data (%key key)
+      (ffi:clear-foreign-memory %key key-length)
+      (openssl-funcall
+       ("EVP_KDF_derive" ((:pointer :pointer system:size-t :pointer) :int)
+                         %context %key key-length %parameters))
+      key)))
+
+(defun evp-kdf-fetch (%library-context name properties)
+  (ffi:with-foreign-strings ((%name name)
+                             (%properties properties))
+    (openssl-funcall
+     ("EVP_KDF_fetch" ((:pointer :pointer :pointer) :pointer)
+                      %library-context %name %properties))))
+
+(defun evp-kdf-free (%kdf)
+  (openssl-funcall ("EVP_KDF_free" ((:pointer) :void) %kdf)))

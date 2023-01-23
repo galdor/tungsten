@@ -89,3 +89,21 @@
  (filetype :int)
  ((:ssl-filetype-pem "SSL_FILETYPE_PEM")
   (:ssl-filetype-asn1 "SSL_FILETYPE_ASN1")))
+
+(enum
+ (ossl-param-type :unsigned-int)
+ ((:ossl-param-integer "OSSL_PARAM_INTEGER")
+  (:ossl-param-unsigned-integer "OSSL_PARAM_UNSIGNED_INTEGER")
+  (:ossl-param-real "OSSL_PARAM_REAL")
+  (:ossl-param-utf8-string "OSSL_PARAM_UTF8_STRING")
+  (:ossl-param-octet-string "OSSL_PARAM_OCTET_STRING")
+  (:ossl-param-utf8-ptr "OSSL_PARAM_UTF8_PTR")
+  (:ossl-param-octet-ptr "OSSL_PARAM_OCTET_PTR")))
+
+(struct
+ (ossl-param "struct ossl_param_st")
+ ((:key :pointer "key")
+  (:data-type 'ossl-param-type "data_type")
+  (:data :pointer "data")
+  (:data-size 'system:size-t "data_size")
+  (:return-size 'system:size-t "return_size")))

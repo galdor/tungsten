@@ -13,8 +13,10 @@
    (:file "ffi")
    (:file "tls-stream")
    (:file "tls-client")
+   (:file "parameters")
    (:file "random")
-   (:file "digests"))
+   (:file "digests")
+   (:file "pbkdf2"))
   :in-order-to ((test-op (test-op "openssl/test"))))
 
 (defsystem "openssl/test"
@@ -25,6 +27,7 @@
   :serial t
   :components
   ((:file "package")
-   (:file "digests"))
+   (:file "digests")
+   (:file "pbkdf2"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :openssl-test)))
