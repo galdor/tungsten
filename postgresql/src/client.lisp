@@ -59,9 +59,7 @@
     (let ((message (read-message stream)))
       (case (car message)
         (:error-response
-         (let* ((fields (cdr message))
-                (message (or (cdr (assoc :message fields)) "unknown error")))
-           (authentication-error "Cannot authenticate: ~A." message)))
+         (backend-error (cdr message)))
         (:notice-response
          nil)
         (:authentication-ok

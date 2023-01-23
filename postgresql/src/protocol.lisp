@@ -6,6 +6,90 @@
 (defun protocol-error (format &rest arguments)
   (error 'protocol-error :format-control format :format-arguments arguments))
 
+(define-condition backend-error (error)
+  ((l10n-severity
+    :type (or symbol string)
+    :reader backend-error-l10n-severity)
+   (severity
+    :type (or symbol string)
+    :reader backend-error-severity)
+   (code
+    :type string
+    :reader backend-error-code)
+   (message
+    :type string
+    :reader backend-error-message)
+   (detail
+    :type (or string null)
+    :reader backend-error-detail)
+   (position
+    :type (or integer null)
+    :reader backend-error-position)
+   (internal-position
+    :type (or integer null)
+    :reader backend-error-internal-position)
+   (internal-query
+    :type (or string null)
+    :reader backend-error-internal-query)
+   (where
+    :type (or string null)
+    :reader backend-error-where)
+   (schema
+    :type (or string null)
+    :reader backend-error-schema)
+   (table
+    :type (or string null)
+    :reader backend-error-table)
+   (column
+    :type (or string null)
+    :reader backend-error-column)
+   (data-type
+    :type (or string null)
+    :reader backend-error-data-type)
+   (constraint
+    :type (or string null)
+    :reader backend-error-constraint)
+   (file
+    :type (or string null)
+    :reader backend-error-file)
+   (line
+    :type (or integer null)
+    :reader backend-error-line)
+   (routine
+    :type (or string null)
+    :reader backend-error-routine))
+  (:report
+   (lambda (condition stream)
+     (with-slots (severity code message) condition
+       (format stream "PostgreSQL backend error: ~A ~A ~A."
+               severity code message)))))
+
+(defun backend-error (fields)
+  (declare (type list fields))
+  (let ((error (make-condition 'backend-error)))
+    (macrolet ((copy-field (name)
+                 `(setf (slot-value error ',name)
+                        (cdr (assoc ,(intern (symbol-name name) :keyword)
+                                    fields)))))
+      (copy-field l10n-severity)
+      (copy-field severity)
+      (copy-field code)
+      (copy-field message)
+      (copy-field detail)
+      (copy-field position)
+      (copy-field internal-position)
+      (copy-field internal-query)
+      (copy-field where)
+      (copy-field schema)
+      (copy-field table)
+      (copy-field column)
+      (copy-field data-type)
+      (copy-field constraint)
+      (copy-field file)
+      (copy-field line)
+      (copy-field routine))
+    (error error)))
+
 (defstruct (decoder
             (:copier nil)
             (:predicate nil))
@@ -86,14 +170,14 @@
     (let* ((type (code-char (decode-int8 decoder)))
            (value (decode-string decoder))
            (field (case type
-                    (#\S (cons :l10n-severity value))
-                    (#\V (cons :severity value))
+                    (#\S (cons :l10n-severity (parse-severity value)))
+                    (#\V (cons :severity (parse-severity value)))
                     (#\C (cons :code value))
                     (#\M (cons :message value))
                     (#\D (cons :detail value))
                     (#\H (cons :hint value))
-                    (#\P (cons :position value))
-                    (#\p (cons :internal-position value))
+                    (#\P (cons :position (parse-integer value)))
+                    (#\p (cons :internal-position (parse-integer value)))
                     (#\q (cons :internal-query value))
                     (#\W (cons :where value))
                     (#\s (cons :schema value))
@@ -102,10 +186,20 @@
                     (#\d (cons :data-type value))
                     (#\n (cons :constraint value))
                     (#\F (cons :file value))
-                    (#\L (cons :internal-line value))
+                    (#\L (cons :internal-line (parse-integer value)))
                     (#\R (cons :routine value))
                     (t (cons type value)))))
       (push field fields))))
+
+(defun parse-severity (string)
+  (declare (type string string))
+  (cond
+    ((member string '("LOG" "DEBUG" "INFO" "NOTICE" "WARNING" "ERROR"
+                      "FATAL" "PANIC")
+             :test #'string=)
+     (intern string :keyword))
+    (t
+     string)))
 
 (defun read-message (stream)
   (declare (type stream stream))
