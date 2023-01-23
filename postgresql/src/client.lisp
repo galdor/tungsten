@@ -76,38 +76,42 @@
             ,@body)
        (close-client client))))
 
+(defmacro read-message-case ((message stream) &rest forms)
+  `(let ((,message (read-message ,stream)))
+     (case (car ,message)
+       (:error-response
+        (backend-error (cdr ,message)))
+       (:notice-response
+        nil)
+       ,@forms
+       (t
+        (error 'unexpected-message :message ,message)))))
+
 (defun authenticate (user password stream)
   (declare (type (or string null) user password)
            (type stream stream))
   (do ()
       (nil)
-    (let ((message (read-message stream)))
-      (case (car message)
-        (:error-response
-         (backend-error (cdr message)))
-        (:notice-response
-         nil)
-        (:authentication-ok
-         (return))
-        (:authentication-cleartext-password
-         (unless password
-           (error 'missing-password))
-         (write-password-message password stream))
-        (:authentication-md5-password
-         (unless password
-           (error 'missing-password))
-         (let* ((salt (cadr message))
-                (hash (compute-password-md5-hash user password salt)))
-           (write-password-message hash stream)))
-        (:authentication-gss
-         (error 'unsupported-authentication-scheme :name "GSS"))
-        (:authentication-kerberos-v5
-         (error 'unsupported-authentication-scheme :name "Kerberos V5"))
-        (:authentication-scm-credential
-         (error 'unsupported-authentication-scheme :name "SCM"))
-        (:authentication-sspi-credential
-         (error 'unsupported-authentication-scheme :name "SSPI"))
-        (:authentication-sasl-credential
-         (error 'unsupported-authentication-scheme :name "SASL"))
-        (t
-         (error 'unexpected-message :message message))))))
+    (read-message-case (message stream)
+      (:authentication-ok
+        (return))
+      (:authentication-cleartext-password
+        (unless password
+          (error 'missing-password))
+        (write-password-message password stream))
+      (:authentication-md5-password
+        (unless password
+          (error 'missing-password))
+        (let* ((salt (cadr message))
+               (hash (compute-password-md5-hash user password salt)))
+          (write-password-message hash stream)))
+      (:authentication-gss
+        (error 'unsupported-authentication-scheme :name "GSS"))
+      (:authentication-kerberos-v5
+        (error 'unsupported-authentication-scheme :name "Kerberos V5"))
+      (:authentication-scm-credential
+        (error 'unsupported-authentication-scheme :name "SCM"))
+      (:authentication-sspi-credential
+        (error 'unsupported-authentication-scheme :name "SSPI"))
+      (:authentication-sasl-credential
+        (error 'unsupported-authentication-scheme :name "SASL")))))
