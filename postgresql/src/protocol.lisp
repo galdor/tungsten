@@ -223,7 +223,7 @@
 
 (defun decode-message/error-response (decoder)
   (declare (type decoder decoder))
-  `(:error-response . ,(decode-error-and-notice-fields decoder)))
+  `(:error-response ,(decode-error-and-notice-fields decoder)))
 
 (defun decode-message/authentication (decoder)
   (declare (type decoder decoder))

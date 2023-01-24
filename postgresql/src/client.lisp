@@ -83,7 +83,7 @@
        (declare (ignorable ,fields))
        (case (car ,message)
          (:error-response
-          (backend-error (cdr ,message)))
+          (backend-error (car ,fields)))
          (:notice-response
           nil)
          ,@(mapcar
