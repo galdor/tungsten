@@ -29,7 +29,15 @@
   ((stream
     :type (or system:network-stream null)
     :initarg :stream
-    :reader client-stream)))
+    :reader client-stream)
+   (backend-process-id
+    :type (or integer null)
+    :initform nil
+    :accessor client-backend-process-id)
+   (backend-secret-key
+    :type (or integer null)
+    :initform nil
+    :accessor client-backend-secret-key)))
 
 (defmethod print-object ((client client) stream)
   (print-unreadable-object (client stream :type t)
@@ -58,6 +66,7 @@
           (write-startup-message 3 0 parameters stream)
           (setf client (make-instance 'client :stream stream))
           (authenticate user password client)
+          (finish-startup client)
           client)
       (if client
           (close-client client)
@@ -175,8 +184,21 @@
                     ;; Check the server signature
                     (check-scram-server-final-message
                      server-final-message salted-password auth-message)
-                    ;; Wait for an AuthenticationOk message.
-                    (loop
-                      (read-message-case (message client)
-                        (:authentication-ok ()
-                          nil)))))))))))))
+                    (return-from authenticate/scram-sha-256)))))))))))
+
+(defun finish-startup (client)
+  (declare (type client client))
+  ;; See
+  ;; https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.6.7.3
+  ;; for more information about the startup process.
+  (with-slots (stream) client
+    (loop
+      (read-message-case (message client)
+        (:parameter-status (name value)
+          (declare (ignore name value))
+          nil)
+        (:backend-key-data (process-id secret-key)
+          (setf (client-backend-process-id client) process-id
+                (client-backend-secret-key client) secret-key))
+        (:ready-for-query ()
+          (return))))))

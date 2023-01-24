@@ -27,6 +27,8 @@
    #:unexpected-message
    #:unexpected-message-message
    #:client
+   #:client-backend-process-id
+   #:client-backend-secret-key
    #:client-stream
    #:make-client
    #:close-client

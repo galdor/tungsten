@@ -149,6 +149,14 @@
       (return (nreverse strings)))
     (push (decode-string decoder) strings)))
 
+(defun decode-octet (decoder)
+  (declare (type decoder decoder))
+  (with-slots (data start end) decoder
+    (when (>= start end)
+      (protocol-error "Missing octet."))
+    (prog1 (aref data 0)
+      (incf start))))
+
 (defun decode-octets (decoder nb-octets)
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
@@ -212,18 +220,27 @@
            (body (core:make-octet-vector body-size)))
       (unless (= (read-sequence body stream) body-size)
         (error 'end-of-file :stream stream))
-      (let ((decoder (make-decoder :data body :start 0 :end (length body))))
-        (case message-type
-          (#\E
-           (decode-message/error-response decoder))
-          (#\R
-           (decode-message/authentication decoder))
-          (t
-           (protocol-error "Unhandled message type ~S." message-type)))))))
+      (let ((decoder (make-decoder :data body :start 0 :end (length body)))
+            (decode (case message-type
+                      (#\E 'decode-message/error-response)
+                      (#\K 'decode-message/backend-key-data)
+                      (#\R 'decode-message/authentication)
+                      (#\S 'decode-message/parameter-status)
+                      (#\Z 'decode-message/ready-for-query)
+                      (t
+                       (protocol-error "Unhandled message type ~S."
+                                       message-type)))))
+        (funcall decode decoder)))))
 
 (defun decode-message/error-response (decoder)
   (declare (type decoder decoder))
   `(:error-response ,(decode-error-and-notice-fields decoder)))
+
+(defun decode-message/backend-key-data (decoder)
+  (declare (type decoder decoder))
+  (let* ((process-id (decode-int32 decoder))
+         (secret-key (decode-int32 decoder)))
+    `(:backend-key-data ,process-id ,secret-key)))
 
 (defun decode-message/authentication (decoder)
   (declare (type decoder decoder))
@@ -259,6 +276,24 @@
            ,(text:decode-string data :encoding :ascii))))
       (t
        (protocol-error "Unknown authentication type ~D." type)))))
+
+(defun decode-message/parameter-status (decoder)
+  (declare (type decoder decoder))
+  (let* ((name (decode-string decoder))
+         (value (decode-string decoder)))
+    `(:parameter-status ,name ,value)))
+
+(defun decode-message/ready-for-query (decoder)
+  (declare (type decoder decoder))
+  (let* ((status-octet (decode-octet decoder))
+         (status (case status-octet
+                   (#.(char-code #\I) :idle)
+                   (#.(char-code #\T) :in-transaction)
+                   (#.(char-code #\E) :in-failed-transaction)
+                   (t
+                    (protocol-error
+                     "Unknown backend transaction status ~S." status-octet)))))
+    `(:ready-for-query ,status)))
 
 (defun write-message (message-type value stream)
   (declare (type (or standard-char null) message-type)
