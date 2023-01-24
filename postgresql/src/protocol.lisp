@@ -234,13 +234,13 @@
 
 (defun decode-message/error-response (decoder)
   (declare (type decoder decoder))
-  `(:error-response ,(decode-error-and-notice-fields decoder)))
+  (list :error-response (decode-error-and-notice-fields decoder)))
 
 (defun decode-message/backend-key-data (decoder)
   (declare (type decoder decoder))
   (let* ((process-id (decode-int32 decoder))
          (secret-key (decode-int32 decoder)))
-    `(:backend-key-data ,process-id ,secret-key)))
+    (list :backend-key-data process-id secret-key)))
 
 (defun decode-message/authentication (decoder)
   (declare (type decoder decoder))
@@ -254,7 +254,7 @@
        '(:authentication-cleartext-password))
       (5
        (let ((salt (decode-octets decoder 4)))
-         `(:authentication-md5-password ,salt)))
+         (list :authentication-md5-password salt)))
       (6
        '(:authentication-scm-credential))
       (7
@@ -263,17 +263,17 @@
        '(:authentication-sspi))
       (10
        (let ((mechanisms (decode-string-list decoder)))
-         `(:authentication-sasl ,mechanisms)))
+         (list :authentication-sasl mechanisms)))
       (11
        (let ((data (decode-octets decoder (- (decoder-end decoder)
                                              (decoder-start decoder)))))
-         `(:authentication-sasl-continue
-           ,(text:decode-string data :encoding :ascii))))
+         (list :authentication-sasl-continue
+               (text:decode-string data :encoding :ascii))))
       (12
        (let ((data (decode-octets decoder (- (decoder-end decoder)
                                              (decoder-start decoder)))))
-         `(:authentication-sasl-final
-           ,(text:decode-string data :encoding :ascii))))
+         (list :authentication-sasl-final
+               (text:decode-string data :encoding :ascii))))
       (t
        (protocol-error "Unknown authentication type ~D." type)))))
 
@@ -281,7 +281,7 @@
   (declare (type decoder decoder))
   (let* ((name (decode-string decoder))
          (value (decode-string decoder)))
-    `(:parameter-status ,name ,value)))
+    (list :parameter-status name value)))
 
 (defun decode-message/ready-for-query (decoder)
   (declare (type decoder decoder))
@@ -293,7 +293,7 @@
                    (t
                     (protocol-error
                      "Unknown backend transaction status ~S." status-octet)))))
-    `(:ready-for-query ,status)))
+    (list :ready-for-query status)))
 
 (defun write-message (message-type value stream)
   (declare (type (or standard-char null) message-type)
