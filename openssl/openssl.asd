@@ -16,6 +16,7 @@
    (:file "parameters")
    (:file "random")
    (:file "digests")
+   (:file "hmacs")
    (:file "pbkdf2"))
   :in-order-to ((test-op (test-op "openssl/test"))))
 
@@ -28,6 +29,7 @@
   :components
   ((:file "package")
    (:file "digests")
+   (:file "hmacs")
    (:file "pbkdf2"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :openssl-test)))

@@ -30,4 +30,6 @@
    #:compute-digest
    #:compute-hex-digest
 
+   #:compute-hmac
+
    #:pbkdf2))

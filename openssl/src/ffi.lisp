@@ -319,6 +319,26 @@
     octets))
 
 ;;;
+;;; HMACs
+;;;
+
+(defun hmac (%digest key data)
+  (let* ((mac-length (evp-md-get-size %digest))
+         (mac (core:make-octet-vector mac-length)))
+    (ffi:with-pinned-vector-data (%mac mac)
+      (ffi:with-pinned-vector-data (%key key)
+        (ffi:with-pinned-vector-data (%data data)
+          (ffi:with-foreign-value (%mac-length :unsigned-int)
+            (setf (ffi:foreign-value %mac-length :unsigned-int) mac-length)
+            (openssl-funcall
+             ("HMAC" ((:pointer :pointer :int :pointer system:size-t
+                                :pointer :pointer)
+                      :pointer)
+                     %digest %key (length key) %data (length data)
+                     %mac %mac-length)))))
+      mac)))
+
+;;;
 ;;; Key derivation
 ;;;
 
@@ -331,7 +351,6 @@
 (defun evp-kdf-derive (%context key-length %parameters)
   (let ((key (core:make-octet-vector key-length)))
     (ffi:with-pinned-vector-data (%key key)
-      (ffi:clear-foreign-memory %key key-length)
       (openssl-funcall
        ("EVP_KDF_derive" ((:pointer :pointer system:size-t :pointer) :int)
                          %context %key key-length %parameters))
