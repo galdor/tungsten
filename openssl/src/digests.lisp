@@ -7,14 +7,14 @@
 ;;; have to manipulate digests.
 
 (define-condition unsupported-digest-algorithm ()
-  ((name
+  ((algorith
     :type symbol
-    :initarg :name
-    :reader unsupported-digest-algorithm-name))
+    :initarg :algorithm
+    :reader unsupported-digest-algorithm-algorithm))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unsupported digest algorithm ~S." name)))))
+     (with-slots (algorithm) condition
+       (format stream "Unsupported digest algorithm ~S." algorithm)))))
 
 (defun digest-algorithm-name (algorithm)
   (cond
@@ -26,13 +26,14 @@
     (t
      (error 'unsupported-digest-algorithm :name algorithm))))
 
-(defun make-digest (name)
-  (declare (type symbol name))
+(defun make-digest (algorithm)
+  (declare (type symbol algorithm))
   (let ((%context (evp-md-ctx-new)))
     (core:abort-protect
-        (let ((%digest (evp-get-digest-by-name (digest-algorithm-name name))))
+        (let ((%digest (evp-get-digest-by-name
+                        (digest-algorithm-name algorithm))))
           (when (ffi:null-pointer-p %digest)
-            (error 'unsupported-digest-algorithm :name name))
+            (error 'unsupported-digest-algorithm :name algorithm))
           (evp-digest-init-ex2 %context %digest (ffi:null-pointer))
           %context)
       (evp-md-ctx-free %context))))

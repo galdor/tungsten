@@ -294,8 +294,8 @@
 (defun evp-md-ctx-get0-md (%context)
   (openssl-funcall ("EVP_MD_CTX_get0_md" ((:pointer) :pointer) %context)))
 
-(defun evp-md-get-size (%digest-data)
-  (openssl-funcall ("EVP_MD_get_size" ((:pointer) :int) %digest-data)))
+(defun evp-md-get-size (%digest)
+  (openssl-funcall ("EVP_MD_get_size" ((:pointer) :int) %digest)))
 
 (defun evp-digest-init-ex2 (%context %digest %parameters)
   (openssl-funcall ("EVP_DigestInit_ex2" ((:pointer :pointer :pointer) :int)
