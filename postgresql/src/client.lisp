@@ -134,27 +134,43 @@
   (declare (type (or string null) user password)
            (type stream stream)
            (ignore user))
+  ;; See https://www.postgresql.org/docs/current/sasl-authentication.html for
+  ;; more information. We only support the SCRAM-SHA-256 mechanism.
+  ;;
+  ;; It might seem strange to always loop even though we are waiting for one
+  ;; specific message at each step. However we need to be able to handle
+  ;; messages such as NoticeResponse which can be sent at any moment.
   (unless password
     (error 'missing-password))
+  ;; Send a SASLInitialResponse message containing a client-first-message
+  ;; SCRAM payload.
   (let* ((nonce (generate-scram-nonce))
          (client-first-message (scram-client-first-message nil nonce)))
     (write-sasl-initial-response-message "SCRAM-SHA-256" client-first-message
                                          stream)
+    ;; Wait for a AuthenticationSASLContinue message containing a
+    ;; server-first-message SCRAM payload.
     (loop
-     (read-message-case (message stream)
-       (:authentication-sasl-continue (server-first-message)
-         (multiple-value-bind
-               (client-final-message salted-password auth-message)
-             (scram-client-final-message client-first-message
-                                         server-first-message
-                                         password nonce)
-           (write-sasl-response-message client-final-message stream)
-           (loop
-             (read-message-case (message stream)
-               (:authentication-sasl-final (server-final-message)
-                 (check-scram-server-final-message
-                  server-final-message salted-password auth-message)
-                 (loop
-                   (read-message-case (message stream)
-                     (:authentication-ok ()
-                       nil))))))))))))
+      (read-message-case (message stream)
+        (:authentication-sasl-continue (server-first-message)
+          ;; Compute the proof and send a SASLResponse message containing a
+          ;; client-final-message SCRAM payload.
+          (multiple-value-bind
+                (client-final-message salted-password auth-message)
+              (scram-client-final-message client-first-message
+                                          server-first-message
+                                          password nonce)
+            (write-sasl-response-message client-final-message stream)
+            ;; Wait for an AuthenticationSASLFinal message containing a
+            ;; server-final-message SCRAM payload.
+            (loop
+              (read-message-case (message stream)
+                (:authentication-sasl-final (server-final-message)
+                  ;; Check the server signature
+                  (check-scram-server-final-message
+                   server-final-message salted-password auth-message)
+                  ;; Wait for an AuthenticationOk message.
+                  (loop
+                    (read-message-case (message stream)
+                      (:authentication-ok ()
+                        nil))))))))))))
