@@ -77,47 +77,58 @@
        (close-client client))))
 
 (defmacro read-message-case ((message stream) &rest forms)
-  `(let ((,message (read-message ,stream)))
-     (case (car ,message)
-       (:error-response
-        (backend-error (cdr ,message)))
-       (:notice-response
-        nil)
-       ,@forms
-       (t
-        (error 'unexpected-message :message ,message)))))
+  (let ((fields (gensym "FIELDS-")))
+    `(let* ((,message (read-message ,stream))
+            (,fields (cdr ,message)))
+       (declare (ignorable ,fields))
+       (case (car ,message)
+         (:error-response
+          (backend-error (cdr ,message)))
+         (:notice-response
+          nil)
+         ,@(mapcar
+            (lambda (form)
+              (destructuring-bind (type args &body body) form
+                `(,type
+                  ,(if (null args)
+                       `(progn ,@body)
+                       `(let* (,@(mapcar (lambda (arg)
+                                           `(,arg (pop ,fields)))
+                                         args))
+                          ,@body)))))
+            forms)
+         (t
+          (error 'unexpected-message :message ,message))))))
 
 (defun authenticate (user password stream)
   (declare (type (or string null) user password)
            (type stream stream))
   (loop
    (read-message-case (message stream)
-     (:authentication-ok
+     (:authentication-ok ()
        (return))
-     (:authentication-cleartext-password
+     (:authentication-cleartext-password ()
        (unless password
          (error 'missing-password))
        (write-password-message password stream))
-     (:authentication-md5-password
+     (:authentication-md5-password (salt)
        (unless password
          (error 'missing-password))
-       (let* ((salt (cadr message))
-              (hash (compute-password-md5-hash user password salt)))
+       (let ((hash (compute-password-md5-hash user password salt)))
          (write-password-message hash stream)))
-     (:authentication-gss
+     (:authentication-gss ()
        (error 'unsupported-authentication-scheme :name "GSS"))
-     (:authentication-kerberos-v5
+     (:authentication-kerberos-v5 ()
        (error 'unsupported-authentication-scheme :name "Kerberos V5"))
-     (:authentication-scm-credential
+     (:authentication-scm-credential ()
        (error 'unsupported-authentication-scheme :name "SCM"))
-     (:authentication-sspi
+     (:authentication-sspi ()
        (error 'unsupported-authentication-scheme :name "SSPI"))
-     (:authentication-sasl
-       (let ((mechanisms (cadr message)))
-         (unless (member "SCRAM-SHA-256" mechanisms :test #'string=)
-           (error 'unsupported-authentication-scheme
-                  :name (format nil "SASL (~{~A~^, ~})" mechanisms)))
-         (authenticate/scram-sha-256 user password stream))))))
+     (:authentication-sasl (mechanisms)
+       (unless (member "SCRAM-SHA-256" mechanisms :test #'string=)
+         (error 'unsupported-authentication-scheme
+                :name (format nil "SASL (~{~A~^, ~})" mechanisms)))
+       (authenticate/scram-sha-256 user password stream)))))
 
 (defun authenticate/scram-sha-256 (user password stream)
   (declare (type (or string null) user password)
@@ -131,22 +142,19 @@
                                          stream)
     (loop
      (read-message-case (message stream)
-       (:authentication-sasl-continue
-         (let ((server-first-message (cadr message)))
-           (multiple-value-bind
-                 (client-final-message salted-password auth-message)
-               (scram-client-final-message client-first-message
-                                           server-first-message
-                                           password nonce)
-             (write-sasl-response-message client-final-message stream)
-             (loop
-              (read-message-case (message stream)
-                (:authentication-sasl-final
-                  (let ((server-final-message (cadr message)))
-                    (check-scram-server-final-message
-                     server-final-message
-                     salted-password auth-message))
-                  (loop
+       (:authentication-sasl-continue (server-first-message)
+         (multiple-value-bind
+               (client-final-message salted-password auth-message)
+             (scram-client-final-message client-first-message
+                                         server-first-message
+                                         password nonce)
+           (write-sasl-response-message client-final-message stream)
+           (loop
+             (read-message-case (message stream)
+               (:authentication-sasl-final (server-final-message)
+                 (check-scram-server-final-message
+                  server-final-message salted-password auth-message)
+                 (loop
                    (read-message-case (message stream)
-                     (:authentication-ok
-                       nil)))))))))))))
+                     (:authentication-ok ()
+                       nil))))))))))))
