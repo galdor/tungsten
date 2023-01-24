@@ -45,7 +45,8 @@
            (type (or string null) user password database application-name))
   ;; It may seems strange that the host is not a mandatory parameter, but in
   ;; the future we would like to support UNIX sockets.
-  (let ((stream (system:make-tcp-client host port)))
+  (let ((stream (system:make-tcp-client host port))
+        (client nil))
     (core:abort-protect
         (let ((parameters nil))
           (when user
@@ -55,9 +56,12 @@
           (when application-name
             (push (cons "application_name" application-name) parameters))
           (write-startup-message 3 0 parameters stream)
-          (authenticate user password stream)
-          (make-instance 'client :stream stream))
-      (close stream))))
+          (setf client (make-instance 'client :stream stream))
+          (authenticate user password client)
+          client)
+      (if client
+          (close-client client)
+          (close stream)))))
 
 (defun close-client (client)
   (declare (type client client))
@@ -76,9 +80,9 @@
             ,@body)
        (close-client client))))
 
-(defmacro read-message-case ((message stream) &rest forms)
+(defmacro read-message-case ((message client) &rest forms)
   (let ((fields (gensym "FIELDS-")))
-    `(let* ((,message (read-message ,stream))
+    `(let* ((,message (read-message (client-stream ,client)))
             (,fields (cdr ,message)))
        (declare (ignorable ,fields))
        (case (car ,message)
@@ -100,39 +104,40 @@
          (t
           (error 'unexpected-message :message ,message))))))
 
-(defun authenticate (user password stream)
+(defun authenticate (user password client)
   (declare (type (or string null) user password)
-           (type stream stream))
-  (loop
-   (read-message-case (message stream)
-     (:authentication-ok ()
-       (return))
-     (:authentication-cleartext-password ()
-       (unless password
-         (error 'missing-password))
-       (write-password-message password stream))
-     (:authentication-md5-password (salt)
-       (unless password
-         (error 'missing-password))
-       (let ((hash (compute-password-md5-hash user password salt)))
-         (write-password-message hash stream)))
-     (:authentication-gss ()
-       (error 'unsupported-authentication-scheme :name "GSS"))
-     (:authentication-kerberos-v5 ()
-       (error 'unsupported-authentication-scheme :name "Kerberos V5"))
-     (:authentication-scm-credential ()
-       (error 'unsupported-authentication-scheme :name "SCM"))
-     (:authentication-sspi ()
-       (error 'unsupported-authentication-scheme :name "SSPI"))
-     (:authentication-sasl (mechanisms)
-       (unless (member "SCRAM-SHA-256" mechanisms :test #'string=)
-         (error 'unsupported-authentication-scheme
-                :name (format nil "SASL (~{~A~^, ~})" mechanisms)))
-       (authenticate/scram-sha-256 user password stream)))))
+           (type client client))
+  (with-slots (stream) client
+    (loop
+      (read-message-case (message client)
+        (:authentication-ok ()
+          (return))
+        (:authentication-cleartext-password ()
+          (unless password
+            (error 'missing-password))
+          (write-password-message password stream))
+        (:authentication-md5-password (salt)
+          (unless password
+            (error 'missing-password))
+          (let ((hash (compute-password-md5-hash user password salt)))
+            (write-password-message hash stream)))
+        (:authentication-gss ()
+          (error 'unsupported-authentication-scheme :name "GSS"))
+        (:authentication-kerberos-v5 ()
+          (error 'unsupported-authentication-scheme :name "Kerberos V5"))
+        (:authentication-scm-credential ()
+          (error 'unsupported-authentication-scheme :name "SCM"))
+        (:authentication-sspi ()
+          (error 'unsupported-authentication-scheme :name "SSPI"))
+        (:authentication-sasl (mechanisms)
+          (unless (member "SCRAM-SHA-256" mechanisms :test #'string=)
+            (error 'unsupported-authentication-scheme
+                   :name (format nil "SASL (~{~A~^, ~})" mechanisms)))
+          (authenticate/scram-sha-256 user password client))))))
 
-(defun authenticate/scram-sha-256 (user password stream)
+(defun authenticate/scram-sha-256 (user password client)
   (declare (type (or string null) user password)
-           (type stream stream)
+           (type client client)
            (ignore user))
   ;; See https://www.postgresql.org/docs/current/sasl-authentication.html for
   ;; more information. We only support the SCRAM-SHA-256 mechanism.
@@ -142,35 +147,36 @@
   ;; messages such as NoticeResponse which can be sent at any moment.
   (unless password
     (error 'missing-password))
-  ;; Send a SASLInitialResponse message containing a client-first-message
-  ;; SCRAM payload.
-  (let* ((nonce (generate-scram-nonce))
-         (client-first-message (scram-client-first-message nil nonce)))
-    (write-sasl-initial-response-message "SCRAM-SHA-256" client-first-message
-                                         stream)
-    ;; Wait for a AuthenticationSASLContinue message containing a
-    ;; server-first-message SCRAM payload.
-    (loop
-      (read-message-case (message stream)
-        (:authentication-sasl-continue (server-first-message)
-          ;; Compute the proof and send a SASLResponse message containing a
-          ;; client-final-message SCRAM payload.
-          (multiple-value-bind
-                (client-final-message salted-password auth-message)
-              (scram-client-final-message client-first-message
-                                          server-first-message
-                                          password nonce)
-            (write-sasl-response-message client-final-message stream)
-            ;; Wait for an AuthenticationSASLFinal message containing a
-            ;; server-final-message SCRAM payload.
-            (loop
-              (read-message-case (message stream)
-                (:authentication-sasl-final (server-final-message)
-                  ;; Check the server signature
-                  (check-scram-server-final-message
-                   server-final-message salted-password auth-message)
-                  ;; Wait for an AuthenticationOk message.
-                  (loop
-                    (read-message-case (message stream)
-                      (:authentication-ok ()
-                        nil))))))))))))
+  (with-slots (stream) client
+    ;; Send a SASLInitialResponse message containing a client-first-message
+    ;; SCRAM payload.
+    (let* ((nonce (generate-scram-nonce))
+           (client-first-message (scram-client-first-message nil nonce)))
+      (write-sasl-initial-response-message "SCRAM-SHA-256"
+                                           client-first-message stream)
+      ;; Wait for a AuthenticationSASLContinue message containing a
+      ;; server-first-message SCRAM payload.
+      (loop
+        (read-message-case (message client)
+          (:authentication-sasl-continue (server-first-message)
+            ;; Compute the proof and send a SASLResponse message containing a
+            ;; client-final-message SCRAM payload.
+            (multiple-value-bind
+                  (client-final-message salted-password auth-message)
+                (scram-client-final-message client-first-message
+                                            server-first-message
+                                            password nonce)
+              (write-sasl-response-message client-final-message stream)
+              ;; Wait for an AuthenticationSASLFinal message containing a
+              ;; server-final-message SCRAM payload.
+              (loop
+                (read-message-case (message client)
+                  (:authentication-sasl-final (server-final-message)
+                    ;; Check the server signature
+                    (check-scram-server-final-message
+                     server-final-message salted-password auth-message)
+                    ;; Wait for an AuthenticationOk message.
+                    (loop
+                      (read-message-case (message client)
+                        (:authentication-ok ()
+                          nil)))))))))))))
