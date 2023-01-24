@@ -6,6 +6,7 @@
   :components
   ((:file "package")
    (:file "environment")
+   (:file "maths")
    (:file "sequences")
    (:file "hash-tables")
    (:file "octets")

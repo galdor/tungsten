@@ -3,6 +3,8 @@
   (:export
    #:*interactive*
 
+   #:iota
+
    #:shuffle
    #:nshuffle
 

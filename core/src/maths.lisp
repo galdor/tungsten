@@ -1,0 +1,11 @@
+(in-package :core)
+
+(defun iota (n &key (start 0) (step 1))
+  (declare (type (integer 0) n)
+           (type number start step))
+  (do ((values nil)
+       (i 0 (1+ i))
+       (value start (+ value step)))
+      ((>= i n)
+       (nreverse values))
+    (push value values)))
