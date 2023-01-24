@@ -15,6 +15,8 @@
    #:openssl-error-stack-function
    #:openssl-error-stack-errors
 
+   #:constant-time-equal
+
    #:*default-ca-certificate-directory-paths*
    #:tls-client
    #:tls-client-host

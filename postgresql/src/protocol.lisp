@@ -247,6 +247,16 @@
       (10
        (let ((mechanisms (decode-string-list decoder)))
          `(:authentication-sasl ,mechanisms)))
+      (11
+       (let ((data (decode-octets decoder (- (decoder-end decoder)
+                                             (decoder-start decoder)))))
+         `(:authentication-sasl-continue
+           ,(text:decode-string data :encoding :ascii))))
+      (12
+       (let ((data (decode-octets decoder (- (decoder-end decoder)
+                                             (decoder-start decoder)))))
+         `(:authentication-sasl-final
+           ,(text:decode-string data :encoding :ascii))))
       (t
        (protocol-error "Unknown authentication type ~D." type)))))
 
@@ -289,10 +299,10 @@
                                                :nb-octets nb-octets)
                      (setf (aref data (+ offset nb-octets)) 0)))
                   (octets
-                   (let* ((value (cadr value))
-                          (nb-octets (length value))
-                          (offset (reserve nb-octets)))
-                     (replace data value :start1 offset)))))))))
+                   (let* ((nb-octets (length value)))
+                     (when (> nb-octets 0)
+                       (let ((offset (reserve nb-octets)))
+                         (replace data value :start1 offset)))))))))))
       (encode-value value))
     (let ((size-offset (if message-type 1 0))
           (size (length data)))
@@ -319,6 +329,24 @@
   (declare (type string password)
            (type stream stream))
   (write-message #\p `(string ,password) stream))
+
+(defun write-sasl-initial-response-message (mechanism string stream)
+  (declare (type string mechanism)
+           (type (or string null) string)
+           (type stream stream))
+  (let ((data (when string
+                (text:encode-string string :encoding :ascii))))
+    (write-message #\p `((string ,mechanism)
+                         (int32 ,(if data (length data) -1))
+                         (octets ,data))
+                   stream)))
+
+(defun write-sasl-response-message (string stream)
+  (declare (type string string)
+           (type stream stream))
+  (let ((data (text:encode-string string :encoding :ascii)))
+    (write-message #\p `((octets ,data))
+                   stream)))
 
 (defun write-termination-message (stream)
   (declare (type stream stream))

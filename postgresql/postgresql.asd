@@ -1,12 +1,13 @@
 (defsystem "postgresql"
   :description "A client for the PostgreSQL database."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("core" "text" "system" "openssl")
+  :depends-on ("core" "text" "system" "streams" "openssl")
   :pathname "src"
   :serial t
   :components
   ((:file "package")
    (:file "protocol")
+   (:file "scram")
    (:file "client"))
   :in-order-to ((test-op (test-op "postgresql/test"))))
 
@@ -17,6 +18,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "scram"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :postgresql-test)))

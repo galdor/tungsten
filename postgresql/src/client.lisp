@@ -90,28 +90,63 @@
 (defun authenticate (user password stream)
   (declare (type (or string null) user password)
            (type stream stream))
-  (do ()
-      (nil)
-    (read-message-case (message stream)
-      (:authentication-ok
-        (return))
-      (:authentication-cleartext-password
-        (unless password
-          (error 'missing-password))
-        (write-password-message password stream))
-      (:authentication-md5-password
-        (unless password
-          (error 'missing-password))
-        (let* ((salt (cadr message))
-               (hash (compute-password-md5-hash user password salt)))
-          (write-password-message hash stream)))
-      (:authentication-gss
-        (error 'unsupported-authentication-scheme :name "GSS"))
-      (:authentication-kerberos-v5
-        (error 'unsupported-authentication-scheme :name "Kerberos V5"))
-      (:authentication-scm-credential
-        (error 'unsupported-authentication-scheme :name "SCM"))
-      (:authentication-sspi
-        (error 'unsupported-authentication-scheme :name "SSPI"))
-      (:authentication-sasl-credential
-        (error 'unsupported-authentication-scheme :name "SASL")))))
+  (loop
+   (read-message-case (message stream)
+     (:authentication-ok
+       (return))
+     (:authentication-cleartext-password
+       (unless password
+         (error 'missing-password))
+       (write-password-message password stream))
+     (:authentication-md5-password
+       (unless password
+         (error 'missing-password))
+       (let* ((salt (cadr message))
+              (hash (compute-password-md5-hash user password salt)))
+         (write-password-message hash stream)))
+     (:authentication-gss
+       (error 'unsupported-authentication-scheme :name "GSS"))
+     (:authentication-kerberos-v5
+       (error 'unsupported-authentication-scheme :name "Kerberos V5"))
+     (:authentication-scm-credential
+       (error 'unsupported-authentication-scheme :name "SCM"))
+     (:authentication-sspi
+       (error 'unsupported-authentication-scheme :name "SSPI"))
+     (:authentication-sasl
+       (let ((mechanisms (cadr message)))
+         (unless (member "SCRAM-SHA-256" mechanisms :test #'string=)
+           (error 'unsupported-authentication-scheme
+                  :name (format nil "SASL (~{~A~^, ~})" mechanisms)))
+         (authenticate/scram-sha-256 user password stream))))))
+
+(defun authenticate/scram-sha-256 (user password stream)
+  (declare (type (or string null) user password)
+           (type stream stream)
+           (ignore user))
+  (unless password
+    (error 'missing-password))
+  (let* ((nonce (generate-scram-nonce))
+         (client-first-message (scram-client-first-message nil nonce)))
+    (write-sasl-initial-response-message "SCRAM-SHA-256" client-first-message
+                                         stream)
+    (loop
+     (read-message-case (message stream)
+       (:authentication-sasl-continue
+         (let ((server-first-message (cadr message)))
+           (multiple-value-bind
+                 (client-final-message salted-password auth-message)
+               (scram-client-final-message client-first-message
+                                           server-first-message
+                                           password nonce)
+             (write-sasl-response-message client-final-message stream)
+             (loop
+              (read-message-case (message stream)
+                (:authentication-sasl-final
+                  (let ((server-final-message (cadr message)))
+                    (check-scram-server-final-message
+                     server-final-message
+                     salted-password auth-message))
+                  (loop
+                   (read-message-case (message stream)
+                     (:authentication-ok
+                       nil)))))))))))))

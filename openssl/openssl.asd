@@ -11,6 +11,7 @@
     "ffi-manifest"
     :package :openssl)
    (:file "ffi")
+   (:file "utils")
    (:file "tls-stream")
    (:file "tls-client")
    (:file "parameters")

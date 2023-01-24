@@ -175,6 +175,19 @@
   (<= n 0))
 
 ;;;
+;;; Utils
+;;;
+
+(defun crypto-memcmp (octets1 octets2)
+  (assert (= (length octets1) (length octets2)))
+  (ffi:with-pinned-vector-data (%octets1 octets1)
+    (ffi:with-pinned-vector-data (%octets2 octets2)
+      (openssl-funcall
+       ("CRYPTO_memcmp" ((:pointer :pointer system:size-t) :int)
+                        %octets1 %octets2 (length octets1))
+       :errorp nil))))
+
+;;;
 ;;; Contexts
 ;;;
 

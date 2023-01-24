@@ -13,8 +13,6 @@ services:
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
-      POSTGRES_INITDB_ARGS: "--auth-host=md5"
-      POSTGRES_HOST_AUTH_METHOD: "md5"
     logging: &logging
       driver: "json-file"
       options:
