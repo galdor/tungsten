@@ -1,5 +1,7 @@
 (in-package :postgresql)
 
+(defvar *client* nil)
+
 (define-condition missing-password (simple-error)
   ()
   (:default-initargs
@@ -82,12 +84,12 @@
       (setf stream nil)
       t)))
 
-(defmacro with-client ((client &rest options) &body body)
-  `(let ((,client (make-client ,@options)))
+(defmacro with-client ((&rest options) &body body)
+  `(let ((*client* (make-client ,@options)))
      (unwind-protect
           (progn
             ,@body)
-       (close-client client))))
+       (close-client *client*))))
 
 (defmacro read-message-case ((message client) &rest forms)
   (let ((fields (gensym "FIELDS-")))
@@ -202,3 +204,56 @@
                 (client-backend-secret-key client) secret-key))
         (:ready-for-query ()
           (return))))))
+
+(defun query/simple (query &key (client *client*))
+  "Execute QUERY as a simple query and returns a list of command results. Each
+result is a list containing a vector of column names, a list of row vectors
+and the number of rows affected by the query. Columns are always returned as
+strings."
+  (declare (type string query)
+           (type client client))
+  (multiple-value-bind (results transaction-status)
+      (send-simple-query query :client client)
+    (labels ((column-name (description)
+               (cdr (assoc :name description)))
+             (decode-row (rows)
+               (dotimes (i (length rows))
+                 (setf (aref rows i) (text:decode-string (aref rows i)))))
+             (make-result (result)
+               (destructuring-bind (column-descriptions rows command-tag)
+                   result
+                 (let* ((nb-columns (length column-descriptions))
+                        (column-names
+                          (map-into
+                           (make-array nb-columns :element-type 'string
+                                                  :initial-element "")
+                           #'column-name column-descriptions))
+                        (nb-affected-rows (cdr command-tag)))
+                   (mapc #'decode-row rows)
+                   (list column-names rows nb-affected-rows)))))
+      (values (mapcar #'make-result results) transaction-status))))
+
+(defun send-simple-query (query &key (client *client*))
+  (declare (type string query)
+           (type client client))
+  (with-slots (stream) client
+    (write-query-message query stream)
+    (do ((columns nil)
+         (results nil)
+         (rows nil)
+         (transaction-status nil))
+        (transaction-status
+         (values (nreverse results) transaction-status))
+      (read-message-case (message client)
+        (:empty-query-response ()
+          nil)
+        (:row-description (description)
+          (setf columns description))
+        (:data-row (row)
+          (push row rows))
+        (:command-complete (tag)
+          (push (list columns rows tag) results)
+          (setf columns nil
+                rows nil))
+        (:ready-for-query (status)
+          (setf transaction-status status))))))

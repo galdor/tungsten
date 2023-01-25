@@ -21,6 +21,7 @@
    #:backend-error-line
    #:backend-error-routine
 
+   #:*client*
    #:missing-password
    #:unsupported-authentication-scheme
    #:unsupported-authentication-scheme-name
@@ -32,4 +33,5 @@
    #:client-stream
    #:make-client
    #:close-client
-   #:with-client))
+   #:with-client
+   #:query/simple))

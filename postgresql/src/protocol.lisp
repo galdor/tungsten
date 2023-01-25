@@ -122,6 +122,14 @@
     (prog1 (core:binref :int8 data start)
       (incf start))))
 
+(defun decode-int16 (decoder)
+  (declare (type decoder decoder))
+  (with-slots (data start end) decoder
+    (when (> (+ start 2) end)
+      (protocol-error "Truncated 2 byte integer."))
+    (prog1 (core:binref :int16be data start)
+      (incf start 2))))
+
 (defun decode-int32 (decoder)
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
@@ -199,6 +207,49 @@
                     (t (cons type value)))))
       (push field fields))))
 
+(defun decode-row-description (decoder)
+  (declare (type decoder decoder))
+  (let* ((name (decode-string decoder))
+         (table-oid (decode-int32 decoder))
+         (column-attribute (decode-int16 decoder))
+         (type-oid (decode-int32 decoder))
+         (type-size (decode-int16 decoder))
+         (type-modifier (decode-int32 decoder))
+         (format-code (decode-int16 decoder))
+         (format (case format-code
+                   (0 :text)
+                   (1 :binary)
+                   (t (protocol-error "Unknown field format code ~D."
+                                      format-code)))))
+    (list (cons :name name)
+          (cons :table-oid table-oid)
+          (cons :column-attribute column-attribute)
+          (cons :type-oid type-oid)
+          (cons :type-size type-size)
+          (cons :type-modifier type-modifier)
+          (cons :format format))))
+
+(defun parse-command-tag (string)
+  (let ((space (position #\Space string)))
+    (unless space
+      (protocol-error "Invalid command tag ~S." string))
+    (let ((name (cond ((string= string "INSERT" :end1 space) :insert)
+                      ((string= string "DELETE" :end1 space) :delete)
+                      ((string= string "UPDATE" :end1 space) :update)
+                      ((string= string "SELECT" :end1 space) :select)
+                      ((string= string "MOVE" :end1 space) :move)
+                      ((string= string "FETCH" :end1 space) :fetch)
+                      ((string= string "COPY" :end1 space) :copy)
+                      (t (subseq string 0 space))))
+          ;; Find the last space character to support "INSERT 0 <N>"
+          (value (let ((start (1+ (position #\Space string :from-end t))))
+                   (handler-case
+                       (parse-integer string :start start)
+                     (error ()
+                       (protocol-error "Invalid command tag count ~S."
+                                       (subseq string start)))))))
+      (cons name value))))
+
 (defun parse-severity (string)
   (declare (type string string))
   (cond
@@ -222,15 +273,37 @@
         (error 'end-of-file :stream stream))
       (let ((decoder (make-decoder :data body :start 0 :end (length body)))
             (decode (case message-type
+                      (#\C 'decode-message/command-complete)
+                      (#\D 'decode-message/data-row)
                       (#\E 'decode-message/error-response)
                       (#\K 'decode-message/backend-key-data)
                       (#\R 'decode-message/authentication)
                       (#\S 'decode-message/parameter-status)
+                      (#\T 'decode-message/row-description)
                       (#\Z 'decode-message/ready-for-query)
                       (t
                        (protocol-error "Unhandled message type ~S."
                                        message-type)))))
         (funcall decode decoder)))))
+
+(defun decode-message/command-complete (decoder)
+  (declare (type decoder decoder))
+  (let ((tag (decode-string decoder)))
+    (list :command-complete (parse-command-tag tag))))
+
+(defun decode-message/data-row (decoder)
+  (declare (type decoder decoder))
+  (let* ((nb-columns (decode-int16 decoder))
+         (columns (make-array nb-columns)))
+    (dotimes (i nb-columns (list :data-row columns))
+      (let ((size (decode-int32 decoder)))
+        (cond
+          ((< size -1)
+           (protocol-error "Invalid data row column size ~D." size))
+          ((= size -1)
+           (setf (aref columns i) :null))
+          (t
+           (setf (aref columns i) (decode-octets decoder size))))))))
 
 (defun decode-message/error-response (decoder)
   (declare (type decoder decoder))
@@ -282,6 +355,13 @@
   (let* ((name (decode-string decoder))
          (value (decode-string decoder)))
     (list :parameter-status name value)))
+
+(defun decode-message/row-description (decoder)
+  (declare (type decoder decoder))
+  (let ((nb-fields (decode-int16 decoder))
+        (fields nil))
+    (dotimes (i nb-fields (list :row-description (nreverse fields)))
+      (push (decode-row-description decoder) fields))))
 
 (defun decode-message/ready-for-query (decoder)
   (declare (type decoder decoder))
@@ -386,6 +466,11 @@
 (defun write-termination-message (stream)
   (declare (type stream stream))
   (write-message #\X nil stream))
+
+(defun write-query-message (query stream)
+  (declare (type string query)
+           (type stream stream))
+  (write-message #\Q `(string ,query) stream))
 
 (defun compute-password-md5-hash (user password salt)
   (declare (type string user password)
