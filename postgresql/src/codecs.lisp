@@ -133,6 +133,10 @@
   (let ((codec (find-codec type-or-oid)))
     (funcall (codec-decoding-function codec) octets)))
 
+;;;
+;;; Booleans
+;;;
+
 (defun encode-value/boolean (value)
   (if value
       (core:octet-vector* 1)
@@ -146,3 +150,60 @@
     (t :true)))
 
 (register-codec :boolean 16 'encode-value/boolean 'decode-value/boolean)
+
+;;;
+;;; Binary data
+;;;
+
+(defun encode-value/bytea (value)
+  value)
+
+(defun decode-value/bytea (octets)
+  octets)
+
+(register-codec :bytea 17 'encode-value/bytea 'decode-value/bytea)
+
+;;;
+;;; Integers
+;;;
+
+(defun integer-value-encoding-function (size type)
+  (lambda (value)
+    (let ((octets (core:make-octet-vector size)))
+      (setf (core:binref type octets) value)
+      octets)))
+
+(defun integer-value-decoding-function (size type)
+  (lambda (octets)
+    (when (/= (length octets) size)
+      (value-decoding-error octets "integer is not ~D byte long" size))
+    (core:binref type octets)))
+
+(register-codec :int8 20
+                (integer-value-encoding-function 8 :int64be)
+                (integer-value-decoding-function 8 :int64be))
+
+(register-codec :int2 21
+                (integer-value-encoding-function 2 :int16be)
+                (integer-value-decoding-function 2 :int16be))
+
+(register-codec :int4 23
+                (integer-value-encoding-function 4 :int32be)
+                (integer-value-decoding-function 4 :int32be))
+
+(register-codec :oid 26
+                (integer-value-encoding-function 4 :uint32be)
+                (integer-value-decoding-function 4 :uint32be))
+;;;
+;;; Strings
+
+(defun encode-value/text (value)
+  (text:encode-string value))
+
+(defun decode-value/text (octets)
+  (text:decode-string octets))
+
+(register-codec :name 19 'encode-value/text 'decode-value/text)
+(register-codec :text 25 'encode-value/text 'decode-value/text)
+(register-codec :bpchar 1042 'encode-value/text 'decode-value/text)
+(register-codec :varchar 1043 'encode-value/text 'decode-value/text)
