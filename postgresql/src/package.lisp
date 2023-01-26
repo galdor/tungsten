@@ -21,6 +21,25 @@
    #:backend-error-line
    #:backend-error-routine
 
+   #:oid
+   #:unknown-codec
+   #:unknown-codec-type
+   #:unknown-codec-oid
+   #:unencodable-value
+   #:unencodable-value-value
+   #:value-decoding-error
+   #:value-decoding-error-octets
+   #:codec
+   #:codec-type
+   #:codec-oid
+   #:codec-encoding-function
+   #:codec-decoding-function
+   #:find-codec
+   #:register-codec
+   #:delete-codec
+   #:encode-value
+   #:decode-value
+
    #:*client*
    #:missing-password
    #:unsupported-authentication-scheme

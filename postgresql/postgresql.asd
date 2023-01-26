@@ -7,6 +7,7 @@
   :components
   ((:file "package")
    (:file "protocol")
+   (:file "codecs")
    (:file "scram")
    (:file "client"))
   :in-order-to ((test-op (test-op "postgresql/test"))))
