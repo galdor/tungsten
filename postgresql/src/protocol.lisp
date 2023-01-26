@@ -273,6 +273,8 @@
         (error 'end-of-file :stream stream))
       (let ((decoder (make-decoder :data body :start 0 :end (length body)))
             (decode (case message-type
+                      (#\1 'decode-message/parse-complete)
+                      (#\2 'decode-message/bind-complete)
                       (#\C 'decode-message/command-complete)
                       (#\D 'decode-message/data-row)
                       (#\E 'decode-message/error-response)
@@ -286,13 +288,19 @@
                                        message-type)))))
         (funcall decode decoder)))))
 
+(defun decode-message/parse-complete (decoder)
+  (declare (ignore decoder))
+  (list :parse-complete))
+
+(defun decode-message/bind-complete (decoder)
+  (declare (ignore decoder))
+  (list :bind-complete))
+
 (defun decode-message/command-complete (decoder)
-  (declare (type decoder decoder))
   (let ((tag (decode-string decoder)))
     (list :command-complete (parse-command-tag tag))))
 
 (defun decode-message/data-row (decoder)
-  (declare (type decoder decoder))
   (let* ((nb-columns (decode-int16 decoder))
          (columns (make-array nb-columns)))
     (dotimes (i nb-columns (list :data-row columns))
@@ -306,17 +314,14 @@
            (setf (aref columns i) (decode-octets decoder size))))))))
 
 (defun decode-message/error-response (decoder)
-  (declare (type decoder decoder))
   (list :error-response (decode-error-and-notice-fields decoder)))
 
 (defun decode-message/backend-key-data (decoder)
-  (declare (type decoder decoder))
   (let* ((process-id (decode-int32 decoder))
          (secret-key (decode-int32 decoder)))
     (list :backend-key-data process-id secret-key)))
 
 (defun decode-message/authentication (decoder)
-  (declare (type decoder decoder))
   (let ((type (decode-int32 decoder)))
     (case type
       (0
@@ -351,20 +356,17 @@
        (protocol-error "Unknown authentication type ~D." type)))))
 
 (defun decode-message/parameter-status (decoder)
-  (declare (type decoder decoder))
   (let* ((name (decode-string decoder))
          (value (decode-string decoder)))
     (list :parameter-status name value)))
 
 (defun decode-message/row-description (decoder)
-  (declare (type decoder decoder))
-  (let ((nb-fields (decode-int16 decoder))
-        (fields nil))
-    (dotimes (i nb-fields (list :row-description (nreverse fields)))
-      (push (decode-row-description decoder) fields))))
+  (let* ((nb-fields (decode-int16 decoder))
+         (fields (make-array nb-fields)))
+    (dotimes (i nb-fields (list :row-description fields))
+      (setf (aref fields i) (decode-row-description decoder)))))
 
 (defun decode-message/ready-for-query (decoder)
-  (declare (type decoder decoder))
   (let* ((status-octet (decode-octet decoder))
          (status (case status-octet
                    (#.(char-code #\I) :idle)
@@ -413,6 +415,8 @@
                      (text:encode-string value :octets data :offset offset
                                                :nb-octets nb-octets)
                      (setf (aref data (+ offset nb-octets)) 0)))
+                  (octet
+                   (setf (core:binref :uint8 data (reserve 1)) value))
                   (octets
                    (let* ((nb-octets (length value)))
                      (when (> nb-octets 0)
@@ -471,6 +475,69 @@
   (declare (type string query)
            (type stream stream))
   (write-message #\Q `(string ,query) stream))
+
+(defun write-parse-message (statement-name query parameter-oids stream)
+  (declare (type (or string null) statement-name)
+           (type string query)
+           (type list parameter-oids)
+           (type stream stream))
+  (write-message #\P `((string ,(or statement-name ""))
+                       (string ,query)
+                       (int16 ,(length parameter-oids))
+                       ,(mapcar (lambda (oid) `(int32 ,oid)) parameter-oids))
+                 stream))
+
+(defun write-bind-message (portal-name statement-name
+                           parameter-format-codes parameters
+                           result-format-codes
+                           stream)
+  (declare (type (or string null) portal-name statement-name)
+           (type list parameter-format-codes parameters result-format-codes)
+           (type stream stream))
+  (write-message #\B `((string ,(or portal-name ""))
+                       (string ,(or statement-name ""))
+                       (int16 ,(length parameter-format-codes))
+                       ,(mapcar (lambda (code)
+                                  `(int16 ,(ecase code
+                                             (:text 0)
+                                             (:binary 1))))
+                                parameter-format-codes)
+                       (int16 ,(length parameters))
+                       ,(mapcar (lambda (parameter)
+                                  `((int32 ,(cond
+                                              ((eq parameter :null) -1)
+                                              (t (length parameter))))
+                                    (octets ,parameter)))
+                                parameters)
+                       (int16 ,(length result-format-codes))
+                       ,(mapcar (lambda (code)
+                                  `(int16 ,(ecase code
+                                             (:text 0)
+                                             (:binary 1))))
+                                result-format-codes))
+                 stream))
+
+(defun write-describe-message (type name stream)
+  (declare (type keyword type)
+           (type (or string null) name)
+           (type stream stream))
+  (write-message #\D `((octet ,(ecase type
+                                 (:prepared-statement #.(char-code #\S))
+                                 (:portal #.(char-code #\P))))
+                       (string ,(or name "")))
+                 stream))
+
+(defun write-execute-message (portal-name max-nb-rows stream)
+  (declare (type (or string null) portal-name)
+           (type (or (integer 0) null) max-nb-rows)
+           (type stream stream))
+  (write-message #\E `((string ,(or portal-name ""))
+                       (int32 ,(or max-nb-rows 0)))
+                 stream))
+
+(defun write-sync-message (stream)
+  (declare (type stream stream))
+  (write-message #\S nil stream))
 
 (defun compute-password-md5-hash (user password salt)
   (declare (type string user password)
