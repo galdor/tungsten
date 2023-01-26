@@ -231,7 +231,7 @@ status after execution of the query."
                            #'column-name columns))
                         (nb-affected-rows (cdr command-tag)))
                    (mapc #'decode-row rows)
-                   (list column-names rows nb-affected-rows)))))
+                   (list rows column-names nb-affected-rows)))))
       (values (mapcar #'make-result results) transaction-status))))
 
 (defun query (query &optional parameters &key (client *client*))
@@ -256,7 +256,7 @@ returned as strings."
       (let ((column-names (map 'vector #'column-name columns))
             (nb-affected-rows (cdr command-tag)))
         (mapc #'decode-row rows)
-        (values column-names rows nb-affected-rows transaction-status)))))
+        (values rows column-names nb-affected-rows transaction-status)))))
 
 (defun send-simple-query (query &key (client *client*))
   (declare (type string query)
