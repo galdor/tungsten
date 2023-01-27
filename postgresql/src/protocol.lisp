@@ -309,7 +309,7 @@
           ((< size -1)
            (protocol-error "Invalid data row column size ~D." size))
           ((= size -1)
-           (setf (aref columns i) :null))
+           (setf (aref columns i) nil))
           (t
            (setf (aref columns i) (decode-octets decoder size))))))))
 
@@ -505,7 +505,7 @@
                        (int16 ,(length parameters))
                        ,(mapcar (lambda (parameter)
                                   `((int32 ,(cond
-                                              ((eq parameter :null) -1)
+                                              ((null parameter) -1)
                                               (t (length parameter))))
                                     (octets ,parameter)))
                                 parameters)

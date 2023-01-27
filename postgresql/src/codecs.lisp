@@ -119,13 +119,13 @@
   (declare (type hash-table codecs))
   (cond
     ((null value)
-     '(:null . nil))
+     '(0 . nil))
     ((eq value :void)
      (encode-value '(:void . nil) codecs))
     ((eq value :true)
-     (encode-value '(:boolean . t) codecs))
+     (encode-value '(:boolean . :true) codecs))
     ((eq value :false)
-     (encode-value '(:boolean . nil) codecs))
+     (encode-value '(:boolean . :false) codecs))
     ((typep value '(signed-byte 16))
      (encode-value `(:int2 . ,value) codecs))
     ((typep value '(signed-byte 32))
@@ -144,16 +144,18 @@
      (let* ((codec (find-codec (car value) codecs))
             (value (cdr value)))
        (cons (codec-oid codec)
-             (funcall (codec-encoding-function codec) value codec codecs))))
+             (when value
+               (funcall (codec-encoding-function codec) value codec codecs)))))
     (t
      (error 'unencodable-value :value value))))
 
 (defun decode-value (octets codec-designator codecs)
-  (declare (type core:octet-vector octets)
+  (declare (type (or core:octet-vector null) octets)
            (type (or codec codec-type oid) codec-designator)
            (type hash-table codecs))
-  (let ((codec (find-codec codec-designator codecs)))
-    (funcall (codec-decoding-function codec) octets codecs)))
+  (when octets
+    (let ((codec (find-codec codec-designator codecs)))
+      (funcall (codec-decoding-function codec) octets codecs))))
 
 (defun make-default-codec-table ()
   (let ((codecs (make-codec-table)))
@@ -210,7 +212,7 @@
          (rank (array-rank value))
          (array-contains-null-p
            (dotimes (i (array-total-size value) nil)
-             (when (eq (row-major-aref value i) :null)
+             (when (null (row-major-aref value i))
                (return t))))
          (flags (if array-contains-null-p 1 0)))
     (streams:with-output-to-octet-vector (stream)
@@ -228,7 +230,7 @@
       (dotimes (i (array-total-size value))
         (let ((element (row-major-aref value i)))
           (cond
-            ((eq element :null)
+            ((null element)
              (let ((octets (core:make-octet-vector 4)))
                (setf (core:binref :int32be octets) -1)
                (write-sequence octets stream)))
@@ -267,7 +269,7 @@
             (decf nb-octets 4)
             (cond
               ((= size -1)
-               (setf (row-major-aref elements i) :null))
+               (setf (row-major-aref elements i) nil))
               (t
                (when (< nb-octets size)
                  (value-decoding-error octets "truncated array element"))
@@ -280,10 +282,13 @@
                (decf nb-octets size)))))))))
 
 (defun encode-value/boolean (value codec codecs)
-  (declare (ignore codec codecs))
-  (if value
-      (core:octet-vector* 1)
-      (core:octet-vector* 0)))
+  (declare (type keyword value)
+           (ignore codec codecs))
+  (ecase value
+    (:true
+     (core:octet-vector* 1))
+    (:false
+     (core:octet-vector* 0))))
 
 (defun decode-value/boolean (octets codecs)
   (declare (ignore codecs))
@@ -294,7 +299,8 @@
     (t :true)))
 
 (defun encode-value/bytea (value codec codecs)
-  (declare (ignore codec codecs))
+  (declare (type core:octet-vector value)
+           (ignore codec codecs))
   value)
 
 (defun decode-value/bytea (octets codecs)
@@ -303,7 +309,8 @@
 
 (defun integer-value-encoding-function (size type)
   (lambda (value codec codecs)
-    (declare (ignore codec codecs))
+    (declare (type integer value)
+             (ignore codec codecs))
     (let ((octets (core:make-octet-vector size)))
       (setf (core:binref type octets) value)
       octets)))
@@ -316,7 +323,8 @@
     (core:binref type octets)))
 
 (defun encode-value/text (value codec codecs)
-  (declare (ignore codec codecs))
+  (declare (type string value)
+           (ignore codec codecs))
   (text:encode-string value))
 
 (defun decode-value/text (octets codecs)
