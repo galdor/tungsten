@@ -1,7 +1,7 @@
 (defsystem "json"
   :description "An implementation of the JSON serialization format"
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("float")
+  :depends-on ("core")
   :pathname "src"
   :serial t
   :components

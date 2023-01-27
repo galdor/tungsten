@@ -6,6 +6,7 @@
   :components
   ((:file "package")
    (:file "environment")
+   (:file "floats")
    (:file "maths")
    (:file "sequences")
    (:file "hash-tables")
@@ -24,6 +25,7 @@
   :serial t
   :components
   ((:file "package")
+   (:file "floats")
    (:file "sequences")
    (:file "binary"))
   :perform (test-op (op system)

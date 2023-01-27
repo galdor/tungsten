@@ -1,19 +1,20 @@
-(in-package :float-test)
+(in-package :core-test)
 
 (defun double-float= (a b)
   (declare (type double-float a b))
   (< (- a b) double-float-epsilon))
 
-(defmacro check-parse (&rest checks)
+(defmacro check-parse-float (&rest checks)
   `(progn
-     ,@(mapcar (lambda (check)
-                 `(check-true
-                   (double-float= ,(car check)
-                                  (float:parse ,(cadr check) ,@(cddr check)))))
-               checks)))
+     ,@(mapcar
+        (lambda (check)
+          `(check-true
+            (double-float= ,(car check)
+                           (core:parse-float ,(cadr check) ,@(cddr check)))))
+        checks)))
 
 (deftest parse ()
-  (check-parse
+  (check-parse-float
    (-0.0d0 "-0.0")
    (0.0d0 "+0.0")
    (123d0 "123.0")

@@ -1,4 +1,4 @@
-(in-package :float)
+(in-package :core)
 
 (define-condition float-parse-error (parse-error)
   ((string
@@ -20,8 +20,8 @@
                         :string string
                         :description (apply #'format nil format args))))
 
-(defun parse (string &key (start 0) (end (length string))
-                          (type 'double-float))
+(defun parse-float (string &key (start 0) (end (length string))
+                                (type 'double-float))
   "Parse a floating point number.
 
 Return both the floating point value and the number of characters read."

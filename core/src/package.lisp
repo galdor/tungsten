@@ -3,6 +3,11 @@
   (:export
    #:*interactive*
 
+   #:float-parse-error
+   #:float-parse-error-string
+   #:float-parse-error-description
+   #:parse-float
+
    #:iota
 
    #:shuffle

@@ -318,12 +318,12 @@
              (let ((float-end (position-if-not #'float-char-p string
                                                :start i :end end)))
                (multiple-value-bind (float n)
-                   (float:parse string :start i :end (or float-end end))
+                   (core:parse-float string :start i :end (or float-end end))
                  (parser-skip parser n)
                  float))
-           (float:float-parse-error (condition)
+           (core:float-parse-error (condition)
              (parser-error parser "invalid floating point number: ~A"
-                           (float:float-parse-error-description condition)))))
+                           (core:float-parse-error-description condition)))))
         (t
          (let ((integer (parse-integer string :start i :end digits-end)))
            (parser-skip parser (- digits-end i))
