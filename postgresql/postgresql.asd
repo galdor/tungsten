@@ -20,6 +20,8 @@
   :serial t
   :components
   ((:file "package")
-   (:file "scram"))
+   (:file "utils")
+   (:file "scram")
+   (:file "codecs"))
   :perform (test-op (op system)
                     (symbol-call :check :run :package :postgresql-test)))

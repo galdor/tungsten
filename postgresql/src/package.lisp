@@ -54,4 +54,5 @@
    #:make-client
    #:close-client
    #:with-client
-   #:query/simple))
+   #:query/simple
+   #:query))
