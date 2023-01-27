@@ -21,6 +21,7 @@
    #:backend-error-line
    #:backend-error-routine
 
+   #:codec-type
    #:oid
    #:unknown-codec
    #:unknown-codec-type

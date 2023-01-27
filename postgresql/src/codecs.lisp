@@ -1,11 +1,14 @@
 (in-package :postgresql)
 
+(deftype codec-type ()
+  '(or symbol list))
+
 (deftype oid ()
   '(unsigned-byte 32))
 
 (define-condition unknown-codec (error)
   ((type
-    :type (or symbol null)
+    :type (or codec-type null)
     :initarg :type
     :initform nil
     :reader unknown-codec-type)
@@ -51,7 +54,7 @@
 
 (defclass codec ()
   ((type
-    :type symbol
+    :type codec-type
     :initarg :type
     :reader codec-type)
    (oid
@@ -68,7 +71,7 @@
     :reader codec-decoding-function)))
 
 (defun make-codec (type oid encoding-function decoding-function)
-  (declare (type (or symbol list) type)
+  (declare (type codec-type type)
            (type oid oid)
            (type (or symbol function) encoding-function decoding-function))
   (make-instance 'codec :type type
@@ -81,13 +84,18 @@
     (with-slots (type oid) codec
       (format stream "~A ~D" type oid))))
 
-(defun find-codec (type-or-oid codecs)
-  (declare (type (or symbol oid) type-or-oid)
+(defun find-codec (codec-designator codecs)
+  (declare (type (or codec codec-type oid) codec-designator)
            (type hash-table codecs))
-  (or (gethash type-or-oid codecs)
-      (etypecase type-or-oid
-        (oid (error 'unknown-codec :oid type-or-oid))
-        (t (error 'unknown-codec :type type-or-oid)))))
+  (etypecase codec-designator
+    (codec
+     codec-designator)
+    (codec-type
+     (or (gethash codec-designator codecs)
+         (error 'unknown-codec :type codec-designator)))
+    (oid
+     (or (gethash codec-designator codecs)
+         (error 'unknown-codec :oid codec-designator)))))
 
 (defun register-codec (codec codecs)
   (declare (type codec codec)
@@ -99,7 +107,7 @@
           (gethash oid codecs) codec)))
 
 (defun delete-codec (type-or-oid codecs)
-  (declare (type (or symbol list oid) type-or-oid)
+  (declare (type (or codec-type oid) type-or-oid)
            (type hash-table codecs))
   (let ((codec (gethash type-or-oid codecs)))
     (when codec
@@ -134,50 +142,145 @@
      (encode-value `(:bytea . ,value) codecs))
     ((consp value)
      (let* ((codec (find-codec (car value) codecs))
-            (value (cdr value))
-            (octets (funcall (codec-encoding-function codec) value codecs)))
-       (cons (codec-oid codec) octets)))
+            (value (cdr value)))
+       (cons (codec-oid codec)
+             (funcall (codec-encoding-function codec) value codec codecs))))
     (t
      (error 'unencodable-value :value value))))
 
-(defun decode-value (octets type-or-oid codecs)
+(defun decode-value (octets codec-designator codecs)
   (declare (type core:octet-vector octets)
-           (type (or symbol oid) type-or-oid)
+           (type (or codec codec-type oid) codec-designator)
            (type hash-table codecs))
-  (let ((codec (find-codec type-or-oid codecs)))
+  (let ((codec (find-codec codec-designator codecs)))
     (funcall (codec-decoding-function codec) octets codecs)))
 
 (defun make-default-codec-table ()
   (let ((codecs (make-codec-table)))
     (mapcar
      (lambda (entry)
-       (destructuring-bind (type oid encoding-function decoding-function)
+       (destructuring-bind (type value-oid array-oid
+                            encoding-function decoding-function)
            entry
-         (let ((codec
-                (make-codec type oid encoding-function decoding-function)))
-           (register-codec codec codecs))))
-     `((:boolean 16 encode-value/boolean decode-value/boolean)
-       (:bytea 17 encode-value/bytea decode-value/bytea)
-       (:name 19 encode-value/text decode-value/text)
-       (:int8 20
+         (register-codec (make-codec type value-oid
+                                     encoding-function decoding-function)
+                         codecs)
+         (register-codec (make-codec (list :array type) array-oid
+                                     'encode-value/array 'decode-value/array)
+                         codecs)))
+     `((:boolean
+        16 1000
+        encode-value/boolean decode-value/boolean)
+       (:bytea
+        17 1001
+        encode-value/bytea decode-value/bytea)
+       (:name
+        19 1003
+        encode-value/text decode-value/text)
+       (:int8
+        20 1016
         ,(integer-value-encoding-function 8 :int64be)
         ,(integer-value-decoding-function 8 :int64be))
-       (:int2 21
+       (:int2
+        21 1005
         ,(integer-value-encoding-function 2 :int16be)
         ,(integer-value-decoding-function 2 :int16be))
-       (:int4 23
+       (:int4
+        23 1007
         ,(integer-value-encoding-function 4 :int32be)
         ,(integer-value-decoding-function 4 :int32be))
-       (:text 25 encode-value/text decode-value/text)
-       (:oid 26
+       (:text
+        25 1009
+        encode-value/text decode-value/text)
+       (:oid
+        26 1028
         ,(integer-value-encoding-function 4 :uint32be)
         ,(integer-value-decoding-function 4 :uint32be))
-       (:bpchar 1042 encode-value/text decode-value/text)
-       (:varchar 1043 encode-value/text decode-value/text)))
+       (:bpchar
+        1042 1014
+        encode-value/text decode-value/text)
+       (:varchar
+        1043 1015
+        encode-value/text decode-value/text)))
     codecs))
 
-(defun encode-value/boolean (value codecs)
-  (declare (ignore codecs))
+(defun encode-value/array (value codec codecs)
+  (let* ((element-type (cadr (codec-type codec)))
+         (element-codec (find-codec element-type codecs))
+         (rank (array-rank value))
+         (array-contains-null-p
+           (dotimes (i (array-total-size value) nil)
+             (when (eq (row-major-aref value i) :null)
+               (return t))))
+         (flags (if array-contains-null-p 1 0)))
+    (streams:with-output-to-octet-vector (stream)
+      (let ((header (core:make-octet-vector (+ 12 (* rank 8))))
+            (offset 0))
+        (setf (core:binref :int32be header 0) rank
+              (core:binref :int32be header 4) flags
+              (core:binref :int32be header 8) (codec-oid element-codec))
+        (incf offset 12)
+        (dotimes (i rank)
+          (setf (core:binref :int32be header offset) (array-dimension value i)
+                (core:binref :int32be header (+ offset 4)) 1)
+          (incf offset 8))
+        (write-sequence header stream))
+      (dotimes (i (array-total-size value))
+        (let ((element (row-major-aref value i)))
+          (cond
+            ((eq element :null)
+             (let ((octets (core:make-octet-vector 4)))
+               (setf (core:binref :int32be octets) -1)
+               (write-sequence octets stream)))
+            (t
+             (let ((element-octets
+                     (cdr (encode-value (cons element-type element) codecs)))
+                   (length-octets (core:make-octet-vector 4)))
+               (setf (core:binref :int32be length-octets)
+                     (length element-octets))
+               (write-sequence length-octets stream)
+               (write-sequence element-octets stream)))))))))
+
+(defun decode-value/array (octets codecs)
+  (let ((nb-octets (length octets)))
+    (when (< nb-octets 12)
+      (value-decoding-error octets "truncated array header"))
+    (let* ((rank (core:binref :int32be octets 0))
+           (element-oid (core:binref :int32be octets 8))
+           (element-codec (find-codec element-oid codecs))
+           (dimensions nil)
+           (offset 12))
+      (decf nb-octets 12)
+      (unless (>= nb-octets (* rank 8))
+        (value-decoding-error octets "truncated array dimensions"))
+      (dotimes (i rank)
+        (push (core:binref :int32be octets offset) dimensions)
+        (incf offset 8)
+        (decf nb-octets 8))
+      (let ((elements (make-array (reverse dimensions)))
+            (nb-elements (reduce #'* dimensions)))
+        (dotimes (i nb-elements elements)
+          (when (< nb-octets 4)
+            (value-decoding-error octets "truncated array element size"))
+          (let ((size (core:binref :int32be octets offset)))
+            (incf offset 4)
+            (decf nb-octets 4)
+            (cond
+              ((= size -1)
+               (setf (row-major-aref elements i) :null))
+              (t
+               (when (< nb-octets size)
+                 (value-decoding-error octets "truncated array element"))
+               ;; It would be nice to have all value decoding functions
+               ;; accept OCTETS, START and END to avoid allocation here.
+               (let ((element-octets (subseq octets offset (+ offset size))))
+                 (setf (row-major-aref elements i)
+                       (decode-value element-octets element-codec codecs)))
+               (incf offset size)
+               (decf nb-octets size)))))))))
+
+(defun encode-value/boolean (value codec codecs)
+  (declare (ignore codec codecs))
   (if value
       (core:octet-vector* 1)
       (core:octet-vector* 0)))
@@ -190,8 +293,8 @@
     (0 :false)
     (t :true)))
 
-(defun encode-value/bytea (value codecs)
-  (declare (ignore codecs))
+(defun encode-value/bytea (value codec codecs)
+  (declare (ignore codec codecs))
   value)
 
 (defun decode-value/bytea (octets codecs)
@@ -199,8 +302,8 @@
   octets)
 
 (defun integer-value-encoding-function (size type)
-  (lambda (value codecs)
-    (declare (ignore codecs))
+  (lambda (value codec codecs)
+    (declare (ignore codec codecs))
     (let ((octets (core:make-octet-vector size)))
       (setf (core:binref type octets) value)
       octets)))
@@ -212,8 +315,8 @@
       (value-decoding-error octets "integer is not ~D byte long" size))
     (core:binref type octets)))
 
-(defun encode-value/text (value codecs)
-  (declare (ignore codecs))
+(defun encode-value/text (value codec codecs)
+  (declare (ignore codec codecs))
   (text:encode-string value))
 
 (defun decode-value/text (octets codecs)
