@@ -278,11 +278,13 @@
                       (#\C 'decode-message/command-complete)
                       (#\D 'decode-message/data-row)
                       (#\E 'decode-message/error-response)
+                      (#\I 'decode-message/empty-query-response)
                       (#\K 'decode-message/backend-key-data)
                       (#\R 'decode-message/authentication)
                       (#\S 'decode-message/parameter-status)
                       (#\T 'decode-message/row-description)
                       (#\Z 'decode-message/ready-for-query)
+                      (#\n 'decode-message/no-data)
                       (t
                        (protocol-error "Unhandled message type ~S."
                                        message-type)))))
@@ -315,6 +317,10 @@
 
 (defun decode-message/error-response (decoder)
   (list :error-response (decode-error-and-notice-fields decoder)))
+
+(defun decode-message/empty-query-response (decoder)
+  (declare (ignore decoder))
+  (list :empty-query-response))
 
 (defun decode-message/backend-key-data (decoder)
   (let* ((process-id (decode-int32 decoder))
@@ -376,6 +382,10 @@
                     (protocol-error
                      "Unknown backend transaction status ~S." status-octet)))))
     (list :ready-for-query status)))
+
+(defun decode-message/no-data (decoder)
+  (declare (ignore decoder))
+  (list :no-data))
 
 (defun write-message (message-type value stream)
   (declare (type (or standard-char null) message-type)

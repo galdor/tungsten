@@ -219,24 +219,25 @@ status after execution of the query."
            (type client client))
   (multiple-value-bind (results transaction-status)
       (send-simple-query query :client client)
-    (labels ((column-name (column)
-               (cdr (assoc :name column)))
-             (decode-row (row)
-               (dotimes (i (length row))
-                 (setf (aref row i) (text:decode-string (aref row i)))))
-             (make-result (result)
-               (destructuring-bind (columns rows command-tag)
-                   result
-                 (let* ((nb-columns (length columns))
-                        (column-names
-                          (map-into
-                           (make-array nb-columns :element-type 'string
-                                                  :initial-element "")
-                           #'column-name columns))
-                        (nb-affected-rows (cdr command-tag)))
-                   (mapc #'decode-row rows)
-                   (list rows column-names nb-affected-rows)))))
-      (values (mapcar #'make-result results) transaction-status))))
+    (when results
+      (labels ((column-name (column)
+                 (cdr (assoc :name column)))
+               (decode-row (row)
+                 (dotimes (i (length row))
+                   (setf (aref row i) (text:decode-string (aref row i)))))
+               (make-result (result)
+                 (destructuring-bind (columns rows command-tag)
+                     result
+                   (let* ((nb-columns (length columns))
+                          (column-names
+                            (map-into
+                             (make-array nb-columns :element-type 'string
+                                                    :initial-element "")
+                             #'column-name columns))
+                          (nb-affected-rows (cdr command-tag)))
+                     (mapc #'decode-row rows)
+                     (list rows column-names nb-affected-rows)))))
+        (values (mapcar #'make-result results) transaction-status)))))
 
 (defun query (query &optional parameters &key (client *client*))
   "Execute QUERY with PARAMETERS as an extended query and returns four values: a
@@ -249,19 +250,20 @@ returned as strings."
            #+sbcl (sb-ext:muffle-conditions style-warning))
   (multiple-value-bind (columns rows command-tag transaction-status)
       (send-extended-query query parameters :client client)
-    (labels ((column-name (column)
-               (cdr (assoc :name column)))
-             (decode-row (row)
-               (dotimes (i (length row))
-                 (let* ((octets (aref row i))
-                        (column (aref columns i))
-                        (oid (cdr (assoc :type-oid column))))
-                   (setf (aref row i)
-                         (decode-value octets oid (client-codecs client)))))))
-      (let ((column-names (map 'vector #'column-name columns))
-            (nb-affected-rows (cdr command-tag)))
-        (mapc #'decode-row rows)
-        (values rows column-names nb-affected-rows transaction-status)))))
+    (when columns
+      (labels ((column-name (column)
+                 (cdr (assoc :name column)))
+               (decode-row (row)
+                 (dotimes (i (length row))
+                   (let* ((octets (aref row i))
+                          (column (aref columns i))
+                          (oid (cdr (assoc :type-oid column))))
+                     (setf (aref row i)
+                           (decode-value octets oid (client-codecs client)))))))
+        (let ((column-names (map 'vector #'column-name columns))
+              (nb-affected-rows (cdr command-tag)))
+          (mapc #'decode-row rows)
+          (values rows column-names nb-affected-rows transaction-status))))))
 
 (defun send-simple-query (query &key (client *client*))
   (declare (type string query)
@@ -275,7 +277,7 @@ returned as strings."
         (transaction-status
          (values (nreverse results) transaction-status))
       (read-message-case (message client)
-        (:empty-query-response ()
+        (:no-data ()
           nil)
         (:row-description (description)
           (setf columns description))
@@ -285,6 +287,8 @@ returned as strings."
           (push (list columns (nreverse rows) tag) results)
           (setf columns nil
                 rows nil))
+        (:empty-query-response ()
+          (return-from send-simple-query nil))
         (:ready-for-query (status)
           (setf transaction-status status))))))
 
@@ -314,10 +318,7 @@ returned as strings."
            (command-tag nil))
           (transaction-status
            (values columns (nreverse rows) command-tag transaction-status))
-        ;; TODO :NO-DATA
         (read-message-case (message client)
-          (:empty-query-response ()
-            nil)
           (:parse-complete ()
             nil)
           (:bind-complete ()
@@ -328,5 +329,9 @@ returned as strings."
             (push row rows))
           (:command-complete (tag)
             (setf command-tag tag))
+          (:no-data ()
+            nil)
+          (:empty-query-response ()
+            (return-from send-extended-query nil))
           (:ready-for-query (status)
             (setf transaction-status status)))))))
