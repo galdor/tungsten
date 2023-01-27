@@ -1,7 +1,5 @@
 (in-package :postgresql)
 
-(defvar *codecs* (make-hash-table :test #'equal))
-
 (deftype oid ()
   '(unsigned-byte 32))
 
@@ -48,6 +46,9 @@
                                :format-control format
                                :format-arguments arguments))
 
+(defun make-codec-table ()
+  (make-hash-table :test #'equal))
+
 (defclass codec ()
   ((type
     :type symbol
@@ -66,144 +67,155 @@
     :initarg :decoding-function
     :reader codec-decoding-function)))
 
+(defun make-codec (type oid encoding-function decoding-function)
+  (declare (type (or symbol list) type)
+           (type oid oid)
+           (type (or symbol function) encoding-function decoding-function))
+  (make-instance 'codec :type type
+                        :oid oid
+                        :encoding-function encoding-function
+                        :decoding-function decoding-function))
+
 (defmethod print-object ((codec codec) stream)
   (print-unreadable-object (codec stream :type t)
     (with-slots (type oid) codec
       (format stream "~A ~D" type oid))))
 
-(defun find-codec (type-or-oid)
-  (declare (type (or symbol oid) type-or-oid))
-  (or (gethash type-or-oid *codecs*)
+(defun find-codec (type-or-oid codecs)
+  (declare (type (or symbol oid) type-or-oid)
+           (type hash-table codecs))
+  (or (gethash type-or-oid codecs)
       (etypecase type-or-oid
         (oid (error 'unknown-codec :oid type-or-oid))
         (t (error 'unknown-codec :type type-or-oid)))))
 
-(defun register-codec (type oid encoding-function decoding-function)
-  (let ((codec (make-instance 'codec :type type
-                                     :oid oid
-                                     :encoding-function encoding-function
-                                     :decoding-function decoding-function)))
-    (delete-codec type)
-    (delete-codec oid)
-    (setf (gethash type *codecs*) codec
-          (gethash oid *codecs*) codec)))
+(defun register-codec (codec codecs)
+  (declare (type codec codec)
+           (type hash-table codecs))
+  (with-slots (type oid) codec
+    (delete-codec type codecs)
+    (delete-codec oid codecs)
+    (setf (gethash type codecs) codec
+          (gethash oid codecs) codec)))
 
-(defun delete-codec (type-or-oid)
-  (let ((codec (gethash type-or-oid *codecs*)))
+(defun delete-codec (type-or-oid codecs)
+  (declare (type (or symbol list oid) type-or-oid)
+           (type hash-table codecs))
+  (let ((codec (gethash type-or-oid codecs)))
     (when codec
-      (remhash (codec-type codec) *codecs*)
-      (remhash (codec-oid codec) *codecs*)
+      (remhash (codec-type codec) codecs)
+      (remhash (codec-oid codec) codecs)
       t)))
 
-(defun encode-value (value)
+(defun encode-value (value codecs)
+  (declare (type hash-table codecs))
   (cond
     ((null value)
      '(:null . nil))
     ((eq value :void)
-     (encode-value '(:void . nil)))
+     (encode-value '(:void . nil) codecs))
     ((eq value :true)
-     (encode-value '(:boolean . t)))
+     (encode-value '(:boolean . t) codecs))
     ((eq value :false)
-     (encode-value '(:boolean . nil)))
+     (encode-value '(:boolean . nil) codecs))
     ((typep value '(signed-byte 16))
-     (encode-value `(:int2 . ,value)))
+     (encode-value `(:int2 . ,value) codecs))
     ((typep value '(signed-byte 32))
-     (encode-value `(:int4 . ,value)))
+     (encode-value `(:int4 . ,value) codecs))
     ((typep value '(signed-byte 64))
-     (encode-value `(:int8 . ,value)))
+     (encode-value `(:int8 . ,value) codecs))
     ((typep value 'single-float)
-     (encode-value `(:float4 . ,value)))
+     (encode-value `(:float4 . ,value) codecs))
     ((typep value 'double-float)
-     (encode-value `(:float8 . ,value)))
+     (encode-value `(:float8 . ,value) codecs))
     ((typep value 'string)
-     (encode-value `(:text . ,value)))
+     (encode-value `(:text . ,value) codecs))
     ((typep value 'core:octet-vector)
-     (encode-value `(:bytea . ,value)))
+     (encode-value `(:bytea . ,value) codecs))
     ((consp value)
-     (let* ((codec (find-codec (car value)))
+     (let* ((codec (find-codec (car value) codecs))
             (value (cdr value))
-            (octets (funcall (codec-encoding-function codec) value)))
+            (octets (funcall (codec-encoding-function codec) value codecs)))
        (cons (codec-oid codec) octets)))
     (t
      (error 'unencodable-value :value value))))
 
-(defun decode-value (octets type-or-oid)
+(defun decode-value (octets type-or-oid codecs)
   (declare (type core:octet-vector octets)
-           (type (or symbol oid) type-or-oid))
-  (let ((codec (find-codec type-or-oid)))
-    (funcall (codec-decoding-function codec) octets)))
+           (type (or symbol oid) type-or-oid)
+           (type hash-table codecs))
+  (let ((codec (find-codec type-or-oid codecs)))
+    (funcall (codec-decoding-function codec) octets codecs)))
 
-;;;
-;;; Booleans
-;;;
+(defun make-default-codec-table ()
+  (let ((codecs (make-codec-table)))
+    (mapcar
+     (lambda (entry)
+       (destructuring-bind (type oid encoding-function decoding-function)
+           entry
+         (let ((codec
+                (make-codec type oid encoding-function decoding-function)))
+           (register-codec codec codecs))))
+     `((:boolean 16 encode-value/boolean decode-value/boolean)
+       (:bytea 17 encode-value/bytea decode-value/bytea)
+       (:name 19 encode-value/text decode-value/text)
+       (:int8 20
+        ,(integer-value-encoding-function 8 :int64be)
+        ,(integer-value-decoding-function 8 :int64be))
+       (:int2 21
+        ,(integer-value-encoding-function 2 :int16be)
+        ,(integer-value-decoding-function 2 :int16be))
+       (:int4 23
+        ,(integer-value-encoding-function 4 :int32be)
+        ,(integer-value-decoding-function 4 :int32be))
+       (:text 25 encode-value/text decode-value/text)
+       (:oid 26
+        ,(integer-value-encoding-function 4 :uint32be)
+        ,(integer-value-decoding-function 4 :uint32be))
+       (:bpchar 1042 encode-value/text decode-value/text)
+       (:varchar 1043 encode-value/text decode-value/text)))
+    codecs))
 
-(defun encode-value/boolean (value)
+(defun encode-value/boolean (value codecs)
+  (declare (ignore codecs))
   (if value
       (core:octet-vector* 1)
       (core:octet-vector* 0)))
 
-(defun decode-value/boolean (octets)
+(defun decode-value/boolean (octets codecs)
+  (declare (ignore codecs))
   (unless (= (length octets) 1)
     (value-decoding-error octets "boolean is not 1 byte long"))
   (case (aref octets 0)
     (0 :false)
     (t :true)))
 
-(register-codec :boolean 16 'encode-value/boolean 'decode-value/boolean)
-
-;;;
-;;; Binary data
-;;;
-
-(defun encode-value/bytea (value)
+(defun encode-value/bytea (value codecs)
+  (declare (ignore codecs))
   value)
 
-(defun decode-value/bytea (octets)
+(defun decode-value/bytea (octets codecs)
+  (declare (ignore codecs))
   octets)
 
-(register-codec :bytea 17 'encode-value/bytea 'decode-value/bytea)
-
-;;;
-;;; Integers
-;;;
-
 (defun integer-value-encoding-function (size type)
-  (lambda (value)
+  (lambda (value codecs)
+    (declare (ignore codecs))
     (let ((octets (core:make-octet-vector size)))
       (setf (core:binref type octets) value)
       octets)))
 
 (defun integer-value-decoding-function (size type)
-  (lambda (octets)
+  (lambda (octets codecs)
+    (declare (ignore codecs))
     (when (/= (length octets) size)
       (value-decoding-error octets "integer is not ~D byte long" size))
     (core:binref type octets)))
 
-(register-codec :int8 20
-                (integer-value-encoding-function 8 :int64be)
-                (integer-value-decoding-function 8 :int64be))
-
-(register-codec :int2 21
-                (integer-value-encoding-function 2 :int16be)
-                (integer-value-decoding-function 2 :int16be))
-
-(register-codec :int4 23
-                (integer-value-encoding-function 4 :int32be)
-                (integer-value-decoding-function 4 :int32be))
-
-(register-codec :oid 26
-                (integer-value-encoding-function 4 :uint32be)
-                (integer-value-decoding-function 4 :uint32be))
-;;;
-;;; Strings
-
-(defun encode-value/text (value)
+(defun encode-value/text (value codecs)
+  (declare (ignore codecs))
   (text:encode-string value))
 
-(defun decode-value/text (octets)
+(defun decode-value/text (octets codecs)
+  (declare (ignore codecs))
   (text:decode-string octets))
-
-(register-codec :name 19 'encode-value/text 'decode-value/text)
-(register-codec :text 25 'encode-value/text 'decode-value/text)
-(register-codec :bpchar 1042 'encode-value/text 'decode-value/text)
-(register-codec :varchar 1043 'encode-value/text 'decode-value/text)

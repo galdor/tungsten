@@ -39,7 +39,11 @@
    (backend-secret-key
     :type (or integer null)
     :initform nil
-    :accessor client-backend-secret-key)))
+    :accessor client-backend-secret-key)
+   (codecs
+    :type hash-table
+    :initform (make-default-codec-table)
+    :reader client-codecs)))
 
 (defmethod print-object ((client client) stream)
   (print-unreadable-object (client stream :type t)
@@ -252,7 +256,8 @@ returned as strings."
                  (let* ((octets (aref row i))
                         (column (aref columns i))
                         (oid (cdr (assoc :type-oid column))))
-                   (setf (aref row i) (decode-value octets oid))))))
+                   (setf (aref row i)
+                         (decode-value octets oid (client-codecs client)))))))
       (let ((column-names (map 'vector #'column-name columns))
             (nb-affected-rows (cdr command-tag)))
         (mapc #'decode-row rows)
@@ -287,7 +292,10 @@ returned as strings."
   (declare (type string query)
            (type list parameters)
            (type client client))
-  (let ((encoded-parameters (mapcar 'encode-value parameters))
+  (let ((encoded-parameters
+          (mapcar (lambda (parameter)
+                    (encode-value parameter (client-codecs client)))
+                  parameters))
         (parameter-oids nil)
         (parameter-values nil))
     (dolist (parameter encoded-parameters)
