@@ -222,3 +222,69 @@
                                       0 0 0 0 0 0 0 128
                                       255 255 255 255 255 255 255 127)
                   data)))
+
+;;;
+;;; 32 bit floating point numbers
+;;;
+
+(deftest binref/float32be ()
+  (check-binref 0.0f0 :float32be #(0 0 0 0))
+  (check-binref -0.5f0 :float32be #(191 0 0 0))
+  (check-binref 3.1415927f0 :float32be #(64 73 15 219))
+  (let ((data (core:make-octet-vector 12)))
+    (setf (core:binref :float32be data 0) 0.0f0)
+    (setf (core:binref :float32be data 4) -0.5f0)
+    (setf (core:binref :float32be data 8) 3.1415927f0)
+    (check-equalp (core:octet-vector* 0 0 0 0
+                                      191 0 0 0
+                                      64 73 15 219)
+                  data)))
+
+(deftest binref/float32le ()
+  (check-binref 0.0f0 :float32le #(0 0 0 0))
+  (check-binref -0.5f0 :float32le #(0 0 0 191))
+  (check-binref 3.1415927f0 :float32le #(219 15 73 64))
+  (let ((data (core:make-octet-vector 12)))
+    (setf (core:binref :float32le data 0) 0.0f0)
+    (setf (core:binref :float32le data 4) -0.5f0)
+    (setf (core:binref :float32le data 8) 3.1415927f0)
+    (check-equalp (core:octet-vector* 0 0 0 0
+                                      0 0 0 191
+                                      219 15 73 64)
+                  data)))
+
+;;;
+;;; 64 bit floating point numbers
+;;;
+
+(deftest binref/float64be ()
+  (check-binref 0.0d0 :float64be
+                #(0 0 0 0 0 0 0 0))
+  (check-binref -0.5d0 :float64be
+                #(191 224 0 0 0 0 0 0))
+  (check-binref 3.141592653589793d0 :float64be
+                #(64 9 33 251 84 68 45 24))
+  (let ((data (core:make-octet-vector 24)))
+    (setf (core:binref :float64be data 0) 0.0d0)
+    (setf (core:binref :float64be data 8) -0.5d0)
+    (setf (core:binref :float64be data 16) 3.141592653589793d0)
+    (check-equalp (core:octet-vector* 0 0 0 0 0 0 0 0
+                                      191 224 0 0 0 0 0 0
+                                      64 9 33 251 84 68 45 24)
+                  data)))
+
+(deftest binref/float64le ()
+  (check-binref 0.0d0 :float64le
+                #(0 0 0 0 0 0 0 0))
+  (check-binref -0.5d0 :float64le
+                #(0 0 0 0 0 0 224 191))
+  (check-binref 3.141592653589793d0 :float64le
+                #(24 45 68 84 251 33 9 64))
+  (let ((data (core:make-octet-vector 24)))
+    (setf (core:binref :float64le data 0) 0.0d0)
+    (setf (core:binref :float64le data 8) -0.5d0)
+    (setf (core:binref :float64le data 16) 3.141592653589793d0)
+    (check-equalp (core:octet-vector* 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 224 191
+                                      24 45 68 84 251 33 9 64)
+                  data)))
