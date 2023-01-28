@@ -327,7 +327,7 @@
   (lambda (octets codecs)
     (declare (ignore codecs))
     (when (/= (length octets) size)
-      (value-decoding-error octets "integer is not ~D byte long" size))
+      (value-decoding-error octets "truncated ~D byte integer" size))
     (core:binref type octets)))
 
 (defun floating-point-value-encoding-function (size type)
@@ -342,7 +342,7 @@
   (lambda (octets codecs)
     (declare (ignore codecs))
     (when (/= (length octets) size)
-      (value-decoding-error octets "floating point value is not ~D byte long"
+      (value-decoding-error octets "truncated ~D byte floating point value"
                             size))
     (core:binref type octets)))
 
