@@ -198,6 +198,14 @@
         26 1028
         ,(integer-value-encoding-function 4 :uint32be)
         ,(integer-value-decoding-function 4 :uint32be))
+       (:float4
+        700 1021
+        ,(floating-point-value-encoding-function 4 :float32be)
+        ,(floating-point-value-decoding-function 4 :float32be))
+       (:float8
+        701 1022
+        ,(floating-point-value-encoding-function 8 :float64be)
+        ,(floating-point-value-decoding-function 8 :float64be))
        (:bpchar
         1042 1014
         encode-value/text decode-value/text)
@@ -320,6 +328,22 @@
     (declare (ignore codecs))
     (when (/= (length octets) size)
       (value-decoding-error octets "integer is not ~D byte long" size))
+    (core:binref type octets)))
+
+(defun floating-point-value-encoding-function (size type)
+  (lambda (value codec codecs)
+    (declare (type float value)
+             (ignore codec codecs))
+    (let ((octets (core:make-octet-vector size)))
+      (setf (core:binref type octets) value)
+      octets)))
+
+(defun floating-point-value-decoding-function (size type)
+  (lambda (octets codecs)
+    (declare (ignore codecs))
+    (when (/= (length octets) size)
+      (value-decoding-error octets "floating point value is not ~D byte long"
+                            size))
     (core:binref type octets)))
 
 (defun encode-value/text (value codec codecs)

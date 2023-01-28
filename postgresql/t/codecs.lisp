@@ -90,6 +90,30 @@
      (equalp)
      ((#(0 42 nil) '((:array :oid) . #(0 42 nil)))))))
 
+(deftest codec/float4 ()
+  (with-test-client ()
+    (check-codec
+     (eql)
+     ((nil '(:float4 . nil))
+      (-0.5f0 '(:float4 . -0.5f0))
+      (0.0f0 '(:float4 . 0.0f0))
+      (3.14f0 '(:float4 . 3.14f0))))
+    (check-codec
+     (equalp)
+     ((#(-0.5f0 0.0f0 3.14f0) '((:array :float4) . #(-0.5f0 0.0f0 3.14f0)))))))
+
+(deftest codec/float8 ()
+  (with-test-client ()
+    (check-codec
+     (eql)
+     ((nil '(:float8 . nil))
+      (-0.5d0 '(:float8 . -0.5d0))
+      (0.0d0 '(:float8 . 0.0d0))
+      (3.14d0 '(:float8 . 3.14d0))))
+    (check-codec
+     (equalp)
+     ((#(-0.5d0 0.0d0 3.14d0) '((:array :float8) . #(-0.5d0 0.0d0 3.14d0)))))))
+
 (deftest codec/text ()
   (with-test-client ()
     (check-codec
