@@ -1,6 +1,10 @@
 (defpackage :core
   (:use :cl)
   (:export
+   #:unsupported-feature
+   #:unsupported-feature-name
+   #:endianness
+   #:*endianness*
    #:*interactive*
 
    #:float-parse-error
@@ -44,6 +48,4 @@
 
    #:prompt-eval
 
-   #:unsupported-feature
-   #:unsupported-feature-name
    #:abort-protect))
