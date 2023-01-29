@@ -251,7 +251,9 @@ written."))
 
 (defmethod streams:stream-write-string ((stream io-stream) string
                                         &optional (start 0) end)
-  (declare (type string string))
+  (declare (type string string)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   (let* ((end (or end (length string)))
          (nb-characters (- end start)))
     (when (> nb-characters 0)
