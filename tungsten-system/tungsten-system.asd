@@ -1,8 +1,13 @@
-(defsystem "system"
+(defsystem "tungsten-system"
   :description "System programming utilities."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :defsystem-depends-on ("ffi")
-  :depends-on ("core" "ffi" "text" "streams")
+  :defsystem-depends-on
+  ("tungsten-ffi")
+  :depends-on
+  ("tungsten-core"
+   "tungsten-ffi"
+   "tungsten-text"
+   "tungsten-streams")
   :pathname "src"
   :serial t
   :components
@@ -25,12 +30,14 @@
    (:file "tcp-stream")
    (:file "tcp-client")
    (:file "tcp-server"))
-  :in-order-to ((test-op (test-op "system/test"))))
+  :in-order-to ((test-op (test-op "tungsten-system/test"))))
 
-(defsystem "system/test"
+(defsystem "tungsten-system/test"
   :description "Tests for the system system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("test" "system")
+  :depends-on
+  ("tungsten-test"
+   "tungsten-system")
   :pathname "t"
   :serial t
   :components

@@ -1,8 +1,9 @@
-(defsystem "text"
+(defsystem "tungsten-text"
   :description "Textual data manipulation."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :pathname "src"
-  :depends-on ("core")
+  :depends-on
+  ("tungsten-core")
   :serial t
   :components
   ((:file "package")
@@ -16,12 +17,14 @@
    (:file "iso-8859-1")
    (:file "hex-encoding")
    (:file "base64"))
-  :in-order-to ((test-op (test-op "text/test"))))
+  :in-order-to ((test-op (test-op "tungsten-text/test"))))
 
-(defsystem "text/test"
+(defsystem "tungsten-text/test"
   :description "Tests for the text system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("test" "text")
+  :depends-on
+  ("tungsten-test"
+   "tungsten-text")
   :pathname "t"
   :serial t
   :components

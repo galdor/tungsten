@@ -1,7 +1,8 @@
-(defsystem "uri"
+(defsystem "tungsten-uri"
   :description "Utilities to manipulate Universal Resource Identifiers."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("text")
+  :depends-on
+  ("tungsten-text")
   :pathname "src"
   :serial t
   :components
@@ -11,12 +12,14 @@
    (:file "serialization")
    (:file "parser")
    (:file "references"))
-  :in-order-to ((test-op (test-op "uri/test"))))
+  :in-order-to ((test-op (test-op "tungsten-uri/test"))))
 
-(defsystem "uri/test"
+(defsystem "tungsten-uri/test"
   :description "Tests for the uri system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("test" "uri")
+  :depends-on
+  ("tungsten-test"
+   "tungsten-uri")
   :pathname "t"
   :serial t
   :components

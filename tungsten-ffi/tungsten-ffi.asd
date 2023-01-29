@@ -1,7 +1,9 @@
-(defsystem "ffi"
+(defsystem "tungsten-ffi"
   :description "A foreign function interface."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("asdf-utils" "text")
+  :depends-on
+  ("tungsten-asdf-utils"
+   "tungsten-text")
   :pathname "src"
   :serial t
   :components
@@ -28,13 +30,16 @@
      (:file "generation")
      (:file "extraction")
      (:file "asdf-manifest"))))
-  :in-order-to ((test-op (test-op "ffi/test"))))
+  :in-order-to ((test-op (test-op "tungsten-ffi/test"))))
 
-(defsystem "ffi/test"
+(defsystem "tungsten-ffi/test"
   :description "Tests for the ffi system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :defsystem-depends-on ("asdf-utils")
-  :depends-on ("test" "ffi")
+  :defsystem-depends-on
+  ("tungsten-asdf-utils")
+  :depends-on
+  ("tungsten-test"
+   "tungsten-ffi")
   :pathname "t"
   :serial t
   :components

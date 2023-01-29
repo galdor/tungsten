@@ -1,7 +1,9 @@
-(defsystem "log"
+(defsystem "tungsten-log"
   :description "Utilities for flexible logging."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("core" "system")
+  :depends-on
+  ("tungsten-core"
+   "tungsten-system")
   :pathname "src"
   :serial t
   :components
@@ -11,12 +13,14 @@
    (:file "sink")
    (:file "terminal-sink")
    (:file "logger"))
-  :in-order-to ((test-op (test-op "log/test"))))
+  :in-order-to ((test-op (test-op "tungsten-log/test"))))
 
-(defsystem "log/test"
+(defsystem "tungsten-log/test"
   :description "Tests for the log system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("test" "log")
+  :depends-on
+  ("tungsten-test"
+   "tungsten-log")
   :pathname "t"
   :serial t
   :components

@@ -1,7 +1,9 @@
-(defsystem "streams"
+(defsystem "tungsten-streams"
   :description "Stream utilities."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("core" "text")
+  :depends-on
+  ("tungsten-core"
+   "tungsten-text")
   :pathname "src"
   :serial t
   :components
@@ -9,12 +11,14 @@
    (:file "fundamental-stream-definitions")
    (:file "fundamental-streams")
    (:file "octet-output-stream"))
-  :in-order-to ((test-op (test-op "streams/test"))))
+  :in-order-to ((test-op (test-op "tungsten-streams/test"))))
 
-(defsystem "streams/test"
+(defsystem "tungsten-streams/test"
   :description "Tests for the streams system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("test" "streams")
+  :depends-on
+  ("tungsten-test"
+   "tungsten-streams")
   :pathname "t"
   :serial t
   :components

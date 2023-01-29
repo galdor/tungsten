@@ -1,4 +1,4 @@
-(in-package :check-test)
+(in-package :test-test)
 
 (deftest check-true ()
   (check-true t)

@@ -1,6 +1,6 @@
 (in-package :ffi-test)
 
-(ffi:use-asdf-shared-library 'ffi-test "ffi/test" "ffi-test"
+(ffi:use-asdf-shared-library 'ffi-test "tungsten-ffi/test" "ffi-test"
                              :reload t)
 
 (ffi:define-type-alias ffi-int-t :int)
