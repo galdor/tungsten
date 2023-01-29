@@ -13,8 +13,7 @@
   (:documentation "A condition signaled when a test cannot be found.")
   (:report (lambda (condition stream)
              (with-slots (package name) condition
-               (format stream "unknown test ~A"
-                       (test-key package name))))))
+               (format stream "Unknown test ~S." (test-key package name))))))
 
 (defun test-key (package name)
   (declare (type string package name))
