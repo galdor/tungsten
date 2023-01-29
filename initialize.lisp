@@ -1,10 +1,10 @@
 ;; Create and use a temporary package to avoid polluting :CL-USER
-(defpackage :systems-init
+(defpackage :tungsten-init
   (:use :cl)
   (:export
    :load-asdf))
 
-(in-package :systems-init)
+(in-package :tungsten-init)
 
 (defvar *log-output* *error-output*
   "The stream used to log information during the initialization process.")
@@ -44,13 +44,13 @@ Common Lisp implementation and platform."
                                  (normalize-path-string architecture)))
          (cache-path
            (make-pathname :directory
-                          `(:relative ".cache" "common-lisp" "systems"
+                          `(:relative ".cache" "common-lisp" "tungsten"
                                       ,directory-name))))
     (merge-pathnames cache-path (user-homedir-pathname))))
 
 (defun asdf-fasl-path ()
   "Return the path of the compiled version of the ASDF source file bundled with
-the systems repository.
+the tungsten repository.
 
 The location of the file depends on runtime information to ensure we always
 load a file which was compiled with the currently running Lisp
@@ -60,14 +60,14 @@ implementation."
     (merge-pathnames file-path (fasl-directory))))
 
 (defun load-asdf ()
-  "Locate and load the copy of ASDF bundled with cl-systems.
+  "Locate and load the copy of ASDF bundled with tungsten.
 
 We use the asdf.lisp file which is produced by the ASDF build process, called
 by the utils/update-asdf script.
 
 Note that in the current state, we do not detect changes to the ASDF file.
 This means that the compiled file must be manually deleted when updating
-cl-systems."
+tungsten."
   (let ((asdf-source-path (asdf-source-path))
         (asdf-fasl-path (asdf-fasl-path)))
     (ensure-directories-exist asdf-fasl-path)
@@ -85,7 +85,7 @@ cl-systems."
 ;; DECLARE in LOAD-ASDF. So we have to use DECLAIM here.
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
-(systems-init:load-asdf)
+(tungsten-init:load-asdf)
 
 ;; Cleaning
-(delete-package :systems-init)
+(delete-package :tungsten-init)
