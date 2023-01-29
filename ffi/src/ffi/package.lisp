@@ -4,9 +4,9 @@
    #:use-foreign-library
    #:use-asdf-shared-library
 
-   #:define-foreign-type
    #:foreign-type
    #:foreign-type-size
+   #:foreign-base-type
    #:encode-foreign-value
    #:decode-foreign-value
    #:define-type-alias

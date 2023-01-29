@@ -3,6 +3,13 @@
 (ffi:use-asdf-shared-library 'ffi-test "ffi/test" "ffi-test"
                              :reload t)
 
+(ffi:define-type-alias ffi-int-t :int)
+
+(ffi:define-enum (int-values :base-type 'ffi-int-t)
+    ((:a 0)
+     (:b 1)
+     (:c 2)))
+
 (ffi:define-enum (test-enum)
     ((:min -2147483648)
      (:a             0)

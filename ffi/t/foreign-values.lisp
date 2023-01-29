@@ -113,6 +113,17 @@
     (:max 2147483647))
    :check check-eql))
 
+(deftest foreign-values/enum-with-type-alias ()
+  (check-foreign-value
+   'int-values
+   (:a
+    (:a 0)
+    :b
+    (:b 1)
+    :c
+    (:c 2))
+   :check check-eql))
+
 (deftest foreign-values/bitset ()
   (check-foreign-value
    'test-bitset

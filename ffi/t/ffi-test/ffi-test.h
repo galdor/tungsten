@@ -4,6 +4,12 @@
 #include <limits.h>
 #include <stdint.h>
 
+typedef int ffi_int_t;
+
+static const ffi_int_t ffi_int_a = 0;
+static const ffi_int_t ffi_int_b = 1;
+static const ffi_int_t ffi_int_c = 2;
+
 enum ffi_test_enum {
         FFI_TEST_SIMPLE_ENUM_MIN = INT_MIN,
 

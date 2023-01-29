@@ -44,5 +44,5 @@
            constants)))
     `(register-foreign-type
       (make-instance 'bitset :name ',name
-                             :base-type ,base-type
+                             :base-type (foreign-base-type ,base-type)
                              :constants ',constant-pairs))))

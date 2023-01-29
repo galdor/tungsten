@@ -59,10 +59,12 @@
   (format stream "}~%"))
 
 (defun generate-constant (form stream)
-  (destructuring-bind (name c-name &optional (base-type :int)) form
-    (format stream "~%printf(\"\\n(defconstant ~A \"~A\")\\n\",~
+  (destructuring-bind (name c-name &optional (type-form :int)) form
+    (let* ((type (resolve-foreign-type-quoted-form type-form))
+           (base-type (ffi:foreign-base-type type)))
+      (format stream "~%printf(\"\\n(defconstant ~A \"~A\")\\n\",~
                              ~A);~%"
-            name (integer-printf-string base-type) c-name)))
+              name (integer-printf-string base-type) c-name))))
 
 (defun generate-c-type (form stream)
   (destructuring-bind (name c-name) form
@@ -73,28 +75,32 @@
             name c-name c-name c-name)))
 
 (defun generate-c-enum (form stream)
-  (destructuring-bind ((name base-type) (&rest constants)) form
-    (format stream "puts(\"\\n(ffi:define-enum (~A :base-type ~S)\");~%"
-            name base-type)
-    (format stream "puts(\"(\");~%")
-    (dolist (constant constants)
-      (destructuring-bind (constant-name value) constant
-        (format stream "printf(\"  (~S \"~A\")\\n\", (~A)~A);~%"
-                constant-name (integer-printf-string base-type)
-                (integer-type-name base-type) value)))
-    (format stream "puts(\"))\");~%")))
+  (destructuring-bind ((name type-form) (&rest constants)) form
+    (let* ((type (resolve-foreign-type-quoted-form type-form))
+           (base-type (ffi:foreign-base-type type)))
+      (format stream "puts(\"\\n(ffi:define-enum (~A :base-type ~S)\");~%"
+              name type-form)
+      (format stream "puts(\"(\");~%")
+      (dolist (constant constants)
+        (destructuring-bind (constant-name value) constant
+          (format stream "printf(\"  (~S \"~A\")\\n\", (~A)~A);~%"
+                  constant-name (integer-printf-string base-type)
+                  (integer-type-name base-type) value)))
+      (format stream "puts(\"))\");~%"))))
 
 (defun generate-c-bitset (form stream)
-  (destructuring-bind ((name base-type) (&rest constants)) form
-    (format stream "puts(\"\\n(ffi:define-bitset (~A :base-type ~S)\");~%"
-            name base-type)
-    (format stream "puts(\"(\");~%")
-    (dolist (constant constants)
-      (destructuring-bind (constant-name value) constant
-        (format stream "printf(\"  (~S \"~A\")\\n\", (~A)~A);~%"
-                constant-name (integer-printf-string base-type)
-                (integer-type-name base-type) value)))
-    (format stream "puts(\"))\");~%")))
+  (destructuring-bind ((name type-form) (&rest constants)) form
+    (let* ((type (resolve-foreign-type-quoted-form type-form))
+           (base-type (ffi:foreign-base-type type)))
+      (format stream "puts(\"\\n(ffi:define-bitset (~A :base-type ~S)\");~%"
+              name type-form)
+      (format stream "puts(\"(\");~%")
+      (dolist (constant constants)
+        (destructuring-bind (constant-name value) constant
+          (format stream "printf(\"  (~S \"~A\")\\n\", (~A)~A);~%"
+                  constant-name (integer-printf-string base-type)
+                  (integer-type-name base-type) value)))
+      (format stream "puts(\"))\");~%"))))
 
 (defun generate-c-struct (form stream)
   (destructuring-bind ((name c-name) (&rest members)) form
@@ -131,6 +137,20 @@
           (format stream "printf(\"  (~S ~S :count %Zu)\\n\", ~A);~%"
                   member-name type count-expr))))
     (format stream "puts(\"))\");~%")))
+
+(defun resolve-foreign-type-quoted-form (form)
+  "Analyze FORM and return the foreign type symbol it represents. FORM is either
+a keyword, a symbol, or a quoted symbol form such as (QUOTE SYSTEM:SIZE-T)."
+  (cond
+    ((keywordp form)
+     form)
+    ((and (listp form)
+          (= (length form) 2)
+          (eq (car form) 'cl:quote)
+          (symbolp (cadr form)))
+     (cadr form))
+    (t
+     (error "Invalid foreign type form ~S." form))))
 
 (defun integer-printf-string (base-type)
   (ecase base-type

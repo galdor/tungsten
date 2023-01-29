@@ -67,6 +67,7 @@
   (setf (gethash (foreign-type-name type) *foreign-types*) type))
 
 (defun foreign-type (type-or-name)
+  (declare (type (or foreign-type symbol) type-or-name))
   (etypecase type-or-name
     (foreign-type
      type-or-name)
@@ -75,6 +76,7 @@
          (error 'unknown-foreign-type :name type-or-name)))))
 
 (defun foreign-base-type (name)
+  (declare (type symbol name))
   (if (base-type-p name)
       name
       (foreign-type-base-type (foreign-type name))))
