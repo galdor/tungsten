@@ -3,7 +3,7 @@
 (defmacro check-encode-hex-string (&rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-string=
+                 `(check-string=
                    ,(car check)
                    (text:encode-hex-string (core:octet-vector,(cadr check))
                                            ,@(cddr check))))

@@ -15,7 +15,7 @@
 (defsystem "postgresql/test"
   :description "Tests for the postgresql system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "postgresql")
+  :depends-on ("test" "postgresql")
   :pathname "t"
   :serial t
   :components
@@ -24,4 +24,4 @@
    (:file "scram")
    (:file "codecs"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :postgresql-test)))
+                    (symbol-call :test :run :package :postgresql-test)))

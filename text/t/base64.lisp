@@ -3,7 +3,7 @@
 (defmacro check-encode-base64 (&rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-string=
+                 `(check-string=
                    ,(car check)
                    (text:encode-base64
                     (text:encode-string ,(cadr check)) ,@(cddr check))))
@@ -24,7 +24,7 @@
 (defmacro check-decode-base64 (&rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-string=
+                 `(check-string=
                    ,(car check)
                    (text:decode-string
                     (text:decode-base64 ,(cadr check) ,@(cddr check)))))

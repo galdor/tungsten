@@ -1,4 +1,4 @@
-(in-package :check)
+(in-package :test)
 
 (defmacro check-true (expr &key label)
   (let ((value (gensym "VALUE-")))

@@ -1,4 +1,4 @@
-(in-package :check)
+(in-package :test)
 
 (defmacro deftest (name () &body body)
   "Define a test."

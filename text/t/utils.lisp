@@ -3,7 +3,7 @@
 (defmacro check-encode-string (encoding &rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-equalp
+                 `(check-equalp
                    ,(car check)
                    (text:encode-string ,(cadr check) :encoding ,encoding
                                        ,@(cddr check))))
@@ -12,7 +12,7 @@
 (defmacro check-encode-string-error (encoding &rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-signals
+                 `(check-signals
                    ,(car check)
                    (text:encode-string ,(cadr check) :encoding ,encoding
                                        ,@(cddr check))))
@@ -21,7 +21,7 @@
 (defmacro check-decode-string (encoding &rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-equalp
+                 `(check-equalp
                    ,(car check)
                    (text:decode-string
                     ,(make-array (length (cadr check))
@@ -33,7 +33,7 @@
 (defmacro check-decode-string-error (encoding &rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-signals
+                 `(check-signals
                    ,(car check)
                    (text:decode-string
                     ,(make-array (length (cadr check))

@@ -1,3 +1,3 @@
 (defpackage :ffi-test
-  (:use :cl :check)
+  (:use :cl :test)
   (:export))

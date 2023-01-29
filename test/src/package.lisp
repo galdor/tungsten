@@ -1,4 +1,4 @@
-(defpackage :check
+(defpackage :test
   (:use :cl)
   (:export
    #:test-not-found

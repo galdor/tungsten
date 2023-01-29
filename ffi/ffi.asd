@@ -34,7 +34,7 @@
   :description "Tests for the ffi system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :defsystem-depends-on ("asdf-utils")
-  :depends-on ("check" "ffi")
+  :depends-on ("test" "ffi")
   :pathname "t"
   :serial t
   :components
@@ -53,4 +53,4 @@
    (:file "unions")
    (:file "errno"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :ffi-test)))
+                    (symbol-call :test :run :package :ffi-test)))

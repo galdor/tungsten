@@ -13,11 +13,11 @@
 (defsystem "json/test"
   :description "Tests for the json system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "json")
+  :depends-on ("test" "json")
   :pathname "t"
   :serial t
   :components
   ((:file "package")
    (:file "parser"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :json-test)))
+                    (symbol-call :test :run :package :json-test)))

@@ -21,7 +21,7 @@
 (defsystem "text/test"
   :description "Tests for the text system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "text")
+  :depends-on ("test" "text")
   :pathname "t"
   :serial t
   :components
@@ -33,4 +33,4 @@
    (:file "hex-encoding")
    (:file "base64"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :text-test)))
+                    (symbol-call :test :run :package :text-test)))

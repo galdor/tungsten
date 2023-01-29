@@ -1,4 +1,4 @@
-(in-package :check)
+(in-package :test)
 
 (defvar *test* nil
   "The test being currently executed.")

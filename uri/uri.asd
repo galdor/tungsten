@@ -16,7 +16,7 @@
 (defsystem "uri/test"
   :description "Tests for the uri system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "uri")
+  :depends-on ("test" "uri")
   :pathname "t"
   :serial t
   :components
@@ -26,4 +26,4 @@
    (:file "parser")
    (:file "references"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :uri-test)))
+                    (symbol-call :test :run :package :uri-test)))

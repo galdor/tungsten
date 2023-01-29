@@ -14,10 +14,10 @@
 (defsystem "streams/test"
   :description "Tests for the streams system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "streams")
+  :depends-on ("test" "streams")
   :pathname "t"
   :serial t
   :components
   ((:file "package"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :streams-test)))
+                    (symbol-call :test :run :package :streams-test)))

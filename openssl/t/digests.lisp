@@ -3,7 +3,7 @@
 (defmacro check-compute-digest (algorithm &rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-string=
+                 `(check-string=
                    ,(car check)
                    (text:encode-hex-string
                     (openssl:compute-digest ,(cadr check) ,algorithm))))
@@ -33,8 +33,8 @@
     (make-array 1000000 :element-type 'character :initial-element #\a))
    ("dea356a2cddd90c7a7ecedc5ebb563934f460452"
     (apply #'concatenate 'string
-             (make-list
-              20 :initial-element "01234567012345670123456701234567")))))
+           (make-list
+            20 :initial-element "01234567012345670123456701234567")))))
 
 (deftest compute-digest/sha256 ()
   ;; See RFC 4634 8.4 The Test driver

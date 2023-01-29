@@ -16,10 +16,10 @@
 (defsystem "log/test"
   :description "Tests for the log system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "log")
+  :depends-on ("test" "log")
   :pathname "t"
   :serial t
   :components
   ((:file "package"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :log-test)))
+                    (symbol-call :test :run :package :log-test)))

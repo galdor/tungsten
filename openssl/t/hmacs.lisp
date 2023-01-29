@@ -3,7 +3,7 @@
 (defmacro check-compute-hmac (algorithm &rest checks)
   `(progn
      ,@(mapcar (lambda (check)
-                 `(check:check-string=
+                 `(check-string=
                    ,(car check)
                    (text:encode-hex-string
                     (openssl:compute-hmac

@@ -30,11 +30,11 @@
 (defsystem "system/test"
   :description "Tests for the system system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "system")
+  :depends-on ("test" "system")
   :pathname "t"
   :serial t
   :components
   ((:file "package")
    (:file "concurrency"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :system-test)))
+                    (symbol-call :test :run :package :system-test)))

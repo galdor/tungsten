@@ -1,4 +1,4 @@
-(in-package :check)
+(in-package :test)
 
 (defun test-system (name)
   "Run tests for an ASDF system. Return T if tests finish without signaling

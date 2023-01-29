@@ -1,4 +1,4 @@
-(in-package :check)
+(in-package :test)
 
 (defclass text-reporter (reporter)
   ((stream

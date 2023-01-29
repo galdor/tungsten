@@ -1,3 +1,3 @@
 (defpackage :postgresql-test
-  (:use :cl :check)
+  (:use :cl :test)
   (:export))

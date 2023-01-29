@@ -38,13 +38,13 @@
                          (make-instance 'http:route :path ,route-path)
                          (uri:parse ,target-string))
                       (unless ,match
-                        (check:fail "target ~S does not match route path ~S"
-                                    ,target-string ,route-path-string))
+                        (fail "target ~S does not match route path ~S"
+                              ,target-string ,route-path-string))
                       (unless (equal ,expected-variables ,variables)
-                        (check:fail "matching target ~S to route path ~S ~
+                        (fail "matching target ~S to route path ~S ~
                                      yielded variables ~S instead of ~S"
-                                    ,target-string ,route-path-string
-                                    ,variables ,expected-variables))))))
+                              ,target-string ,route-path-string
+                              ,variables ,expected-variables))))))
              (check-no-match (target-string route-path-string)
                (let ((route-path (gensym "ROUTE-PATH-"))
                      (match (gensym "MATCH-")))
@@ -54,8 +54,8 @@
                                   (make-instance 'http:route :path ,route-path)
                                   (uri:parse ,target-string))))
                     (when ,match
-                      (check:fail "target ~S matches route path ~S"
-                                  ,target-string ,route-path-string))))))
+                      (fail "target ~S matches route path ~S"
+                            ,target-string ,route-path-string))))))
     (check-match nil "/" "/")
     (check-match nil "/a" "/a")
     (check-match nil "/a/" "/a")

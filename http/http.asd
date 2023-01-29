@@ -20,7 +20,7 @@
 (defsystem "http/test"
   :description "Tests for the http system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "http")
+  :depends-on ("test" "http")
   :pathname "t"
   :serial t
   :components
@@ -28,7 +28,7 @@
    (:file "http")
    (:file "routes"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :http-test)))
+                    (symbol-call :test :run :package :http-test)))
 
 (defsystem "http/example"
   :description "Examples for the http system."

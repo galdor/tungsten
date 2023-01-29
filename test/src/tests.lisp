@@ -1,4 +1,4 @@
-(in-package :check)
+(in-package :test)
 
 (defvar *tests* (make-hash-table :test #'equal)
   "The table containing all tests.")

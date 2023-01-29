@@ -20,7 +20,7 @@
 (defsystem "core/test"
   :description "Tests for the core system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "core")
+  :depends-on ("test" "core")
   :pathname "t"
   :serial t
   :components
@@ -29,4 +29,4 @@
    (:file "sequences")
    (:file "binary"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :core-test)))
+                    (symbol-call :test :run :package :core-test)))

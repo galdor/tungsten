@@ -24,7 +24,7 @@
 (defsystem "openssl/test"
   :description "Tests for the openssl system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
-  :depends-on ("check" "openssl")
+  :depends-on ("test" "openssl")
   :pathname "t"
   :serial t
   :components
@@ -33,4 +33,4 @@
    (:file "hmacs")
    (:file "pbkdf2"))
   :perform (test-op (op system)
-                    (symbol-call :check :run :package :openssl-test)))
+                    (symbol-call :test :run :package :openssl-test)))
