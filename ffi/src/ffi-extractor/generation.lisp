@@ -8,8 +8,7 @@
         "stdlib.h"))
 
 (defun generate-c-program (manifest &key (stream *standard-output*)
-                                         (package :cl-user)
-                                    &aux (*print-case* :downcase))
+                                         (package :cl-user))
   (let ((header-files (manifest-header-files manifest)))
     (dolist (file (append *header-files* header-files))
       (format stream "#include <~A>~%" file))
