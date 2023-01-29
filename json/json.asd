@@ -1,5 +1,5 @@
 (defsystem "json"
-  :description "An implementation of the JSON serialization format"
+  :description "An implementation of the JSON serialization format."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on ("core")
   :pathname "src"
