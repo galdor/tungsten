@@ -90,9 +90,11 @@
 
 (defmethod stream-write-string ((stream octet-output-stream) string
                                 &optional (start 0) end)
-  (declare (type string string))
-  (let ((end (or end (length string)))
-        (nb-characters (- end start)))
+  (declare (type string string)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let* ((end (or end (length string)))
+         (nb-characters (- end start)))
     (when (> nb-characters 0)
       (with-slots (data length external-format) stream
         (let* ((encoding (text:external-format-encoding external-format))
