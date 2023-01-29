@@ -44,10 +44,11 @@ names and values are list of tests.
 If PACKAGE is not null, only include tests in that package."
   (declare (type (or string symbol) package))
   (let ((tests nil)
-        (package (string package)))
+        (package-name (when package (string package))))
     (maphash (lambda (key test)
                (declare (ignore key))
-               (unless (and package (string/= package (test-package test)))
+               (when (or (null package)
+                         (string= package-name (test-package test)))
                  (let ((pair (assoc (test-package test) tests
                                     :test #'string=)))
                    (if pair
