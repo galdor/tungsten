@@ -11,4 +11,18 @@
    #:timestamp
    #:current-timestamp
    #:timestamp-delta
-   #:time-since))
+   #:time-since
+
+   #:year
+   #:month
+   #:month-name
+   #:week-day
+   #:week-day-name
+   #:leap-year-p
+
+   #:datetime
+   #:make-datetime
+   #:decode-datetime
+   #:current-datetime
+
+   #:format-datetime))

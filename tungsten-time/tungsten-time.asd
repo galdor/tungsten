@@ -18,7 +18,10 @@
     :package :time)
    (:file "ffi")
    (:file "clocks")
-   (:file "timestamp"))
+   (:file "timestamp")
+   (:file "calendar")
+   (:file "datetime")
+   (:file "datetime-formatting"))
   :in-order-to ((test-op (test-op "tungsten-time/test"))))
 
 (defsystem "tungsten-time/test"
@@ -30,6 +33,8 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "calendar")
+   (:file "datetime"))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :time-test)))
