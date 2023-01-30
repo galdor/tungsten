@@ -1,0 +1,4 @@
+(include "time.h")
+
+(type time-t "time_t")
+(type clockid-t "clockid_t")

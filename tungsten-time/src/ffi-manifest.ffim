@@ -1,0 +1,12 @@
+(include "time.h")
+
+(struct
+ (timespec "struct timespec")
+ ((:tv-sec 'time-t "tv_sec")
+  (:tv-nsec :long "tv_nsec")))
+
+(enum
+ (clock-type 'clockid-t)
+ ((:clock-monotonic "CLOCK_MONOTONIC")
+  #+linux (:clock-monotonic-raw "CLOCK_MONOTONIC_RAW")
+  (:clock-realtime "CLOCK_REALTIME")))

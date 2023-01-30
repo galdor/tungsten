@@ -5,6 +5,7 @@
    #:system-error-function
    #:system-error-value
    #:system-error-description
+   #:system-funcall
 
    #:size-t
    #:ssize-t
