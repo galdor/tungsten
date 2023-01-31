@@ -9,6 +9,13 @@
     (with-slots (seconds nanoseconds) timestamp
       (format stream "~D ~D" seconds nanoseconds))))
 
+(defun timestamp-equal (timestamp1 timestamp2)
+  "Return T if TIMESTAMP1 and TIMESTAMP2 are equal or NIL else."
+  (declare (type timestamp timestamp1 timestamp2))
+  (with-slots ((s1 seconds) (ns1 nanoseconds)) timestamp1
+    (with-slots ((s2 seconds) (ns2 nanoseconds)) timestamp2
+      (and (= s1 s2) (= ns1 ns2)))))
+
 (defun current-timestamp ()
   (current-clock-timestamp *clock*))
 

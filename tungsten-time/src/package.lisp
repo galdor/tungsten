@@ -9,6 +9,7 @@
    #:with-clock
 
    #:timestamp
+   #:timestamp-equal
    #:current-timestamp
    #:timestamp-delta
    #:time-since
@@ -21,6 +22,7 @@
    #:leap-year-p
 
    #:datetime
+   #:datetime-equal
    #:make-datetime
    #:make-datetime-from-unix-timestamp
    #:datetime-unix-timestamp

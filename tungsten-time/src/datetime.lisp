@@ -23,6 +23,15 @@ nanoseconds since 2000-03-01."
   (print-unreadable-object (datetime stream :type t)
     (write-string (format-datetime datetime :rfc3339) stream)))
 
+(defun datetime-equal (datetime1 datetime2)
+  "Return T if DATETIME1 and DATETIME2 are equal or NIL else."
+  (declare (type datetime datetime1 datetime2))
+  (with-slots ((d1 days) (s1 seconds) (ns1 nanoseconds)) datetime1
+    (with-slots ((d2 days) (s2 seconds) (ns2 nanoseconds)) datetime2
+      (and (= d1 d2)
+           (= s1 s2)
+           (= ns1 ns2)))))
+
 (defun make-datetime (year month day
                       &optional (hours 0) (minutes 0) (seconds 0)
                                 (nanoseconds 0))
