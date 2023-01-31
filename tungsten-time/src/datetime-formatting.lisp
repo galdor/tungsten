@@ -24,6 +24,11 @@
   `(register-datetime-format ,name ',format))
 
 (define-datetime-format :rfc3339
+    ;; Example: 1994-11-06T08:49:37.123456789Z
+    ("~4,'0D-~2,'0D-~2,'0DT~2,'0D:~2,'0D:~9,2$Z"
+     :year :month :day :hour :minute :second-real))
+
+(define-datetime-format :rfc3339-no-fraction
     ;; Example: 1994-11-06T08:49:37Z
     ("~4,'0D-~2,'0D-~2,'0DT~2,'0D:~2,'0D:~2,'0DZ"
      :year :month :day :hour :minute :second))
@@ -48,9 +53,8 @@
                   (error 'unknown-datetime-format :format format))))
          (control (car format-list))
          (arguments (cdr format-list)))
-    (multiple-value-bind (year month day hour minute second nanosecond)
+    (multiple-value-bind (year month day hours minutes seconds nanoseconds)
         (decode-datetime datetime)
-      (declare (ignore nanosecond))
       (apply #'format nil control
              (mapcar
               (lambda (argument)
@@ -66,11 +70,13 @@
                   (:day
                    day)
                   (:hour
-                   hour)
+                   hours)
                   (:minute
-                   minute)
+                   minutes)
                   (:second
-                   second)
+                   seconds)
+                  (:second-real
+                   (+ (float seconds 1.0d0) (* nanoseconds 1.0d-9)))
                   (:week-day
                    (week-day year month day))
                   (:week-day-name
