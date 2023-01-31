@@ -22,6 +22,8 @@
 
    #:datetime
    #:make-datetime
+   #:make-datetime-from-unix-timestamp
+   #:datetime-unix-timestamp
    #:decode-datetime
    #:current-datetime
 

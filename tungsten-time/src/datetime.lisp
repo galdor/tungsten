@@ -19,6 +19,10 @@ nanoseconds since 2000-03-01."
   (seconds 0 :type (integer 0 86399))
   (nanoseconds 0 :type (integer 0 999999999)))
 
+(defmethod print-object ((datetime datetime) stream)
+  (print-unreadable-object (datetime stream :type t)
+    (write-string (format-datetime datetime :rfc3339) stream)))
+
 (defun make-datetime (year month day
                       &optional (hours 0) (minutes 0) (seconds 0)
                                 (nanoseconds 0))
@@ -33,9 +37,38 @@ nanoseconds since 2000-03-01."
           (slot-value datetime 'nanoseconds) nanoseconds)
     datetime))
 
-(defmethod print-object ((datetime datetime) stream)
-  (print-unreadable-object (datetime stream :type t)
-    (write-string (format-datetime datetime :rfc3339) stream)))
+(defun make-datetime-from-unix-timestamp (timestamp &key (unit :second))
+  "Create a datetime from a UNIX timestamp. The precision of the timestamp is
+specified with the UNIX parameter; supported units are :SECOND, :MILLISECOND,
+:MICROSECOND and :NANOSECOND. The default unit is :SECOND."
+  (declare (type integer timestamp)
+           (type (member :second :millisecond :microsecond :nanosecond) unit))
+  (multiple-value-bind (seconds rest)
+      (floor timestamp (ecase unit
+                         (:second               1)
+                         (:millisecond       1000)
+                         (:microsecond    1000000)
+                         (:nanosecond  1000000000)))
+    (let ((nanoseconds (case unit
+                         (:millisecond (setf rest (* rest 1000000)))
+                         (:microsecond (setf rest (* rest    1000)))
+                         (t rest))))
+      (multiple-value-bind (days seconds) (floor seconds 86400)
+        (make-datetime* (+ days unix-epoch) seconds nanoseconds)))))
+
+(defun datetime-unix-timestamp (datetime &key (unit :second))
+  "Return DATETIME represented as a UNIX timestamp. The precision of the
+timestamp depends on the UNIT parameter; supported units are :SECOND,
+:MILLISECOND, :MICROSECOND and :NANOSECOND. The default unit is :SECOND."
+  (declare (type datetime datetime)
+           (type (member :second :millisecond :microsecond :nanosecond) unit))
+  (with-slots (days seconds nanoseconds) datetime
+    (let ((timestamp (+ (* (- days unix-epoch) 86400) seconds)))
+      (ecase unit
+        (:second            timestamp)
+        (:millisecond (+ (* timestamp       1000) (floor nanoseconds 1000000)))
+        (:microsecond (+ (* timestamp    1000000) (floor nanoseconds    1000)))
+        (:nanosecond  (+ (* timestamp 1000000000)        nanoseconds))))))
 
 (defun decode-datetime (datetime)
   "Return the year, month, day, hours, minutes, seconds and nanoseconds parts of
