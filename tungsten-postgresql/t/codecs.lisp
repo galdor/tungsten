@@ -128,6 +128,15 @@
      (equalp)
      ((#("a" "bc" nil) '((:array :text) . #("a" "bc" nil)))))))
 
+(deftest codec/date ()
+  (with-test-client ()
+    (check-codec
+     (time:datetime-equal)
+     (((time:make-datetime 2023 1 31)
+       `(:date . ,(time:make-datetime 2023 1 31)))
+      ((time:make-datetime 2023 1 31)
+       `(:date . ,(time:make-datetime 2023 1 31 10 20 30 123456000)))))))
+
 (deftest codec/timestamp ()
   (with-test-client ()
     (check-codec

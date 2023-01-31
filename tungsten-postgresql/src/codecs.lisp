@@ -6,8 +6,13 @@
 (deftype oid ()
   '(unsigned-byte 32))
 
-(defparameter *timestamp-base* 946684800000000
-  "The microsecond UNIX timestap used as base date for PostgreSQL timestamps.
+(defparameter *date-day-base* 10957
+  "The number of days since the UNIX epoch used as base date for PostgreSQL
+dates. Corresponds to 2000-01-01.")
+
+(defparameter *timestamp-microsecond-base*
+  (* *date-day-base* 86400 1000000)
+  "The microsecond UNIX timestamp used as base date for PostgreSQL timestamps.
 Corresponds to 2000-01-01T00:00:00.")
 
 (define-condition unknown-codec (error)
@@ -218,6 +223,9 @@ Corresponds to 2000-01-01T00:00:00.")
        (:varchar
         1043 1015
         encode-value/text decode-value/text)
+       (:date
+        1082 1182
+        encode-value/date decode-value/date)
        (:timestamp
         1114 1115
         encode-value/timestamp decode-value/timestamp)
@@ -338,7 +346,7 @@ Corresponds to 2000-01-01T00:00:00.")
 (defun integer-value-decoding-function (size type)
   (lambda (octets codecs)
     (declare (ignore codecs))
-    (when (/= (length octets) size)
+    (when (< (length octets) size)
       (value-decoding-error octets "truncated ~D byte integer" size))
     (core:binref type octets)))
 
@@ -353,7 +361,7 @@ Corresponds to 2000-01-01T00:00:00.")
 (defun floating-point-value-decoding-function (size type)
   (lambda (octets codecs)
     (declare (ignore codecs))
-    (when (/= (length octets) size)
+    (when (< (length octets) size)
       (value-decoding-error octets "truncated ~D byte floating point value"
                             size))
     (core:binref type octets)))
@@ -367,18 +375,36 @@ Corresponds to 2000-01-01T00:00:00.")
   (declare (ignore codecs))
   (text:decode-string octets))
 
+(defun encode-value/date (value codec codecs)
+  (declare (type time:datetime value)
+           (ignore codec codecs))
+  (let* ((timestamp (time:datetime-unix-timestamp value :unit :second))
+         (nb-days (floor timestamp 86400)))
+    (let ((octets (core:make-octet-vector 4)))
+      (setf (core:binref :int32be octets) (- nb-days *date-day-base*))
+      octets)))
+
+(defun decode-value/date (octets codecs)
+  (declare (ignore codecs))
+  (when (< (length octets) 4)
+    (value-decoding-error octets "truncated date value"))
+  (let ((nb-days (+ (core:binref :int32be octets) *date-day-base*)))
+    (time:make-datetime-from-unix-timestamp (* nb-days 86400))))
+
 (defun encode-value/timestamp (value codec codecs)
   (declare (type time:datetime value)
            (ignore codec codecs))
   (let ((timestamp (time:datetime-unix-timestamp value :unit :microsecond)))
     (let ((octets (core:make-octet-vector 8)))
-      (setf (core:binref :int64be octets) (- timestamp *timestamp-base*))
+      (setf (core:binref :int64be octets)
+            (- timestamp *timestamp-microsecond-base*))
       octets)))
 
 (defun decode-value/timestamp (octets codecs)
   (declare (ignore codecs))
-  (when (/= (length octets) 8)
+  (when (< (length octets) 8)
     (value-decoding-error octets "truncated timestamp value"))
   (let ((timestamp (core:binref :int64be octets)))
-    (time:make-datetime-from-unix-timestamp (+ timestamp *timestamp-base*)
-                                            :unit :microsecond)))
+    (time:make-datetime-from-unix-timestamp
+     (+ timestamp *timestamp-microsecond-base*)
+     :unit :microsecond)))
