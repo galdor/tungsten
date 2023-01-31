@@ -4,11 +4,12 @@
   `(progn
      ,@(mapcar
         (lambda (form)
-          (let ((expected-value (gensym "EXPECTED-VALUE-"))
-                (input-value (gensym "INPUT-VALUE-")))
-            `(let* ((,expected-value ,(car form))
-                    (,input-value ,(cadr form))
-                    (rows (postgresql:query "SELECT $1" (list ,input-value)))
+          (destructuring-bind (expected-value input-value
+                               &key (sql-expression "$1"))
+              form
+            `(let* ((rows (postgresql:query
+                           (format nil "SELECT ~A" ,sql-expression)
+                           (list ,input-value)))
                     (output-value (aref (car rows) 0)))
                (unless (funcall ',predicate ,expected-value output-value)
                  (fail "~S was returned as ~S which is not ~A to ~S"
@@ -126,3 +127,22 @@
     (check-codec
      (equalp)
      ((#("a" "bc" nil) '((:array :text) . #("a" "bc" nil)))))))
+
+(deftest codec/timestamp ()
+  (with-test-client ()
+    (check-codec
+     (time:datetime-equal)
+     (((time:make-datetime 2023 1 31)
+       (time:make-datetime 2023 1 31))
+      ((time:make-datetime 2023 1 31 10 20 30 123456000)
+       (time:make-datetime 2023 1 31 10 20 30 123456000))))))
+
+(deftest codec/timestamptz ()
+  (with-test-client ()
+    (check-codec
+     (time:datetime-equal)
+     (((time:make-datetime 2023 1 31)
+       `(:timestamptz . ,(time:make-datetime 2023 1 31)))
+      ((time:make-datetime 2023 1 31 10 20 30 123456000)
+       `(:timestamptz
+         . ,(time:make-datetime 2023 1 31 10 20 30 123456000)))))))

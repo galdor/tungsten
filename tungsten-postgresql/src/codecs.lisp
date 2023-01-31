@@ -6,6 +6,10 @@
 (deftype oid ()
   '(unsigned-byte 32))
 
+(defparameter *timestamp-base* 946684800000000
+  "The microsecond UNIX timestap used as base date for PostgreSQL timestamps.
+Corresponds to 2000-01-01T00:00:00.")
+
 (define-condition unknown-codec (error)
   ((type
     :type (or codec-type null)
@@ -140,6 +144,8 @@
      (encode-value `(:text . ,value) codecs))
     ((typep value 'core:octet-vector)
      (encode-value `(:bytea . ,value) codecs))
+    ((typep value 'time:datetime)
+     (encode-value `(:timestamp . ,value) codecs))
     ((consp value)
      (let* ((codec (find-codec (car value) codecs))
             (value (cdr value)))
@@ -211,7 +217,13 @@
         encode-value/text decode-value/text)
        (:varchar
         1043 1015
-        encode-value/text decode-value/text)))
+        encode-value/text decode-value/text)
+       (:timestamp
+        1114 1115
+        encode-value/timestamp decode-value/timestamp)
+       (:timestamptz
+        1184 1185
+        encode-value/timestamp decode-value/timestamp)))
     codecs))
 
 (defun encode-value/array (value codec codecs)
@@ -354,3 +366,19 @@
 (defun decode-value/text (octets codecs)
   (declare (ignore codecs))
   (text:decode-string octets))
+
+(defun encode-value/timestamp (value codec codecs)
+  (declare (type time:datetime value)
+           (ignore codec codecs))
+  (let ((timestamp (time:datetime-unix-timestamp value :unit :microsecond)))
+    (let ((octets (core:make-octet-vector 8)))
+      (setf (core:binref :int64be octets) (- timestamp *timestamp-base*))
+      octets)))
+
+(defun decode-value/timestamp (octets codecs)
+  (declare (ignore codecs))
+  (when (/= (length octets) 8)
+    (value-decoding-error octets "truncated timestamp value"))
+  (let ((timestamp (core:binref :int64be octets)))
+    (time:make-datetime-from-unix-timestamp (+ timestamp *timestamp-base*)
+                                            :unit :microsecond)))

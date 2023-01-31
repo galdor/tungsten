@@ -3,6 +3,7 @@
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
   ("tungsten-core"
+   "tungsten-time"
    "tungsten-text"
    "tungsten-system"
    "tungsten-streams"
