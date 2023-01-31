@@ -3,6 +3,7 @@
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
   ("tungsten-core"
+   "tungsten-time"
    "tungsten-text"
    "tungsten-system"
    "tungsten-openssl"
@@ -11,7 +12,6 @@
   :serial t
   :components
   ((:file "package")
-   (:file "time")
    (:file "http")
    (:file "statuses")
    (:file "request")

@@ -200,8 +200,8 @@
 
 (defun finalize-response/date (response)
   (declare (type response response))
-  (add-new-response-header-field response "Date"
-                                 (format-rfc7231-date (get-universal-time))))
+  (let ((date (time:format-datetime (time:current-datetime) :rfc7231)))
+    (add-new-response-header-field response "Date" date)))
 
 (defun finalize-response/body (response)
   (declare (type response response))

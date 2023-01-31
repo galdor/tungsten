@@ -38,10 +38,9 @@
     ("~:(~A~), ~2,'0D ~:(~A~) ~4,'0D ~2,'0D:~2,'0D:~2,'0D GMT"
      :short-week-day-name :day :short-month-name :year :hour :minute :second))
 
-(defun format-datetime (datetime format stream)
+(defun format-datetime (datetime format)
   (declare (type datetime datetime)
-           (type (or symbol list) format)
-           (type stream stream))
+           (type (or symbol list) format))
   (let* ((format-list
           (if (listp format)
               format
@@ -52,7 +51,7 @@
     (multiple-value-bind (year month day hour minute second nanosecond)
         (decode-datetime datetime)
       (declare (ignore nanosecond))
-      (apply #'format stream control
+      (apply #'format nil control
              (mapcar
               (lambda (argument)
                 (ecase argument

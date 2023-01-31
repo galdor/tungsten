@@ -35,7 +35,7 @@ nanoseconds since 2000-03-01."
 
 (defmethod print-object ((datetime datetime) stream)
   (print-unreadable-object (datetime stream :type t)
-    (format-datetime datetime :rfc3339 stream)))
+    (write-string (format-datetime datetime :rfc3339) stream)))
 
 (defun decode-datetime (datetime)
   "Return the year, month, day, hours, minutes, seconds and nanoseconds parts of
