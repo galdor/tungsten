@@ -1,7 +1,5 @@
 (in-package :log)
 
-(defvar *logger* nil)
-
 (defclass logger ()
   ((domain
     :type domain
@@ -25,7 +23,7 @@
         (format stream "~{~A~^.~}" domain)))))
 
 (defun make-logger (name &key parent data sink)
-  (declare (type domain-part name)
+  (declare (type (or domain-part null) name)
            (type (or logger null) parent)
            (type list data)
            (type (or null sink) sink))
@@ -34,9 +32,11 @@
                (slot-value parent slot)
                default)))
     (make-instance 'logger
-                   :domain (append (inherit 'domain) (list name))
+                   :domain (append (inherit 'domain) (when name (list name)))
                    :data (append data (inherit 'data))
                    :sink (or sink (inherit 'sink (make-default-sink))))))
+
+(defvar *logger* (make-logger nil))
 
 (defmacro with-logger ((name &key data sink) &body body)
   `(let ((*logger* (make-logger ,name :parent *logger*
