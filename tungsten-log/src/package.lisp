@@ -18,7 +18,6 @@
 
    #:make-terminal-sink
 
-   #:*default-stream*
    #:*logger*
    #:logger
    #:logger-domain

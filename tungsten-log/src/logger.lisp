@@ -1,8 +1,5 @@
 (in-package :log)
 
-(defparameter *default-stream*
-  *error-output*)
-
 (defvar *logger* nil)
 
 (defclass logger ()
