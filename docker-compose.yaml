@@ -17,5 +17,26 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
+  influxdb:
+    image: "influxdb:1.8"
+    container_name: "tungsten-influxdb"
+    ports: ["8086:8086"]
+    volumes:
+      - "./docker-compose/influxdb:/docker-entrypoint-initdb.d:ro"
+      - "influxdb-data:/var/lib/influxdb:rw"
+    environment:
+      INFLUXDB_REPORTING_DISABLED: "true"
+    logging: *logging
+  grafana:
+    image: "grafana/grafana:9.3.6"
+    container_name: "tungsten-grafana"
+    user: "root"
+    ports: ["3000:3000"]
+    volumes:
+      - "./docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "grafana-data:/var/lib/grafana:rw"
+    logging: *logging
 volumes:
   postgresql-data:
+  influxdb-data:
+  grafana-data:

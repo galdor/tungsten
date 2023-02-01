@@ -1,0 +1,7 @@
+apiVersion: 1
+datasources:
+  - name: "influxdb"
+    type: "influxdb"
+    database: "tungsten"
+    url: "http://tungsten-influxdb:8086"
+    httpMode: "POST"
