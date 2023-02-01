@@ -29,7 +29,8 @@
    (:file "network-stream")
    (:file "tcp-stream")
    (:file "tcp-client")
-   (:file "tcp-server"))
+   (:file "tcp-server")
+   (:file "environment"))
   :in-order-to ((test-op (test-op "tungsten-system/test"))))
 
 (defsystem "tungsten-system/test"

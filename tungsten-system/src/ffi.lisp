@@ -1,6 +1,27 @@
 (in-package :system)
 
 ;;;
+;;; Environment
+;;;
+
+;; HOST_NAME_MAX is not available on FreeBSD for questionable reasons, so we
+;; use a large value and check for truncation.
+;;
+;; Note that we cannot use uname() because the size of the character arrays in
+;; the ustname structure is not specified.
+
+(defun gethostname ()
+  (let ((hostname-length 256))
+    (ffi:with-foreign-value (%hostname :char :count hostname-length)
+      (ffi:clear-foreign-memory %hostname hostname-length)
+      (system-funcall
+       ("gethostname" ((:pointer size-t) :int) %hostname hostname-length))
+      (unless (zerop (ffi:foreign-value %hostname :char (1- hostname-length)))
+        (error "System function \"gethostname\" returned a truncated ~
+                hostname."))
+      (ffi:decode-foreign-string %hostname))))
+
+;;;
 ;;; Time
 ;;;
 

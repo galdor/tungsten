@@ -87,4 +87,6 @@
 
    #:tcp-server
    #:start-tcp-server
-   #:stop-tcp-server))
+   #:stop-tcp-server
+
+   #:hostname))
