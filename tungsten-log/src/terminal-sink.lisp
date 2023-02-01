@@ -51,7 +51,7 @@
           (unless (null data)
             (format stream "~%      ")
             (dolist (datum data)
-              (format stream " ~:[~*~A:~*~;~A~A:~A~]~A"
+              (format stream " ~:[~*~A=~*~;~A~A=~A~]~A"
                       color blue (car datum) reset
                       (cdr datum))))
           (terpri stream)
