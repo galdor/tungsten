@@ -126,7 +126,7 @@
            (type (or uri:uri string) uri)
            (type header header)
            (type (or body null) body))
-  (let* ((uri (when (stringp uri) (uri:parse uri)))
+  (let* ((uri (uri:uri uri))
          (body (when (and body (stringp body))
                  (text:encode-string body)))
          (request (make-instance 'request :method method
