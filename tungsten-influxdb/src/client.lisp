@@ -147,7 +147,8 @@
 (defun enqueue-point (point &key (client *client*))
   (declare (type point point)
            (type client client))
-  (with-slots (mutex points) client
-    (system:with-mutex (mutex)
-      (push point points))
-    t))
+  (when client
+    (with-slots (mutex points) client
+      (system:with-mutex (mutex)
+        (push point points))
+      t)))
