@@ -91,3 +91,9 @@
                            :text-format format
                            :text-arguments arguments
                            :data data)))
+
+(defun log-condition (condition)
+  (declare (type condition condition))
+  (let ((name (class-name (class-of condition))))
+    (log-error-data (list (cons "condition" (prin1-to-string name)))
+                    "~A" condition)))

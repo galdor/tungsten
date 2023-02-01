@@ -32,4 +32,5 @@
    #:log-info
    #:log-info-data
    #:log-error
-   #:log-error-data))
+   #:log-error-data
+   #:log-condition))
