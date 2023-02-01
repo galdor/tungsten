@@ -93,9 +93,8 @@
           (handler-bind
               ((error
                  (lambda (condition)
-                   (declare (ignore condition))
                    (unless core:*interactive*
-                     ;; TODO logging
+                     (log:log-condition condition)
                      (invoke-restart 'continue)))))
               (process-points client))
         (continue ()

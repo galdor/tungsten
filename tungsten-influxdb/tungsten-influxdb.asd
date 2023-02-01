@@ -4,6 +4,7 @@
   :depends-on
   ("tungsten-core"
    "tungsten-http"
+   "tungsten-log"
    "tungsten-system"
    "tungsten-text")
   :pathname "src"
