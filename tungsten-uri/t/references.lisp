@@ -7,9 +7,7 @@
           (destructuring-bind (expected (reference base)) test
             `(check-string= ,expected
                             (uri:serialize
-                             (uri:resolve-reference
-                              (uri:parse ,reference)
-                              (uri:parse ,base))))))
+                             (uri:resolve-reference ,reference ,base)))))
         tests)))
 
 (deftest resolve-reference ()

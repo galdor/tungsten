@@ -14,38 +14,41 @@
                      a scheme."))))
 
 (defun resolve-reference (reference base)
-  (cond
-    ((uri-scheme reference)
-     (let ((uri (copy-uri reference)))
-       (setf (uri-path uri) (remove-dot-segments (uri-path reference)))
-       uri))
-    ((and (uri-host reference) (uri-scheme base))
-     (let ((uri (copy-uri reference)))
-       (setf (uri-scheme uri) (uri-scheme base))
-       (setf (uri-path uri) (remove-dot-segments (uri-path reference)))
-       uri))
-    ((uri-scheme base)
-     (let ((uri (copy-uri base)))
-       (when (uri-fragment reference)
-         (setf (uri-fragment uri) (uri-fragment reference)))
-       (let ((path (or (uri-path reference) "")))
-         (cond
-           ((string= path "")
-            (when (uri-query reference)
-              (setf (uri-query uri) (uri-query reference))))
-           ((char= (char path 0) #\/)
-            (setf (uri-query uri) (uri-query reference))
-            (setf (uri-path uri) (remove-dot-segments path)))
-           (t
-            (setf (uri-query uri) (uri-query reference))
-            (let* ((base-path (or (uri-path base) ""))
-                   (has-base-authority (not (null (uri-host base)))))
-              (setf (uri-path uri)
-                    (remove-dot-segments
-                     (merge-paths base-path has-base-authority path)))))))
-       uri))
-    (t
-     (error 'missing-base-uri-scheme :reference reference :base base))))
+  (declare (type (or uri string) reference base))
+  (let ((reference (uri reference))
+        (base (uri base)))
+    (cond
+      ((uri-scheme reference)
+       (let ((uri (copy-uri reference)))
+         (setf (uri-path uri) (remove-dot-segments (uri-path reference)))
+         uri))
+      ((and (uri-host reference) (uri-scheme base))
+       (let ((uri (copy-uri reference)))
+         (setf (uri-scheme uri) (uri-scheme base))
+         (setf (uri-path uri) (remove-dot-segments (uri-path reference)))
+         uri))
+      ((uri-scheme base)
+       (let ((uri (copy-uri base)))
+         (when (uri-fragment reference)
+           (setf (uri-fragment uri) (uri-fragment reference)))
+         (let ((path (or (uri-path reference) "")))
+           (cond
+             ((string= path "")
+              (when (uri-query reference)
+                (setf (uri-query uri) (uri-query reference))))
+             ((char= (char path 0) #\/)
+              (setf (uri-query uri) (uri-query reference))
+              (setf (uri-path uri) (remove-dot-segments path)))
+             (t
+              (setf (uri-query uri) (uri-query reference))
+              (let* ((base-path (or (uri-path base) ""))
+                     (has-base-authority (not (null (uri-host base)))))
+                (setf (uri-path uri)
+                      (remove-dot-segments
+                       (merge-paths base-path has-base-authority path)))))))
+         uri))
+      (t
+       (error 'missing-base-uri-scheme :reference reference :base base)))))
 
 (defun merge-paths (base-path has-base-authority path)
   (cond

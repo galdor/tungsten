@@ -61,6 +61,12 @@
             :query (uri-query uri)
             :fragment (uri-fragment uri)))
 
+(defun uri (uri)
+  (declare (type (or uri string) uri))
+  (etypecase uri
+    (uri uri)
+    (string (parse uri))))
+
 (defun uri-absolute-path-p (uri)
   (declare (type uri uri))
   (with-slots (path) uri
