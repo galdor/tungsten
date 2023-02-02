@@ -58,7 +58,7 @@
     (real
      (format stream "~F" field))
     (boolean
-     (write-string (if field "true" "false") stream))
+     (write-string (if field "t" "f") stream))
     (string
      (write-char #\" stream)
      (write-escaped-string field '(#\") stream)
