@@ -54,7 +54,8 @@
   (declare (type stream stream))
   (typecase field
     (integer
-     (princ field stream))
+     (princ field stream)
+     (write-char #\i stream))
     (real
      (format stream "~F" field))
     (boolean
