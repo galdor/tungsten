@@ -90,4 +90,5 @@
    #:stop-tcp-server
 
    #:hostname
+   #:count-file-descriptors
    #:file-descriptor-limit))
