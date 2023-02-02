@@ -11,7 +11,7 @@
                                      :encoding :ascii)))))
 
 (defun encoded-string-length/ascii (string start end)
-  (declare (type simple-string string)
+  (declare (type string string)
            (type (or index null) start end))
   (- (or end (length string)) (or start 0)))
 

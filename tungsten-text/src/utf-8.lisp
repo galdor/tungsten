@@ -29,7 +29,7 @@
       (t 4))))
 
 (defun encoded-string-length/utf8 (string start end)
-  (declare (type simple-string string)
+  (declare (type string string)
            (type (or index null) start end))
   (do ((max-index (1- (or end (length string))))
        (length 0)

@@ -7,7 +7,7 @@
 
 (defun encoded-string-length (string &key (encoding *default-encoding*)
                                           start end)
-  (declare (type simple-string string)
+  (declare (type string string)
            (type (or index null) end))
   (let ((encoding (encoding encoding)))
     (funcall (encoding-encoded-string-length-function encoding)
@@ -16,7 +16,7 @@
 (defun encode-string (string &key (encoding *default-encoding*) start end
                                   octets (offset 0)
                                   nb-octets)
-  (declare (type simple-string string)
+  (declare (type string string)
            (type (or index null) end))
   (let* ((encoding (encoding encoding))
          (nb-octets

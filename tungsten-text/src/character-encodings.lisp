@@ -42,7 +42,7 @@
   '(function (character) vector-length))
 
 (deftype encoded-string-length-function ()
-  '(function (simple-string index index) vector-length))
+  '(function (string index index) vector-length))
 
 (deftype character-encoding-function ()
   '(function (character vector index) vector-length))
@@ -54,7 +54,7 @@
   '(function (octet-vector index index) (values character vector-length)))
 
 (deftype string-decoding-function ()
-  '(function (octet-vector index index string index) simple-string))
+  '(function (octet-vector index index string index) string))
 
 (defclass encoding ()
   ((name
