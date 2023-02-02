@@ -70,7 +70,7 @@
 (defun write-timestamp (datetime stream)
   (declare (type time:datetime datetime)
            (type stream stream))
-  (princ (time:datetime-unix-timestamp datetime :unit :nanosecond) stream))
+  (princ (time:datetime-unix-timestamp datetime :unit :millisecond) stream))
 
 (defun write-key (key stream)
   (write-escaped-string key '(#\, #\= #\Space) stream))
