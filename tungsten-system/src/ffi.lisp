@@ -30,6 +30,9 @@
                               %limit 'rlimit)
       (values current max))))
 
+(defun sysconf (name)
+  (system-funcall ("sysconf" ((sysconf-name) :long) name)))
+
 ;;;
 ;;; Time
 ;;;

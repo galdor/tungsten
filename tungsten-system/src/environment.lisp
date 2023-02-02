@@ -16,3 +16,14 @@ if there is no limit."
     (declare (ignore max))
     (when (integerp current)
       current)))
+
+(defun memory-page-size ()
+  "Return the size of a memory page in bytes."
+  (sysconf :sc-pagesize))
+
+(defun memory-usage ()
+  "Return three values indicating the amount of memory used by the current
+process: the amount of virtual memory, the amount of resident memory and the
+amount of shared memory. All values are specified in bytes."
+  (%memory-usage))
+

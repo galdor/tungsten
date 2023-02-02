@@ -123,6 +123,7 @@
 ;;;
 
 (include "sys/resource.h")
+(include "unistd.h")
 
 (enum
  (resource-limit-value 'rlim-t)
@@ -144,6 +145,10 @@
  (rlimit "struct rlimit")
  ((:rlim-cur 'resource-limit-value "rlim_cur")
   (:rlim-max 'resource-limit-value "rlim_max")))
+
+(enum
+ (sysconf-name :int)
+ ((:sc-pagesize "_SC_PAGESIZE")))
 
 ;;;
 ;;; IO multiplexing

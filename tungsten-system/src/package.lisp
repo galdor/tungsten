@@ -91,4 +91,6 @@
 
    #:hostname
    #:count-file-descriptors
-   #:file-descriptor-limit))
+   #:file-descriptor-limit
+   #:page-size
+   #:memory-usage))
