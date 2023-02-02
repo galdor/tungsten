@@ -1,3 +1,11 @@
 (defpackage :influxdb
   (:use :cl)
-  (:export))
+  (:export
+   #:request-failure
+
+   #:*client*
+   #:client
+   #:start-client
+   #:stop-client
+   #:enqueue-point
+   #:enqueue-points))

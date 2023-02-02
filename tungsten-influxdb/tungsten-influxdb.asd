@@ -13,6 +13,7 @@
   ((:file "package")
    (:file "influxdb")
    (:file "line-protocol")
+   (:file "transport")
    (:file "client"))
   :in-order-to ((test-op (test-op "tungsten-influxdb/test"))))
 
