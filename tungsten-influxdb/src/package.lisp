@@ -3,6 +3,8 @@
   (:export
    #:request-failure
 
+   #:*builtin-metrics-collection-interval*
+
    #:*client*
    #:client
    #:start-client

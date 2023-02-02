@@ -50,7 +50,7 @@
 (defun run-client (client)
   (declare (type client client))
   (with-slots (mutex closingp) client
-    (do ()
+    (do ((last-builtin-metrics-collection (time:current-timestamp)))
         ((system:with-mutex (mutex) closingp)
          nil)
       (restart-case
@@ -60,7 +60,13 @@
                    (unless core:*interactive*
                      (log:log-condition condition)
                      (invoke-restart 'continue)))))
-              (process-points client))
+            (let ((now (time:current-timestamp)))
+              (when (> (time:timestamp-delta last-builtin-metrics-collection
+                                             now)
+                       *builtin-metrics-collection-interval*)
+                (enqueue-points (collect-builtin-metrics))
+                (setf last-builtin-metrics-collection now))
+              (process-points client)))
         (continue ()
           :report "Continue processing points."))
       (sleep 1.0))))

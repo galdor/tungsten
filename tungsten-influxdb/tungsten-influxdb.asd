@@ -6,7 +6,8 @@
    "tungsten-http"
    "tungsten-log"
    "tungsten-system"
-   "tungsten-text")
+   "tungsten-text"
+   "tungsten-time")
   :pathname "src"
   :serial t
   :components
@@ -14,6 +15,7 @@
    (:file "influxdb")
    (:file "line-protocol")
    (:file "transport")
+   (:file "builtin-metrics")
    (:file "client"))
   :in-order-to ((test-op (test-op "tungsten-influxdb/test"))))
 
