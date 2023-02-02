@@ -13,6 +13,9 @@
   :components
   ((:file "package")
    ("ffi-extractor:manifest"
+    "ffi-base-manifest"
+    :package :system)
+   ("ffi-extractor:manifest"
     "ffi-manifest"
     :package :system)
    (:file "errors")

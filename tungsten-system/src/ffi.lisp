@@ -21,6 +21,15 @@
                 hostname."))
       (ffi:decode-foreign-string %hostname))))
 
+(defun getrlimit (resource)
+  (ffi:with-foreign-value (%limit 'rlimit)
+    (ffi:clear-foreign-memory %limit (ffi:foreign-type-size 'rlimit))
+    (system-funcall ("getrlimit" ((resource :pointer) :int) resource %limit))
+    (ffi:with-struct-members (((current :rlim-cur)
+                               (max :rlim-max))
+                              %limit 'rlimit)
+      (values current max))))
+
 ;;;
 ;;; Time
 ;;;

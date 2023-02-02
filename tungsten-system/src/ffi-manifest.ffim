@@ -119,6 +119,33 @@
   (:usec 'suseconds-t "tv_usec")))
 
 ;;;
+;;; Environment
+;;;
+
+(include "sys/resource.h")
+
+(enum
+ (resource-limit-value 'rlim-t)
+ ((:rlim-infinity "RLIM_INFINITY")
+  (:rlim-saved-max "RLIM_SAVED_MAX")
+  (:rlim-saved-cur "RLIM_SAVED_CUR")))
+
+(enum
+ (resource :int)
+ ((:rlimit-core "RLIMIT_CORE")
+  (:rlimit-cpu "RLIMIT_CPU")
+  (:rlimit-data "RLIMIT_DATA")
+  (:rlimit-fsize "RLIMIT_FSIZE")
+  (:rlimit-nofile "RLIMIT_NOFILE")
+  (:rlimit-stack "RLIMIT_STACK")
+  (:rlimit-as "RLIMIT_AS")))
+
+(struct
+ (rlimit "struct rlimit")
+ ((:rlim-cur 'resource-limit-value "rlim_cur")
+  (:rlim-max 'resource-limit-value "rlim_max")))
+
+;;;
 ;;; IO multiplexing
 ;;;
 

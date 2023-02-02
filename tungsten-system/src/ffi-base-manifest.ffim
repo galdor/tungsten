@@ -1,0 +1,3 @@
+(include "sys/resource.h")
+
+(type rlim-t "rlim_t")
