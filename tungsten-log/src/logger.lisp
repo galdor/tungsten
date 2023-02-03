@@ -94,6 +94,9 @@
 
 (defun log-condition (condition)
   (declare (type condition condition))
-  (let ((name (class-name (class-of condition))))
+  (let* ((name (class-name (class-of condition)))
+         (backtrace (core:backtrace))
+         (backtrace-string (with-output-to-string (stream)
+                             (core:format-backtrace backtrace stream))))
     (log-error-data (list (cons "condition" (prin1-to-string name)))
-                    "~A" condition)))
+                    "~A~%~%~A" condition backtrace-string)))
