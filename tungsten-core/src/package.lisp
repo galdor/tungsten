@@ -50,7 +50,8 @@
 
    #:abort-protect
 
-   #:*default-backtrace-depth*
+   #:*backtrace-depth*
+   #:*include-backtrace-source-files*
    #:frame
    #:frame-number
    #:frame-name

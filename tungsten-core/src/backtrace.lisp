@@ -1,6 +1,7 @@
 (in-package :core)
 
-(defparameter *default-backtrace-depth* 20)
+(defparameter *backtrace-depth* 20)
+(defparameter *include-backtrace-source-files* nil)
 
 (defclass frame ()
   ((number
@@ -21,21 +22,27 @@
   (print-unreadable-object (frame stream :type t)
     (format stream "~S" (frame-name frame))))
 
-(defun format-frame (frame stream)
+(defun format-frame (frame stream
+                     &key (include-source-file
+                           *include-backtrace-source-files*))
   (declare (type frame frame)
-           (type stream stream))
+           (type stream stream)
+           (type boolean include-source-file))
   (with-slots (number name source-file) frame
     (format stream "~2D ~S~%" number name)
-    (when source-file
+    (when (and source-file include-source-file)
       (format stream "   ~A~%" source-file))))
 
-(defun format-backtrace (backtrace stream)
+(defun format-backtrace (backtrace stream
+                         &key (include-source-file
+                               *include-backtrace-source-files*))
     (declare (type list backtrace)
-             (type stream stream))
+             (type stream stream)
+             (type boolean include-source-file))
   (dolist (frame backtrace)
-    (format-frame frame stream)))
+    (format-frame frame stream :include-source-file include-source-file)))
 
-(defun backtrace (&key (start 0) (depth *default-backtrace-depth*))
+(defun backtrace (&key (start 0) (depth *backtrace-depth*))
   (declare (type (integer 0) start depth))
   (%backtrace start depth))
 
