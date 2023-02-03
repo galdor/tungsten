@@ -14,7 +14,8 @@
    (:file "binary")
    (:file "buffer")
    (:file "input")
-   (:file "conditions"))
+   (:file "conditions")
+   (:file "backtrace"))
   :in-order-to ((test-op (test-op "tungsten-core/test"))))
 
 (defsystem "tungsten-core/test"

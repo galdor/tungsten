@@ -48,4 +48,13 @@
 
    #:prompt-eval
 
-   #:abort-protect))
+   #:abort-protect
+
+   #:*default-backtrace-depth*
+   #:frame
+   #:frame-number
+   #:frame-name
+   #:frame-source-file
+   #:format-frame
+   #:format-backtrace
+   #:backtrace))
