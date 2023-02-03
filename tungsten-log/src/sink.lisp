@@ -15,5 +15,5 @@
   (declare (type message message))
   (with-slots (domain level text-format text-arguments) message
     (let ((*print-case* :downcase))
-      (format *standard-output* "~5@<~A~>  ~24@<~{~A~^.~}~>  ~?~%"
-              level domain text-format text-arguments))))
+      (format *standard-output* "~5@<~A~>  ~24@<~{~A~^.~}~>  ~<~@;~?~:>~%"
+              level domain (list text-format text-arguments)))))
