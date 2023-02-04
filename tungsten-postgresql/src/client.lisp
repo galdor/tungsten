@@ -99,6 +99,12 @@
     :initform (make-default-codec-table)
     :reader connection-codecs)))
 
+(defmethod print-object ((connection connection) stream)
+  (print-unreadable-object (connection stream :type t)
+    (let ((address
+            (system:network-stream-address (connection-stream connection))))
+      (system:format-socket-address address stream))))
+
 (defmethod print-object ((client client) stream)
   (with-slots (host port max-connections
                mutex used-connections idle-connections)
