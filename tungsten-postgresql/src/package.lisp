@@ -42,17 +42,23 @@
    #:decode-value
 
    #:*client*
+   #:*connection-acquisition-timeout*
    #:missing-password
    #:unsupported-authentication-scheme
    #:unsupported-authentication-scheme-name
    #:unexpected-message
    #:unexpected-message-message
+   #:no-available-connection
    #:client
-   #:client-backend-process-id
-   #:client-backend-secret-key
-   #:client-stream
+   #:client-host
+   #:client-port
+   #:clinet-user
+   #:client-password
+   #:client-database
+   #:client-application-name
+   #:client-max-connections
    #:make-client
-   #:close-client
+   #:close-client-connections
    #:with-client
    #:query/simple
    #:query))

@@ -29,7 +29,8 @@
   :components
   ((:file "package")
    (:file "utils")
+   (:file "codecs")
    (:file "scram")
-   (:file "codecs"))
+   (:file "client"))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :postgresql-test)))

@@ -2,6 +2,8 @@
 
 (defvar *client* nil)
 
+(defparameter *connection-acquisition-timeout* 10.0)
+
 (define-condition missing-password (simple-error)
   ()
   (:default-initargs
@@ -27,40 +29,188 @@
      (with-slots (message) condition
        (format stream "Unexpected PostgreSQL message:~%~%~S~%" message)))))
 
+(define-condition no-available-connection (error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (with-slots (message) condition
+       (format stream "No available PostgreSQL connection~%")))))
+
 (defclass client ()
+  ((host
+    :type system:host
+    :initarg :host
+    :reader client-host)
+   (port
+    :type system:port-number
+    :initarg :port
+    :reader client-port)
+   (user
+    :type (or string null)
+    :initarg :user
+    :initform nil
+    :reader client-user)
+   (password
+    :type (or string null)
+    :initarg :password
+    :initform nil
+    :reader client-password)
+   (database
+    :type (or string null)
+    :initarg :database
+    :initform nil
+    :reader client-database)
+   (application-name
+    :type (or string null)
+    :initarg :application-name
+    :reader client-application-name)
+   (max-connections
+    :type (integer 1)
+    :initarg :max-connections
+    :reader client-max-connections)
+   (mutex
+    :type system:mutex
+    :initform (system:make-mutex :name "postgresql-client"))
+   (condition-variable
+    :type system:condition-variable
+    :initform (system:make-condition-variable :name "postgresql-client"))
+   (used-connections
+    :type list
+    :initform nil)
+   (idle-connections
+    :type list
+    :initform nil)))
+
+(defclass connection ()
   ((stream
     :type (or system:network-stream null)
     :initarg :stream
-    :reader client-stream)
+    :reader connection-stream)
    (backend-process-id
     :type (or integer null)
     :initform nil
-    :accessor client-backend-process-id)
+    :accessor connection-backend-process-id)
    (backend-secret-key
     :type (or integer null)
     :initform nil
-    :accessor client-backend-secret-key)
+    :accessor connection-backend-secret-key)
    (codecs
     :type hash-table
     :initform (make-default-codec-table)
-    :reader client-codecs)))
+    :reader connection-codecs)))
 
 (defmethod print-object ((client client) stream)
-  (print-unreadable-object (client stream :type t)
-    (let ((address (system:network-stream-address (client-stream client))))
-      (system:format-socket-address address stream))))
+  (with-slots (host port max-connections
+               mutex used-connections idle-connections)
+      client
+    (system:with-mutex (mutex)
+      (print-unreadable-object (client stream :type t)
+        (system:format-host-and-port host port stream)
+        (format stream " ~D/~D"
+                (+ (length used-connections) (length idle-connections))
+                max-connections)))))
 
 (defun make-client (&key (host "localhost") (port 5432)
-                         user password
-                         database
-                         application-name)
+                         user password database application-name
+                         (max-connections 10))
+  (declare (type system:host host)
+           (type system:port-number port)
+           (type (or string null) user password database application-name)
+           (type (integer 1) max-connections))
+  ;; It may seems strange that the host is not a mandatory parameter, but in
+  ;; the future we would like to support UNIX sockets.
+  (make-instance 'client :host host :port port
+                         :user user :password password
+                         :database database
+                         :application-name application-name
+                         :max-connections max-connections))
+
+(defun close-client-connections (client)
+  (declare (type client client))
+  (with-slots (mutex used-connections idle-connections) client
+    (system:with-mutex (mutex)
+      (mapc 'close-connection used-connections)
+      (setf used-connections nil)
+      (mapc 'close-connection idle-connections)
+      (setf idle-connections nil))
+    t))
+
+(defmacro with-client ((&rest options) &body body)
+  `(let ((*client* (make-client ,@options)))
+     (unwind-protect
+          (progn
+            ,@body)
+       (close-client-connections *client*))))
+
+(defun acquire-connection (&key (client *client*)
+                                (timeout *connection-acquisition-timeout*))
+  (declare (type client client)
+           (type (or real null) timeout))
+  (with-slots (max-connections
+               mutex condition-variable used-connections idle-connections)
+      client
+    (system:with-mutex (mutex)
+      (let ((connection (pop idle-connections)))
+        (cond
+          (connection
+           (push connection used-connections)
+           connection)
+          ((< (length used-connections) max-connections)
+           (let ((connection
+                   (make-connection :host (client-host client)
+                                    :port (client-port client)
+                                    :user (client-user client)
+                                    :password (client-password client)
+                                    :database (client-database client)
+                                    :application-name
+                                    (client-application-name client))))
+             (push connection used-connections)
+             connection))
+          (t
+           (do ()
+               ((and timeout (< timeout 0.0))
+                (error 'no-available-connection))
+             (let ((start (time:current-timestamp)))
+               (system:wait-condition-variable condition-variable mutex
+                                               :timeout timeout)
+               (when idle-connections
+                 (return (pop idle-connections)))
+               (when timeout
+                 (decf timeout (time:time-since start)))))))))))
+
+(defun release-connection (connection &key (client *client*))
+  (declare (type connection connection)
+           (type client client))
+  (with-slots (mutex condition-variable used-connections idle-connections)
+      client
+    (system:with-mutex (mutex)
+      (setf used-connections (delete connection used-connections))
+      (push connection idle-connections)
+      (system:signal-condition-variable condition-variable)
+      nil)))
+
+(defmacro with-connection ((connection &key (client *client*) timeout)
+                           &body body)
+  (let ((client-var (gensym "CLIENT-")))
+    `(let* ((,client-var ,client)
+            (,connection
+              (acquire-connection
+               :client ,client-var
+               :timeout (or ,timeout *connection-acquisition-timeout*))))
+       (unwind-protect
+            (progn
+              ,@body)
+         (release-connection ,connection :client ,client-var)))))
+
+(defun make-connection (&key (host "localhost") (port 5432)
+                             user password
+                             database
+                             application-name)
   (declare (type system:host host)
            (type system:port-number port)
            (type (or string null) user password database application-name))
-  ;; It may seems strange that the host is not a mandatory parameter, but in
-  ;; the future we would like to support UNIX sockets.
   (let ((stream (system:make-tcp-client host port))
-        (client nil))
+        (connection nil))
     (core:abort-protect
         (let ((parameters nil))
           (when user
@@ -70,17 +220,17 @@
           (when application-name
             (push (cons "application_name" application-name) parameters))
           (write-startup-message 3 0 parameters stream)
-          (setf client (make-instance 'client :stream stream))
-          (authenticate user password client)
-          (finish-startup client)
-          client)
-      (if client
-          (close-client client)
+          (setf connection (make-instance 'connection :stream stream))
+          (authenticate user password connection)
+          (finish-startup connection)
+          connection)
+      (if connection
+          (close-connection connection)
           (close stream)))))
 
-(defun close-client (client)
-  (declare (type client client))
-  (with-slots (stream) client
+(defun close-connection (connection)
+  (declare (type connection connection))
+  (with-slots (stream) connection
     (when stream
       (ignore-errors
        (write-termination-message stream)
@@ -88,16 +238,9 @@
       (setf stream nil)
       t)))
 
-(defmacro with-client ((&rest options) &body body)
-  `(let ((*client* (make-client ,@options)))
-     (unwind-protect
-          (progn
-            ,@body)
-       (close-client *client*))))
-
-(defmacro read-message-case ((message client) &rest forms)
+(defmacro read-message-case ((message connection) &rest forms)
   (let ((fields (gensym "FIELDS-")))
-    `(let* ((,message (read-message (client-stream ,client)))
+    `(let* ((,message (read-message (connection-stream ,connection)))
             (,fields (cdr ,message)))
        (declare (ignorable ,fields))
        (case (car ,message)
@@ -119,12 +262,12 @@
          (t
           (error 'unexpected-message :message ,message))))))
 
-(defun authenticate (user password client)
+(defun authenticate (user password connection)
   (declare (type (or string null) user password)
-           (type client client))
-  (with-slots (stream) client
+           (type connection connection))
+  (with-slots (stream) connection
     (loop
-      (read-message-case (message client)
+      (read-message-case (message connection)
         (:authentication-ok ()
           (return))
         (:authentication-cleartext-password ()
@@ -148,11 +291,11 @@
           (unless (member "SCRAM-SHA-256" mechanisms :test #'string=)
             (error 'unsupported-authentication-scheme
                    :name (format nil "SASL (~{~A~^, ~})" mechanisms)))
-          (authenticate/scram-sha-256 user password client))))))
+          (authenticate/scram-sha-256 user password connection))))))
 
-(defun authenticate/scram-sha-256 (user password client)
+(defun authenticate/scram-sha-256 (user password connection)
   (declare (type (or string null) user password)
-           (type client client)
+           (type connection connection)
            (ignore user))
   ;; See https://www.postgresql.org/docs/current/sasl-authentication.html for
   ;; more information. We only support the SCRAM-SHA-256 mechanism.
@@ -162,7 +305,7 @@
   ;; messages such as NoticeResponse which can be sent at any moment.
   (unless password
     (error 'missing-password))
-  (with-slots (stream) client
+  (with-slots (stream) connection
     ;; Send a SASLInitialResponse message containing a client-first-message
     ;; SCRAM payload.
     (let* ((nonce (generate-scram-nonce))
@@ -172,7 +315,7 @@
       ;; Wait for a AuthenticationSASLContinue message containing a
       ;; server-first-message SCRAM payload.
       (loop
-        (read-message-case (message client)
+        (read-message-case (message connection)
           (:authentication-sasl-continue (server-first-message)
             ;; Compute the proof and send a SASLResponse message containing a
             ;; client-final-message SCRAM payload.
@@ -185,27 +328,27 @@
               ;; Wait for an AuthenticationSASLFinal message containing a
               ;; server-final-message SCRAM payload.
               (loop
-                (read-message-case (message client)
+                (read-message-case (message connection)
                   (:authentication-sasl-final (server-final-message)
                     ;; Check the server signature
                     (check-scram-server-final-message
                      server-final-message salted-password auth-message)
                     (return-from authenticate/scram-sha-256)))))))))))
 
-(defun finish-startup (client)
-  (declare (type client client))
+(defun finish-startup (connection)
+  (declare (type connection connection))
   ;; See
   ;; https://www.postgresql.org/docs/current/protocol-flow.html#id-1.10.6.7.3
   ;; for more information about the startup process.
-  (with-slots (stream) client
+  (with-slots (stream) connection
     (loop
-      (read-message-case (message client)
+      (read-message-case (message connection)
         (:parameter-status (name value)
           (declare (ignore name value))
           nil)
         (:backend-key-data (process-id secret-key)
-          (setf (client-backend-process-id client) process-id
-                (client-backend-secret-key client) secret-key))
+          (setf (connection-backend-process-id connection) process-id
+                (connection-backend-secret-key connection) secret-key))
         (:ready-for-query ()
           (return))))))
 
@@ -217,27 +360,28 @@ Columns are always returned as strings. The second value is the transaction
 status after execution of the query."
   (declare (type string query)
            (type client client))
-  (multiple-value-bind (results transaction-status)
-      (send-simple-query query :client client)
-    (when results
-      (labels ((column-name (column)
-                 (cdr (assoc :name column)))
-               (decode-row (row)
-                 (dotimes (i (length row))
-                   (setf (aref row i) (text:decode-string (aref row i)))))
-               (make-result (result)
-                 (destructuring-bind (columns rows command-tag)
-                     result
-                   (let* ((nb-columns (length columns))
-                          (column-names
-                            (map-into
-                             (make-array nb-columns :element-type 'string
-                                                    :initial-element "")
-                             #'column-name columns))
-                          (nb-affected-rows (cdr command-tag)))
-                     (mapc #'decode-row rows)
-                     (list rows column-names nb-affected-rows)))))
-        (values (mapcar #'make-result results) transaction-status)))))
+  (with-connection (connection :client client)
+    (multiple-value-bind (results transaction-status)
+        (send-simple-query query connection)
+      (when results
+        (labels ((column-name (column)
+                   (cdr (assoc :name column)))
+                 (decode-row (row)
+                   (dotimes (i (length row))
+                     (setf (aref row i) (text:decode-string (aref row i)))))
+                 (make-result (result)
+                   (destructuring-bind (columns rows command-tag)
+                       result
+                     (let* ((nb-columns (length columns))
+                            (column-names
+                              (map-into
+                               (make-array nb-columns :element-type 'string
+                                                      :initial-element "")
+                               #'column-name columns))
+                            (nb-affected-rows (cdr command-tag)))
+                       (mapc #'decode-row rows)
+                       (list rows column-names nb-affected-rows)))))
+          (values (mapcar #'make-result results) transaction-status))))))
 
 (defun query (query &optional parameters &key (client *client*))
   "Execute QUERY with PARAMETERS as an extended query and returns four values: a
@@ -248,27 +392,29 @@ returned as strings."
            (type list parameters)
            (type client client)
            #+sbcl (sb-ext:muffle-conditions style-warning))
-  (multiple-value-bind (columns rows command-tag transaction-status)
-      (send-extended-query query parameters :client client)
-    (when columns
-      (labels ((column-name (column)
-                 (cdr (assoc :name column)))
-               (decode-row (row)
-                 (dotimes (i (length row))
-                   (let* ((octets (aref row i))
-                          (column (aref columns i))
-                          (oid (cdr (assoc :type-oid column))))
-                     (setf (aref row i)
-                           (decode-value octets oid (client-codecs client)))))))
-        (let ((column-names (map 'vector #'column-name columns))
-              (nb-affected-rows (cdr command-tag)))
-          (mapc #'decode-row rows)
-          (values rows column-names nb-affected-rows transaction-status))))))
+  (with-connection (connection :client client)
+    (multiple-value-bind (columns rows command-tag transaction-status)
+        (send-extended-query query parameters connection)
+      (when columns
+        (labels ((column-name (column)
+                   (cdr (assoc :name column)))
+                 (decode-row (row)
+                   (dotimes (i (length row))
+                     (let* ((octets (aref row i))
+                            (column (aref columns i))
+                            (oid (cdr (assoc :type-oid column))))
+                       (setf (aref row i)
+                             (decode-value octets oid
+                                           (connection-codecs connection)))))))
+          (let ((column-names (map 'vector #'column-name columns))
+                (nb-affected-rows (cdr command-tag)))
+            (mapc #'decode-row rows)
+            (values rows column-names nb-affected-rows transaction-status)))))))
 
-(defun send-simple-query (query &key (client *client*))
+(defun send-simple-query (query connection)
   (declare (type string query)
-           (type client client))
-  (with-slots (stream) client
+           (type connection connection))
+  (with-slots (stream) connection
     (write-query-message query stream)
     (do ((columns nil)
          (results nil)
@@ -276,7 +422,7 @@ returned as strings."
          (transaction-status nil))
         (transaction-status
          (values (nreverse results) transaction-status))
-      (read-message-case (message client)
+      (read-message-case (message connection)
         (:no-data ()
           nil)
         (:row-description (description)
@@ -292,20 +438,20 @@ returned as strings."
         (:ready-for-query (status)
           (setf transaction-status status))))))
 
-(defun send-extended-query (query parameters &key (client *client*))
+(defun send-extended-query (query parameters connection)
   (declare (type string query)
            (type list parameters)
-           (type client client))
+           (type connection connection))
   (let ((encoded-parameters
           (mapcar (lambda (parameter)
-                    (encode-value parameter (client-codecs client)))
+                    (encode-value parameter (connection-codecs connection)))
                   parameters))
         (parameter-oids nil)
         (parameter-values nil))
     (dolist (parameter encoded-parameters)
       (push (car parameter) parameter-oids)
       (push (cdr parameter) parameter-values))
-    (with-slots (stream) client
+    (with-slots (stream) connection
       (write-parse-message nil query (nreverse parameter-oids) stream)
       (write-bind-message nil nil (list :binary) (nreverse parameter-values)
                           (list :binary) stream)
@@ -318,7 +464,7 @@ returned as strings."
            (command-tag nil))
           (transaction-status
            (values columns (nreverse rows) command-tag transaction-status))
-        (read-message-case (message client)
+        (read-message-case (message connection)
           (:parse-complete ()
             nil)
           (:bind-complete ()
