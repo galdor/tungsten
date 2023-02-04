@@ -119,11 +119,24 @@
            (type (integer 1) max-connections))
   ;; It may seems strange that the host is not a mandatory parameter, but in
   ;; the future we would like to support UNIX sockets.
-  (make-instance 'client :host host :port port
-                         :user user :password password
-                         :database database
-                         :application-name application-name
-                         :max-connections max-connections))
+  (let ((client
+          (make-instance 'client :host host :port port
+                                 :user user :password password
+                                 :database database
+                                 :application-name application-name
+                                 :max-connections max-connections)))
+    (push (make-client-connection client)
+          (slot-value client 'idle-connections))
+    client))
+
+(defun make-client-connection (client)
+  (declare (type client client))
+  (make-connection :host (client-host client)
+                   :port (client-port client)
+                   :user (client-user client)
+                   :password (client-password client)
+                   :database (client-database client)
+                   :application-name (client-application-name client)))
 
 (defun close-client-connections (client)
   (declare (type client client))
@@ -156,14 +169,7 @@
            (push connection used-connections)
            connection)
           ((< (length used-connections) max-connections)
-           (let ((connection
-                   (make-connection :host (client-host client)
-                                    :port (client-port client)
-                                    :user (client-user client)
-                                    :password (client-password client)
-                                    :database (client-database client)
-                                    :application-name
-                                    (client-application-name client))))
+           (let ((connection (make-client-connection client)))
              (push connection used-connections)
              connection))
           (t
