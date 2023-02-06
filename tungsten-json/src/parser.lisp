@@ -103,7 +103,7 @@
     (let ((c (char string i)))
       (cond
         ((char= c #\n)
-         (parse-constant parser :null "null" 4)
+         (parse-constant parser nil "null" 4)
          )
         ((char= c #\t)
          (parse-constant parser :true "true" 4)

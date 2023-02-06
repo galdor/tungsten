@@ -10,9 +10,9 @@
 
 (deftest parse/null ()
   (check-parser
-   (check-eql)
-   (:null "null")
-   (:null (format nil " ~%null~% "))))
+   (check-eq)
+   (nil "null")
+   (nil (format nil " ~%null~% "))))
 
 (deftest parse/booleans ()
   (check-parser
@@ -70,7 +70,7 @@
    (#() "[]")
    (#() "[   ]")
    (#(1 2 3) "[ 1 ,2, 3]")
-   (#("foo" :null :true) "[\"foo\" , null,true]")
+   (#("foo" nil :true) "[\"foo\" , null,true]")
    (#(#()) "[[]]")
    (#(#(#()) #(#())) "[[ [  ]], [[] ]]")
    (#(1 #(#(2 3)) #(4)) "[1, [[2, 3]], [4]]")))
