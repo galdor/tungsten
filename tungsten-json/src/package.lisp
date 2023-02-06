@@ -14,6 +14,8 @@
 
    #:pointer
    #:pointer-parse-error
+   #:invalid-pointer
    #:parse-pointer
    #:serialize-pointer
-   #:pointer-equal))
+   #:pointer-equal
+   #:pointer-ref))

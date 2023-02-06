@@ -16,6 +16,17 @@
        (format stream "Invalid JSON pointer: ~?."
                format-control format-arguments)))))
 
+(define-condition invalid-pointer (error)
+  ((pointer
+    :type pointer
+    :initarg :pointer))
+  (:report
+   (lambda (condition stream)
+     (with-slots (pointer) condition
+       (format stream "JSON pointer ~S does not match the structure of the ~
+                     data."
+               (serialize-pointer pointer))))))
+
 (defun pointer-parse-error (format &rest arguments)
   (error 'pointer-parse-error :format-control format
                               :format-arguments arguments))
@@ -102,3 +113,25 @@
        (and (null p1) (null p2)))
     (unless (string= (car p1) (car p2))
       (return nil))))
+
+(defun pointer-ref (pointer data)
+  (declare (type (or pointer string) pointer))
+  (let ((pointer (pointer pointer)))
+    (labels ((ref (subpointer data)
+               (cond
+                 ((null subpointer)
+                  data)
+                 ((listp data)
+                  (let* ((key (car subpointer))
+                         (member (assoc key data :test #'string=)))
+                    (unless member
+                      (error 'invalid-pointer :pointer pointer))
+                    (ref (cdr subpointer) (cdr member))))
+                 ((vectorp data)
+                  (let ((index (parse-integer (car subpointer))))
+                    (unless (<= 0 index (1- (length data)))
+                      (error 'invalid-pointer :pointer pointer))
+                    (ref (cdr subpointer) (aref data index))))
+                 (t
+                  (error 'invalid-pointer :pointer pointer)))))
+      (ref pointer data))))
