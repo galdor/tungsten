@@ -10,4 +10,10 @@
    #:large-integer-representation
    #:*large-integer-representation*
    #:unserializable-value
-   #:serialize))
+   #:serialize
+
+   #:pointer
+   #:pointer-parse-error
+   #:parse-pointer
+   #:serialize-pointer
+   #:pointer-equal))

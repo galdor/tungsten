@@ -8,7 +8,8 @@
   :components
   ((:file "package")
    (:file "parser")
-   (:file "serialization"))
+   (:file "serialization")
+   (:file "pointers"))
   :in-order-to ((test-op (test-op "tungsten-json/test"))))
 
 (defsystem "tungsten-json/test"
@@ -21,6 +22,7 @@
   :serial t
   :components
   ((:file "package")
-   (:file "parser"))
+   (:file "parser")
+   (:file "pointers"))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :json-test)))
