@@ -13,9 +13,13 @@
    #:serialize
 
    #:pointer
+   #:pointer*
    #:pointer-parse-error
    #:invalid-pointer
    #:parse-pointer
    #:serialize-pointer
+   #:make-pointer
+   #:parent-pointer
+   #:child-pointer
    #:pointer-equal
    #:pointer-ref))

@@ -105,6 +105,32 @@
     (string
      (parse-pointer pointer))))
 
+(defun pointer* (&rest pointers)
+  (declare (type list pointers))
+  (let ((pointer nil))
+    (dolist (element pointers (nreverse pointer))
+      (etypecase element
+        ((or string (integer 0))
+         (push element pointer))
+        (list
+         (setf pointer (append (reverse element) pointer)))))))
+
+(defun make-pointer ()
+  (list))
+
+(defun parent-pointer (pointer)
+  (declare (type pointer pointer))
+  (butlast pointer))
+
+(defun child-pointer (child-pointer pointer)
+  (declare (type (or pointer string (integer 0)) child-pointer)
+           (type pointer pointer))
+  (let ((child-pointer (etypecase child-pointer
+                         (pointer child-pointer)
+                         (string (list child-pointer))
+                         (integer (list (princ-to-string child-pointer))))))
+    (append pointer child-pointer)))
+
 (defun pointer-equal (pointer1 pointer2)
   (declare (type pointer pointer1 pointer2))
   (do ((p1 pointer1 (cdr p1))
