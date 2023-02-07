@@ -19,6 +19,8 @@
 
    #:alist-to-hash-table
 
+   #:string-case
+
    #:octet
    #:make-octet-vector
    #:octet-vector

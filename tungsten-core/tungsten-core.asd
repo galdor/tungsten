@@ -10,6 +10,7 @@
    (:file "maths")
    (:file "sequences")
    (:file "hash-tables")
+   (:file "strings")
    (:file "octets")
    (:file "binary")
    (:file "buffer")
