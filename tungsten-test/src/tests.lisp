@@ -40,14 +40,19 @@ test with this name."
   "Return all tests stored in the test table as a alist whose keys are package
 names and values are list of tests.
 
-If PACKAGE is not null, only include tests in that package."
-  (declare (type (or string symbol) package))
-  (let ((tests nil)
-        (package-name (when package (string package))))
+PACKAGE is either a package designator or a list of package designators; if it
+is not null, only tests which are part of the package or packages are
+returned."
+  (declare (type (or package symbol string list) package))
+  (let* ((packages (etypecase package
+                     (package (list (package-name package)))
+                     ((or symbol string) (list (string package)))
+                     (list (mapcar #'string package))))
+         (tests nil))
     (maphash (lambda (key test)
                (declare (ignore key))
                (when (or (null package)
-                         (string= package-name (test-package test)))
+                         (member (test-package test) packages :test #'string=))
                  (let ((pair (assoc (test-package test) tests
                                     :test #'string=)))
                    (if pair

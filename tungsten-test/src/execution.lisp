@@ -42,6 +42,7 @@ tests passed or NIL else.
 If REPORTER is not null, it is used to report test execution. For the purpose
 of reporting, tests are grouped by package. The default reporter is
 TEXT-REPORTER."
+  (declare (type (or package symbol string list) package))
   (flet ((report (function &rest args)
            (when reporter
              (apply function reporter args))))
