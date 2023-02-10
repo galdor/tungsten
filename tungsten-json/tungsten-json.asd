@@ -7,9 +7,12 @@
   :serial t
   :components
   ((:file "package")
+   (:file "pointers")
+   (:file "mapping-classes")
+   (:file "mappings")
+   (:file "base-mapping-classes")
    (:file "parser")
-   (:file "serialization")
-   (:file "pointers"))
+   (:file "serialization"))
   :in-order-to ((test-op (test-op "tungsten-json/test"))))
 
 (defsystem "tungsten-json/test"
@@ -22,7 +25,7 @@
   :serial t
   :components
   ((:file "package")
-   (:file "parser")
-   (:file "pointers"))
+   (:file "pointers")
+   (:file "parser"))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :json-test)))

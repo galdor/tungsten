@@ -13,12 +13,15 @@
      (with-slots (value) condition
        (format stream "Value ~S cannot be represented in JSON." value)))))
 
-(defun serialize (value &key stream)
+(defun serialize (value &key stream mapping)
   (declare (type (or stream null) stream))
-  (if stream
-      (serialize* value stream)
-      (with-output-to-string (stream)
-        (serialize* value stream))))
+  (let ((encoded-value (if mapping
+                           (generate value mapping)
+                           value)))
+    (if stream
+        (serialize* encoded-value stream)
+        (with-output-to-string (stream)
+          (serialize* encoded-value stream)))))
 
 (defun serialize* (value stream)
   (declare (type stream stream))

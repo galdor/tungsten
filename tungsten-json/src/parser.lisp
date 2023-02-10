@@ -84,7 +84,7 @@
            (setf i j)
            (return-from parser-skip-whitespaces)))))))
 
-(defun parse (string &key (start 0) (end (length string)))
+(defun parse (string &key (start 0) (end (length string)) mapping)
   (let ((parser (make-parser :string string
                              :start start :end end :i start)))
     (let ((value (parse-value parser)))
@@ -92,7 +92,9 @@
       (with-slots (i end) parser
         (when (< i end)
           (parser-error parser "invalid trailing data after value")))
-      value)))
+      (if mapping
+          (validate value mapping)
+          value))))
 
 (defun parse-value (parser)
   (declare (type parser parser))

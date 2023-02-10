@@ -3,6 +3,9 @@
 (deftype pointer ()
   'list)
 
+(deftype child-pointer ()
+  '(or list string (integer 0)))
+
 (define-condition pointer-parse-error (parse-error)
   ((format-control
     :type string
@@ -123,7 +126,7 @@
   (butlast pointer))
 
 (defun child-pointer (child-pointer pointer)
-  (declare (type (or pointer string (integer 0)) child-pointer)
+  (declare (type child-pointer child-pointer)
            (type pointer pointer))
   (let ((child-pointer (etypecase child-pointer
                          (pointer child-pointer)
