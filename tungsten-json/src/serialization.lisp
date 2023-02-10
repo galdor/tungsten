@@ -23,8 +23,6 @@
 (defun serialize* (value stream)
   (declare (type stream stream))
   (cond
-    ((null value)
-     (write-string "null" stream))
     ((integerp value)
      (serialize-integer value stream))
     ((floatp value)
@@ -41,7 +39,8 @@
           (every (lambda (element)
                    (and (consp element)
                         (typep (car element)
-                               '(or string character pathname symbol))))
+                               '(or string character pathname symbol))
+                        (cdr element)))
                  value))
      (serialize-alist value stream))
     ((listp value)
@@ -53,6 +52,8 @@
      (write-string "true" stream))
     ((eq value :false)
      (write-string "false" stream))
+    ((eq value :null)
+     (write-string "null" stream))
     ((symbolp value)
      (serialize-string (symbol-name value) stream))
     (t
