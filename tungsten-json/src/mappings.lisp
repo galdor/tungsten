@@ -116,7 +116,8 @@
         (*mapping-pointer* nil))
     (prog1 (validate-value value mapping)
       (unless (null *mapping-errors*)
-        (error 'invalid-value :mapping-errors (nreverse *mapping-errors*))))))
+        (error 'invalid-value :value value
+                              :mapping-errors (nreverse *mapping-errors*))))))
 
 (defun generate (value mapping)
   (declare (type (or symbol list) mapping))
@@ -125,7 +126,8 @@
         (*mapping-pointer* nil))
     (prog1 (generate-value value mapping)
       (unless (null *mapping-errors*)
-        (error 'invalid-value :mapping-errors (nreverse *mapping-errors*))))))
+        (error 'invalid-value :value value
+                              :mapping-errors (nreverse *mapping-errors*))))))
 
 (defmethod validate-value :around (value (mapping mapping))
   (with-slots (base-types) mapping
