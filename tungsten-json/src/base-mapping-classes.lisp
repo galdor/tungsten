@@ -48,7 +48,7 @@
     :initarg :max
     :initform nil))
   (:default-initargs
-   :base-types '(:number)))
+   :base-types '(:number :integer)))
 
 (defmethod validate-value (value (mapping number-mapping))
   (with-slots (min max) mapping
