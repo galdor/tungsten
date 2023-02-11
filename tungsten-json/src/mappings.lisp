@@ -146,4 +146,5 @@
                                (first base-types) (second base-types)))
            (t
             (add-mapping-error value "value is not of type ~{~A~^, ~} or ~A"
-                               (butlast base-types) (last base-types)))))))))
+                               (butlast base-types) (last base-types))))
+         value)))))
