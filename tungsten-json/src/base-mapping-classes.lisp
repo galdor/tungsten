@@ -94,18 +94,26 @@
    (max-length
     :type (or (integer 0) null)
     :initarg :max-length
+    :initform nil)
+   (value
+    :type list
+    :initarg :value
     :initform nil))
   (:default-initargs
    :base-types '(:string)))
 
 (defmethod validate-value (value (mapping string-mapping))
-  (with-slots (min-length max-length) mapping
+  (with-slots (min-length max-length (valid-values value)) mapping
     (when (and min-length (< (length value) min-length))
       (add-mapping-error value "string must contain more than ~D bytes"
                          min-length))
     (when (and max-length (> (length value) max-length))
       (add-mapping-error value "string must contain less than ~D bytes"
                          max-length))
+    (when valid-values
+      (unless (member value valid-values :test #'string=)
+        (add-mapping-error value "string must have one of the following ~
+                                  values: ~{~S~^, ~}" valid-values)))
     value))
 
 (defmethod generate-value (value (mapping string-mapping))
