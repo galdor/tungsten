@@ -175,14 +175,10 @@
 
 (defmethod validate-value (value (mapping object-mapping))
   (with-slots (class (value-mapping value) members required) mapping
-    (let ((output-value (when class (make-instance class)))
-          (missing-members nil))
-      (when value-mapping
-        (dolist (member-value value)
-          (let ((decoded-value
-                  (validate-child (car member-value) (cdr member-value)
-                                  value-mapping)))
-            (push (cons (car member-value) decoded-value) output-value))))
+    (let ((names (mapcar #'car members))
+          (missing-members nil)
+          (output-value (when class (make-instance class))))
+      ;; Required members
       (dolist (name required)
         (unless (assoc name value :test #'string=)
           (push name missing-members)))
@@ -191,6 +187,7 @@
                                     member~P: ~{~S~^, ~}"
                            (length missing-members)
                            (nreverse missing-members)))
+      ;; Defined members
       (dolist (member members)
         (destructuring-bind (name slot member-mapping) member
           (let ((member-value (assoc name value :test #'string=)))
@@ -200,13 +197,25 @@
                 (if class
                     (setf (slot-value output-value slot) decoded-value)
                     (push (cons slot decoded-value) output-value)))))))
+      ;; Other members
+      (dolist (member-value value)
+        (unless (member (car member-value) names :test #'string=)
+          (let ((decoded-value
+                  (if value-mapping
+                      (validate-child (car member-value) (cdr member-value)
+                                      value-mapping)
+                      (cdr member-value))))
+            (push (cons (car member-value) decoded-value) output-value))))
+      ;; Final value
       (if class
           output-value
           (nreverse output-value)))))
 
 (defmethod generate-value (value (mapping object-mapping))
-  (let ((output-value nil))
-    (with-slots (members) mapping
+  (with-slots (class (value-mapping value) members) mapping
+    (let ((names (mapcar #'car members))
+          (output-value nil))
+      ;; Defined members
       (dolist (member members)
         (destructuring-bind (name slot member-mapping) member
           (cond
@@ -221,8 +230,19 @@
                                     (slot-value value slot)))
                     (encoded-value
                       (generate-child name member-value member-mapping)))
-               (push (cons name encoded-value) output-value)))))))
-    (nreverse output-value)))
+               (push (cons name encoded-value) output-value))))))
+      ;; Other members
+      (unless class
+        (dolist (member-value value)
+          (unless (member (car member-value) names :test #'string=)
+            (let ((encoded-value
+                    (if value-mapping
+                        (generate-child (car member-value) (cdr member-value)
+                                        value-mapping)
+                        (cdr member-value))))
+              (push (cons (car member-value) encoded-value) output-value)))))
+      ;; Final value
+      (nreverse output-value))))
 
 (defclass or-mapping (mapping)
   ((mappings
