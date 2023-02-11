@@ -7,7 +7,8 @@
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "json-mappings"))
   :in-order-to ((test-op (test-op "tungsten-openapi/test"))))
 
 (defsystem "tungsten-openapi/test"
