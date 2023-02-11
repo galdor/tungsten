@@ -6,6 +6,7 @@
 (register-mapping-class :string 'string-mapping)
 (register-mapping-class :array 'array-mapping)
 (register-mapping-class :object 'object-mapping)
+(register-mapping-class :or 'or-mapping)
 
 (defclass boolean-mapping (mapping)
   ((value
@@ -210,3 +211,33 @@
                       (generate-child name member-value member-mapping)))
                (push (cons name encoded-value) output-value)))))))
     (nreverse output-value)))
+
+(defclass or-mapping (mapping)
+  ((mappings
+     :type list
+     :initarg :mappings
+     :accessor or-mapping-mappings)))
+
+(defmethod initialize-instance :after ((mapping or-mapping)
+                                       &key &allow-other-keys)
+  (let (base-types)
+    (dolist (child-mapping (or-mapping-mappings mapping))
+      (dolist (base-type (mapping-base-types (mapping child-mapping)))
+        (push base-type base-types)))
+    (setf (mapping-base-types mapping) (nreverse base-types))))
+
+(defmethod validate-value (value (mapping or-mapping))
+  (dolist (child-mapping (or-mapping-mappings mapping))
+    (handler-case
+        (return-from validate-value (validate value child-mapping))
+      (invalid-value ()
+        nil)))
+  (add-mapping-error value "value does not match any expected format"))
+
+(defmethod generate-value (value (mapping or-mapping))
+  (dolist (child-mapping (or-mapping-mappings mapping))
+    (handler-case
+        (return-from generate-value (generate value child-mapping))
+      (invalid-value ()
+        nil))
+    (add-mapping-error value "value does not match any expected format")))
