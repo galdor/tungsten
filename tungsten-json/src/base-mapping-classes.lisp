@@ -143,6 +143,10 @@
     :initarg :class
     :initform nil
     :accessor object-mapping-class)
+   (value
+    :type (or symbol list)
+    :initarg :value
+    :initform nil)
    (members
     :type list
     :initarg :members
@@ -157,9 +161,15 @@
    :base-types '(:object)))
 
 (defmethod validate-value (value (mapping object-mapping))
-  (with-slots (class members required) mapping
+  (with-slots (class (value-mapping value) members required) mapping
     (let ((output-value (when class (make-instance class)))
           (missing-members nil))
+      (when value-mapping
+        (dolist (member-value value)
+          (let ((decoded-value
+                  (validate-child (car member-value) (cdr member-value)
+                                  value-mapping)))
+            (push (cons (car member-value) decoded-value) output-value))))
       (dolist (name required)
         (unless (assoc name value :test #'string=)
           (push name missing-members)))
