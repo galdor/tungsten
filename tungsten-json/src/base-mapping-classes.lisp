@@ -1,5 +1,6 @@
 (in-package :json)
 
+(register-mapping-class :any 'any-mapping)
 (register-mapping-class :boolean 'boolean-mapping)
 (register-mapping-class :number 'number-mapping)
 (register-mapping-class :integer 'integer-mapping)
@@ -7,6 +8,17 @@
 (register-mapping-class :array 'array-mapping)
 (register-mapping-class :object 'object-mapping)
 (register-mapping-class :or 'or-mapping)
+
+(defclass any-mapping (mapping)
+  ())
+
+(defmethod validate-value (value (mapping any-mapping))
+  (declare (ignore mapping))
+  value)
+
+(defmethod generate-value (value (mapping any-mapping))
+  (declare (ignore mapping))
+  value)
 
 (defclass boolean-mapping (mapping)
   ((value

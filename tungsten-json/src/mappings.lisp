@@ -92,6 +92,7 @@
   ((base-types
     :type list
     :initarg :base-types
+    :initform nil
     :accessor mapping-base-types)))
 
 (defgeneric validate-value (value mapping))
@@ -131,20 +132,21 @@
 
 (defmethod validate-value :around (value (mapping mapping))
   (with-slots (base-types) mapping
-    (let ((value-base-type (value-base-type value)))
-      (cond
-        ((member value-base-type base-types)
-         (call-next-method))
-        (t
-         ;; TODO It can be done with one single format string
-         (case (length base-types)
-           (1
-            (add-mapping-error
-             value "value is not of type ~A" (car base-types)))
-           (2
-            (add-mapping-error value "value is not of type ~A or ~A"
-                               (first base-types) (second base-types)))
-           (t
-            (add-mapping-error value "value is not of type ~{~A~^, ~} or ~A"
-                               (butlast base-types) (last base-types))))
-         value)))))
+    (when base-types
+      (let ((value-base-type (value-base-type value)))
+        (cond
+          ((member value-base-type base-types)
+           (call-next-method))
+          (t
+           ;; TODO It can be done with one single format string
+           (case (length base-types)
+             (1
+              (add-mapping-error
+               value "value is not of type ~A" (car base-types)))
+             (2
+              (add-mapping-error value "value is not of type ~A or ~A"
+                                 (first base-types) (second base-types)))
+             (t
+              (add-mapping-error value "value is not of type ~{~A~^, ~} or ~A"
+                                 (butlast base-types) (last base-types))))
+           value))))))
