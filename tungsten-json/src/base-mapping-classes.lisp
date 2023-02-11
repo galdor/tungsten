@@ -29,7 +29,7 @@
    :base-types '(:boolean)))
 
 (defmethod validate-value (value (mapping boolean-mapping))
-  (with-slots (mapping-value) mapping
+  (with-slots ((mapping-value value)) mapping
     (when (and mapping-value (not (eq mapping-value value)))
       (add-mapping-error value "boolean must be ~A" mapping-value))
     value))
