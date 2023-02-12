@@ -3,7 +3,8 @@
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
   ("tungsten-core"
-   "tungsten-json")
+   "tungsten-json"
+   "tungsten-uri")
   :pathname "src"
   :serial t
   :components

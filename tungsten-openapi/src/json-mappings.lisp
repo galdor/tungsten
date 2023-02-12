@@ -24,7 +24,7 @@
   (("title" title (:string))
    ("summary" summary (:string))
    ("description" description (:string))
-   ("termsOfService" terms-of-service (:string))
+   ("termsOfService" terms-of-service (uri:uri))
    ("contact" contact contact)
    ("license" license license)
    ("version" version (:string)))
@@ -35,7 +35,7 @@
   :object
   :members
   (("name" name (:string))
-   ("url" url (:string))
+   ("url" url (uri:uri))
    ("email" email (:string))))
 
 (json:define-mapping license
@@ -43,14 +43,14 @@
   :members
   (("name" name (:string))
    ("identifier" identifier (:string))
-   ("url" url (:string)))
+   ("url" url (uri:uri)))
   :required
   ("name"))
 
 (json:define-mapping server
   :object
   :members
-  (("url" url (:string))
+  (("url" url (uri:uri))
    ("description" description (:string))
    ("variables" variables (:object :value server-variable)))
   :required
@@ -68,7 +68,7 @@
 (json:define-mapping path-item
   :object
   :members
-  (("$ref" ref (:string))
+  (("$ref" ref (uri:uri))
    ("summary" summary (:string))
    ("description" description (:string))
    ("get" get operation)
@@ -122,7 +122,7 @@
 (json:define-mapping reference
   :object
   :members
-  (("$ref" ref (:string))
+  (("$ref" ref (uri:uri))
    ("summary" summary (:string))
    ("description" description (:string)))
   :required
@@ -154,7 +154,7 @@
 (json:define-mapping schema
   :object
   :members
-  (("$ref" ref (:string))
+  (("$ref" ref (uri:uri))
    ("title" title (:string))
    ("multipleOf" multiple-of (:integer :min 1))
    ("maximum" maximum (:number))
@@ -274,7 +274,7 @@
    ("scheme" scheme (:string))
    ("bearerFormat" bearer-format (:string))
    ("flows" flows oauth-flows)
-   ("openIdConnectUrl" openid-connect-url (:string)))
+   ("openIdConnectUrl" openid-connect-url (uri:uri)))
   :required
   ("type" "name" "in" "scheme" "flows" "openIdConnectUrl"))
 
@@ -289,9 +289,9 @@
 (json:define-mapping oauth-flow
   :object
   :members
-  (("authorizationUrl" authorization-url (:string))
-   ("tokenUrl" token-url (:string))
-   ("refreshUrl" refresh-url (:string))
+  (("authorizationUrl" authorization-url (uri:uri))
+   ("tokenUrl" token-url (uri:uri))
+   ("refreshUrl" refresh-url (uri:uri))
    ("scopes" scopes (:object :value (:string))))
   :required
   ("authorizationUrl" "tokenUrl" "scopes"))
@@ -323,6 +323,6 @@
   :object
   :members
   (("description" description (:string))
-   ("url" url (:string)))
+   ("url" url (uri:uri)))
   :required
   ("description"))
