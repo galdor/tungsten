@@ -20,15 +20,19 @@
           (when scheme
             (let ((scheme-valid-p
                     (if (listp scheme)
-                        (member (uri-scheme uri) scheme :test #'string=)
-                        (string= (uri-scheme uri) scheme))))
+                        (member (uri-scheme uri) scheme :test #'equalp)
+                        (equalp (uri-scheme uri) scheme))))
               (unless scheme-valid-p
-                (if (listp scheme)
-                    (json:add-mapping-error value "URI scheme must be one of ~
-                                                   the following: ~{~S~^, ~}"
-                                             scheme)
-                    (json:add-mapping-error value "URI scheme must be ~S"
-                                            scheme)))))
+                (cond
+                  ((null (uri-scheme uri))
+                   (json:add-mapping-error value "URI must have a scheme"))
+                  ((listp scheme)
+                   (json:add-mapping-error value "URI scheme must be one of ~
+                                                  the following: ~{~S~^, ~}"
+                                           scheme))
+                  (t
+                   (json:add-mapping-error value "URI scheme must be ~S"
+                                           scheme))))))
           (when (slot-boundp mapping 'relative-reference)
             (let ((relative (slot-value mapping 'relative-reference)))
               (cond
