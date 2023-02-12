@@ -6,7 +6,10 @@
   ((scheme
     :type (or string list)
     :initarg :scheme
-    :initform nil))
+    :initform nil)
+   (relative-reference
+    :type boolean
+    :initarg :relative-reference))
   (:default-initargs
    :base-types '(:string)))
 
@@ -26,6 +29,17 @@
                                              scheme)
                     (json:add-mapping-error value "URI scheme must be ~S"
                                             scheme)))))
+          (when (slot-boundp mapping 'relative-reference)
+            (let ((relative (slot-value mapping 'relative-reference)))
+              (cond
+                ((and relative (not (uri-relative-reference-p uri)))
+                 (json:add-mapping-error
+                  value "URI must me a relative reference, it must not have ~
+                         a scheme"))
+                ((and (not relative) (uri-relative-reference-p uri))
+                 (json:add-mapping-error
+                  value "URI must not be a relative reference, it must have ~
+                         a scheme")))))
           uri))
     (uri-parse-error (condition)
       (json:add-mapping-error value "string is not a valid URI: ~A"
