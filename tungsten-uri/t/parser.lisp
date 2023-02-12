@@ -107,7 +107,11 @@
    ((:scheme "http" :host "net.")
     "http://net.")
    ((:scheme "http" :host ".")
-    "http://.")))
+    "http://.")
+   ((:scheme "http" :host "example.com" :port 80)
+    "http://example.com:80")
+   ((:scheme "http" :host "example.com")
+    "http://example.com:")))
 
 (deftest parser/path ()
   (check-parser

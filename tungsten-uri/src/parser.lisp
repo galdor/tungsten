@@ -124,13 +124,17 @@
           (setf (uri-host uri) (subseq string start end))))))))
 
 (defun parse-port (string &key (start 0) (end (length string)))
-  (let ((port (handler-case
-                  (parse-integer string :start start :end end)
-                (parse-error ()
-                  (error 'invalid-port :port (subseq string start end))))))
-    (unless (< 0 port 65536)
-      (error 'invalid-port :port port))
-    port))
+  (cond
+    ((= start end)
+     nil)
+    (t
+     (let ((port (handler-case
+                     (parse-integer string :start start :end end)
+                   (parse-error ()
+                     (error 'invalid-port :port (subseq string start end))))))
+       (unless (< 0 port 65536)
+         (error 'invalid-port :port port))
+       port))))
 
 (defun parse-query (string &key (start 0) (end (length string)))
   (declare (type string string)
