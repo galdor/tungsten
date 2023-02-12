@@ -18,6 +18,7 @@
    #:uri-fragment
    #:make-uri
    #:copy-uri
+   #:uri-relative-reference-p
    #:uri-absolute-path-p
    #:absolute-path-p
    #:uri-path-segments

@@ -27,6 +27,7 @@
   :components
   ((:file "package")
    (:file "encoding")
+   (:file "uri")
    (:file "serialization")
    (:file "parser")
    (:file "references"))
