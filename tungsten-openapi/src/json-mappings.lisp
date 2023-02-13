@@ -2,6 +2,66 @@
 
 ;;; Reference: https://spec.openapis.org/oas/v3.1.0.html
 
+(json:register-mapping-class 'reference 'reference-json-mapping)
+
+(defclass reference-json-mapping (json:mapping)
+  ()
+  (:default-initargs
+   :base-types '(:string)))
+
+(defmethod json:validate-value (value (mapping reference-json-mapping))
+  (handler-case
+      (with-slots (scheme) mapping
+        (let ((uri (uri:parse value)))
+          (cond
+            ((or (uri:uri-host uri) (uri:uri-path uri))
+             (json:add-mapping-error value "unsupported external reference")
+             value)
+            ((null (uri:uri-fragment uri))
+             (json:add-mapping-error value "missing reference URI fragment")
+             value)
+            (t
+             (handler-case
+              (let* ((pointer-string (uri:uri-fragment uri))
+                     (pointer (json:parse-pointer pointer-string)))
+                (cond
+                  ((and (= (length pointer) 3)
+                        (string= (first pointer) "components"))
+                   (let ((type (core:string-case (second pointer)
+                                 ("schemas" 'schema)
+                                 ("parameters" 'parameter)
+                                 ("examples" 'example)
+                                 ("requestBodies" 'request-body)
+                                 ("headers" 'header)
+                                 ("securitySchemes" 'security-scheme)
+                                 ("links" 'link)
+                                 ("responses" 'response)
+                                 ("callbacks" 'callback)
+                                 ("pathItems" 'path-item)
+                                 (t (json:add-mapping-error
+                                     value "unsupported reference to unknown ~
+                                            component type ~S"
+                                     (second pointer)))))
+                         (name (third pointer)))
+                     (list 'component type name)))
+                  (t
+                   (json:add-mapping-error
+                    value "reference does not point to a component")
+                   pointer)))
+            (json:pointer-parse-error (condition)
+              (json:add-mapping-error
+               value "~?"
+               (json:pointer-parse-error-format-control condition)
+               (json:pointer-parse-error-format-arguments condition))
+              value))))))
+    (uri:uri-parse-error (condition)
+      (json:add-mapping-error value "string is not a valid URI: ~A" condition)
+      value)))
+
+(defmethod json:generate-value (value (mapping reference-json-mapping))
+  (declare (ignore mapping))
+  (uri:serialize value))
+
 (json:define-mapping openapi
   :object
   :members
@@ -68,7 +128,7 @@
 (json:define-mapping path-item
   :object
   :members
-  (("$ref" ref (uri:uri))
+  (("$ref" ref (reference))
    ("summary" summary (:string))
    ("description" description (:string))
    ("get" get operation)
@@ -122,7 +182,7 @@
 (json:define-mapping reference
   :object
   :members
-  (("$ref" ref (uri:uri))
+  (("$ref" ref (reference))
    ("summary" summary (:string))
    ("description" description (:string)))
   :required
@@ -154,7 +214,7 @@
 (json:define-mapping schema
   :object
   :members
-  (("$ref" ref (uri:uri))
+  (("$ref" ref (reference))
    ("title" title (:string))
    ("multipleOf" multiple-of (:integer :min 1))
    ("maximum" maximum (:number))
