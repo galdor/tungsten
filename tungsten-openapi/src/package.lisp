@@ -1,3 +1,9 @@
 (defpackage :openapi
   (:use :cl)
-  (:export))
+  (:export
+   #:schema
+   #:schema-openapi-version
+   #:schema-title
+   #:schema-version
+   #:parse-schema
+   #:parse-schema-value))

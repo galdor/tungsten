@@ -9,7 +9,8 @@
   :serial t
   :components
   ((:file "package")
-   (:file "json-mappings"))
+   (:file "json-mappings")
+   (:file "schema"))
   :in-order-to ((test-op (test-op "tungsten-openapi/test"))))
 
 (defsystem "tungsten-openapi/test"
