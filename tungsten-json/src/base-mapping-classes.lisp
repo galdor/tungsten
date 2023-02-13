@@ -266,20 +266,30 @@
     (dolist (child-mapping (or-mapping-mappings mapping))
       (dolist (base-type (mapping-base-types (mapping child-mapping)))
         (push base-type base-types)))
-    (setf (mapping-base-types mapping) (nreverse base-types))))
+    (setf (mapping-base-types mapping)
+          (nreverse (delete-duplicates base-types)))))
 
 (defmethod validate-value (value (mapping or-mapping))
-  (dolist (child-mapping (or-mapping-mappings mapping))
-    (handler-case
-        (return-from validate-value (validate value child-mapping))
-      (invalid-value ()
-        nil)))
-  (add-mapping-error value "value does not match any expected format"))
+  (let ((base-types (mapping-base-types mapping)))
+    (unless (member (value-base-type value) base-types)
+      (add-mapping-error value "value does not match any expected format")))
+  (let ((mapping-errors nil))
+    (dolist (child-mapping (or-mapping-mappings mapping))
+      (handler-case
+          (return-from validate-value (validate value child-mapping
+                                                :pointer *mapping-pointer*))
+        (invalid-value (condition)
+          (when (member (value-base-type value)
+                        (mapping-base-types (mapping child-mapping)))
+            (dolist (mapping-error (invalid-value-mapping-errors condition))
+              (push mapping-error mapping-errors))))))
+    (setf *mapping-errors* (append mapping-errors *mapping-errors*))))
 
 (defmethod generate-value (value (mapping or-mapping))
   (dolist (child-mapping (or-mapping-mappings mapping))
     (handler-case
-        (return-from generate-value (generate value child-mapping))
+        (return-from generate-value (generate value child-mapping
+                                              :pointer *mapping-pointer*))
       (invalid-value ()
         nil))
     (add-mapping-error value "value does not match any expected format")))

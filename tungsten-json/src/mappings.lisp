@@ -109,21 +109,21 @@
   (let ((*mapping-pointer* (child-pointer child-pointer *mapping-pointer*)))
     (generate-value value (mapping mapping))))
 
-(defun validate (value mapping)
+(defun validate (value mapping &key pointer)
   (declare (type (or symbol list) mapping))
   (let ((mapping (mapping mapping))
         (*mapping-errors* nil)
-        (*mapping-pointer* nil))
+        (*mapping-pointer* pointer))
     (prog1 (validate-value value mapping)
       (unless (null *mapping-errors*)
         (error 'invalid-value :value value
                               :mapping-errors (nreverse *mapping-errors*))))))
 
-(defun generate (value mapping)
+(defun generate (value mapping &key pointer)
   (declare (type (or symbol list) mapping))
   (let ((mapping (mapping mapping))
         (*mapping-errors* nil)
-        (*mapping-pointer* nil))
+        (*mapping-pointer* pointer))
     (prog1 (generate-value value mapping)
       (unless (null *mapping-errors*)
         (error 'invalid-value :value value

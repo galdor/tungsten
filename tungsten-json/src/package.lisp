@@ -5,6 +5,8 @@
    #:child-pointer
    #:pointer*
    #:pointer-parse-error
+   #:pointer-parse-error-format-control
+   #:pointer-parse-error-format-arguments
    #:invalid-pointer
    #:parse-pointer
    #:serialize-pointer

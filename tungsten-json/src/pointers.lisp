@@ -9,10 +9,12 @@
 (define-condition pointer-parse-error (parse-error)
   ((format-control
     :type string
-    :initarg :format-control)
+    :initarg :format-control
+    :reader pointer-parse-error-format-control)
    (format-arguments
     :type list
-    :initarg :format-arguments))
+    :initarg :format-arguments
+    :reader pointer-parse-error-format-arguments))
   (:report
    (lambda (condition stream)
      (with-slots (format-control format-arguments) condition
@@ -132,7 +134,7 @@
                          (pointer child-pointer)
                          (string (list child-pointer))
                          (integer (list (princ-to-string child-pointer))))))
-    (append pointer child-pointer)))
+    (concatenate 'list pointer child-pointer)))
 
 (defun pointer-equal (pointer1 pointer2)
   (declare (type pointer pointer1 pointer2))
