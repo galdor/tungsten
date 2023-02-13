@@ -32,7 +32,9 @@
   (with-slots ((mapping-value value)) mapping
     (when (and mapping-value (not (eq mapping-value value)))
       (add-mapping-error value "boolean must be ~A" mapping-value))
-    value))
+    (ecase value
+      (:true t)
+      (:false nil))))
 
 (defmethod generate-value (value (mapping boolean-mapping))
   (declare (ignore mapping))
