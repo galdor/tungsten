@@ -78,15 +78,14 @@
     :reader invalid-value-mapping-errors))
   (:report
    (lambda (condition stream)
-     (format stream "Invalid JSON value:~%~%")
+     (format stream "Invalid JSON value:~%")
      (dolist (error (invalid-value-mapping-errors condition))
        (with-slots (pointer description) error
-         (when pointer
-           (write-string (serialize-pointer pointer) stream)
-           (write-string "  " stream))
-         (write-string description stream)
          (terpri stream)
-         (terpri stream))))))
+         (if pointer
+             (format stream "Pointer: ~A~%Error:   ~A~%"
+                     (serialize-pointer pointer) description)
+             (format stream "Error:   ~A~%" description)))))))
 
 (defclass mapping ()
   ((base-types
