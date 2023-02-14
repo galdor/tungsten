@@ -4,59 +4,71 @@
 
 (json:register-mapping-class 'reference 'reference-json-mapping)
 
-(defclass reference-json-mapping (json:mapping)
-  ()
+(defclass reference-json-mapping (json:object-mapping)
+  ((type
+    :type (or symbol null)
+    :initarg :type
+    :initform nil
+    :reader reference-json-mapping-type))
   (:default-initargs
-   :base-types '(:string)))
+   :members
+   '(("$ref" ref (:string))
+     ("summary" summary (:string))
+     ("description" description (:string)))
+   :required
+   '("$ref")))
 
-(defmethod json:validate-value (value (mapping reference-json-mapping))
-  (handler-case
-      (with-slots (scheme) mapping
-        (let ((uri (uri:parse value)))
+(defmethod json:validate-value :after (value (mapping reference-json-mapping))
+  (let ((reference-type (reference-json-mapping-type mapping))
+        (ref (cdr (assoc "$ref" value :test #'string=))))
+    (handler-case
+        (let* ((uri (uri:parse ref))
+               (fragment (uri:uri-fragment uri))
+               (pointer (when fragment (json:parse-pointer fragment))))
           (cond
             ((or (uri:uri-host uri) (uri:uri-path uri))
              (json:add-mapping-error value "unsupported external reference")
              value)
-            ((null (uri:uri-fragment uri))
+            ((null fragment)
              (json:add-mapping-error value "missing reference URI fragment")
              value)
+            ((and (= (length pointer) 3)
+                  (string= (first pointer) "components"))
+             (let ((type (core:string-case (second pointer)
+                           ("schemas" 'schema)
+                           ("parameters" 'parameter)
+                           ("examples" 'example)
+                           ("requestBodies" 'request-body)
+                           ("headers" 'header)
+                           ("securitySchemes" 'security-scheme)
+                           ("links" 'link)
+                           ("responses" 'response)
+                           ("callbacks" 'callback)
+                           ("pathItems" 'path-item)
+                           (t (json:add-mapping-error
+                               value "unsupported reference to unknown ~
+                                      component type ~S"
+                               (second pointer)))))
+                   (name (third pointer)))
+               (when (and reference-type (not (eq type reference-type)))
+                 (json:add-mapping-error
+                  value "reference does not target a component of type ~A"
+                  reference-type))
+               (list 'component type name)))
             (t
-             (handler-case
-              (let* ((pointer-string (uri:uri-fragment uri))
-                     (pointer (json:parse-pointer pointer-string)))
-                (cond
-                  ((and (= (length pointer) 3)
-                        (string= (first pointer) "components"))
-                   (let ((type (core:string-case (second pointer)
-                                 ("schemas" 'schema)
-                                 ("parameters" 'parameter)
-                                 ("examples" 'example)
-                                 ("requestBodies" 'request-body)
-                                 ("headers" 'header)
-                                 ("securitySchemes" 'security-scheme)
-                                 ("links" 'link)
-                                 ("responses" 'response)
-                                 ("callbacks" 'callback)
-                                 ("pathItems" 'path-item)
-                                 (t (json:add-mapping-error
-                                     value "unsupported reference to unknown ~
-                                            component type ~S"
-                                     (second pointer)))))
-                         (name (third pointer)))
-                     (list 'component type name)))
-                  (t
-                   (json:add-mapping-error
-                    value "reference does not point to a component")
-                   pointer)))
-            (json:pointer-parse-error (condition)
-              (json:add-mapping-error
-               value "~?"
-               (json:pointer-parse-error-format-control condition)
-               (json:pointer-parse-error-format-arguments condition))
-              value))))))
-    (uri:uri-parse-error (condition)
-      (json:add-mapping-error value "string is not a valid URI: ~A" condition)
-      value)))
+             (json:add-mapping-error
+              value "reference does not point to a component")
+             value)))
+      (uri:uri-parse-error (condition)
+        (json:add-mapping-error value "string is not a valid URI: ~A"
+                                condition)
+        value)
+      (json:pointer-parse-error (condition)
+        (json:add-mapping-error
+         value "~?"
+         (json:pointer-parse-error-format-control condition)
+         (json:pointer-parse-error-format-arguments condition))
+        value))))
 
 (defmethod json:generate-value (value (mapping reference-json-mapping))
   (declare (ignore mapping))
@@ -70,7 +82,9 @@
    ("jsonSchemaDialect" json-dialect (:string))
    ("servers" servers (:array :element server))
    ("paths" paths (:object :value path-item))
-   ("webhooks" webhooks (:object :value (:or :mappings (path-item reference))))
+   ("webhooks"
+    webhooks
+    (:object :value (:or :mappings (path-item (reference :type webhook)))))
    ("components" components components)
    ("security" security (:array :element security-requirement))
    ("tags" tags (:array :element tag))
@@ -125,11 +139,16 @@
   :required
   ("default"))
 
+;; TODO
+(json:define-mapping callback
+  :object
+  :members
+  ())
+
 (json:define-mapping path-item
   :object
   :members
-  (("$ref" ref (reference))
-   ("summary" summary (:string))
+  (("summary" summary (:string))
    ("description" description (:string))
    ("get" get operation)
    ("put" put operation)
@@ -140,8 +159,10 @@
    ("patch" patch operation)
    ("trace" trace operation)
    ("servers" servers (:array :element server))
-   ("parameters" parameters
-                 (:array :element (:or :mappings (parameter reference))))))
+   ("parameters"
+    parameters
+    (:array :element (:or :mappings (parameter
+                                     (reference :type parameter)))))))
 
 (json:define-mapping operation
   :object
@@ -152,11 +173,15 @@
    ("externalDocs" external-docs external-documentation)
    ("operationId" operation-id (:string))
    ("parameters"
-    parameters (:array :element (:or :mappings (parameter reference))))
-   ("requestBody" request-body (:or :mappings (request-body reference)))
+    parameters
+    (:array :element (:or :mappings (parameter (reference :type parameter)))))
+   ("requestBody"
+    request-body (:or :mappings (request-body
+                                 (reference :type request-body))))
    ("responses" responses responses)
    ("callbacks"
-    callbacks (:object :value (:or :mappings (callback reference))))
+    callbacks
+    (:object :value (:or :mappings (callback (reference :type callback)))))
    ("deprecated" deprecated (:boolean))
    ("security" security (:array :element security-requirement))
    ("servers" servers (:array :element server))))
@@ -175,47 +200,49 @@
    ("allowReserved" allow-reserved (:boolean))
    ("schema" schema schema)
    ("example" example (:any))
-   ("examples" examples (:object :value (:or :mappings (example reference)))))
+   ("examples"
+    examples (:object :value (:or :mappings (example
+                                             (reference :type example))))))
   :required
   ("name" "in"))
-
-(json:define-mapping reference
-  :object
-  :members
-  (("$ref" ref (reference))
-   ("summary" summary (:string))
-   ("description" description (:string)))
-  :required
-  ("$ref"))
 
 (json:define-mapping components
   :object
   :members
   (("schemas" schemas (:object :value schema))
    ("responses"
-    responses (:object :value (:or :mappings (response reference))))
+    responses (:object :value (:or :mappings (response
+                                              (reference :type response)))))
    ("parameters"
-    parameters (:object :value (:or :mappings (parameter reference))))
+    parameters
+    (:object :value (:or :mappings (parameter (reference :type parameter)))))
    ("examples"
-    examples (:object :value (:or :mappings (example reference))))
+    examples (:object :value (:or :mappings (example
+                                             (reference :type example)))))
    ("requestBodies"
-    request-bodies (:object :value (:or :mappings (request-body reference))))
+    request-bodies
+    (:object :value (:or :mappings (request-body
+                                    (reference :type request-body)))))
    ("headers"
-    headers (:object :value (:or :mappings (header reference))))
+    headers (:object :value (:or :mappings (header
+                                            (reference :type header)))))
    ("securitySchemes"
     security-schemes
-    (:object :value (:or :mappings (security-scheme reference))))
-   ("links" links (:object :value (:or :mappings (link reference))))
+    (:object :value (:or :mappings (security-scheme
+                                    (reference :type security-scheme)))))
+   ("links"
+    links (:object :value (:or :mappings (link (reference :type link)))))
    ("callbacks"
-    callbacks (:object :value (:or :mappings (callback reference))))
+    callbacks
+    (:object :value (:or :mappings (callback (reference :type callback)))))
    ("pathItems"
-    path-items (:object :value (:or :mappings (path-item reference))))))
+    path-items
+    (:object :value (:or :mappings (path-item (reference :type path-item)))))))
 
 (json:define-mapping schema
   :object
   :members
-  (("$ref" ref (reference))
-   ("title" title (:string))
+  (("title" title (:string))
    ("multipleOf" multiple-of (:integer :min 1))
    ("maximum" maximum (:number))
    ("exclusiveMaximum" exclusive-maximum (:boolean))
@@ -271,16 +298,18 @@
 (json:define-mapping responses
   :object
   :members
-  (("default" default (:or :mappings (response reference))))
-  :value (:or :mappings (response reference)))
+  (("default" default (:or :mappings (response (reference :type response)))))
+  :value (:or :mappings (response (reference :type response))))
 
 (json:define-mapping response
   :object
   :members
   (("description" description (:string))
-   ("headers" headers (:object :value (:or :mappings (header reference))))
+   ("headers"
+    headers (:object :value (:or :mappings (header (reference :type header)))))
    ("content" content (:object :value media-type))
-   ("links" links (:object :value (:or :mappings (link reference)))))
+   ("links"
+    links (:object :value (:or :mappings (link (reference :type link))))))
   :required
   ("description"))
 
@@ -304,14 +333,17 @@
   :members
   (("schema" schema schema)
    ("example" example (:any))
-   ("examples" examples (:object :value (:or :mappings (example reference))))
+   ("examples"
+    examples
+    (:object :value (:or :mappings (example (reference :type example)))))
    ("encoding" encoding (:object :value 'encoding))))
 
 (json:define-mapping encoding
   :object
   :members
   (("contentType" content-type (:string))
-   ("headers" headers (:object :value (:or :mappings (header reference))))
+   ("headers"
+    headers (:object :value (:or :mappings (header (reference :type header)))))
    ("style" style (:string))
    ("explode" explode (:boolean))
    ("allowReserved" allow-reserved (:boolean))))

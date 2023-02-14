@@ -41,6 +41,15 @@
    #:validate
    #:generate
 
+   #:any-mapping
+   #:boolean-mapping
+   #:number-mapping
+   #:integer-mapping
+   #:string-mapping
+   #:array-mapping
+   #:object-mapping
+   #:or-mapping
+
    #:duplicate-key-handling
    #:*duplicate-key-handling*
    #:*max-depth*
