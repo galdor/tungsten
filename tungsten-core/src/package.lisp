@@ -18,6 +18,9 @@
    #:nshuffle
 
    #:alist-to-hash-table
+   #:hash-table-keys
+   #:hash-table-values
+   #:hash-table-entries
 
    #:string-case
 
