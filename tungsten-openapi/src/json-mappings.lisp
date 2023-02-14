@@ -139,11 +139,9 @@
   :required
   ("default"))
 
-;; TODO
 (json:define-mapping callback
   :object
-  :members
-  ())
+  :value (:or :mappings (path-item (reference :type path-item))))
 
 (json:define-mapping path-item
   :object
@@ -348,13 +346,21 @@
    ("explode" explode (:boolean))
    ("allowReserved" allow-reserved (:boolean))))
 
-;; TODO
 (json:define-mapping header
   :object
   :members
-  ()
-  :required
-  ())
+  (("description" description (:string))
+   ("required" required (:boolean))
+   ("deprecated" deprecated (:boolean))
+   ("allowEmptyValue" allow-empty-value (:boolean))
+   ("style" style (:string))
+   ("explode" explode (:boolean))
+   ("allowReserved" allow-reserved (:boolean))
+   ("schema" schema schema)
+   ("example" example (:any))
+   ("examples"
+    examples (:object :value (:or :mappings (example
+                                             (reference :type example)))))))
 
 (json:define-mapping security-scheme
   :object
