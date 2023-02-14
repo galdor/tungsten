@@ -112,11 +112,26 @@
     (when (and max-length (> (length value) max-length))
       (add-mapping-error value "string must contain less than ~D bytes"
                          max-length))
-    (when valid-values
-      (unless (member value valid-values :test #'string=)
-        (add-mapping-error value "string must have one of the following ~
-                                  values: ~{~S~^, ~}" valid-values)))
-    value))
+    (cond
+      (valid-values
+       (flet ((predicate (valid-value)
+                (etypecase valid-value
+                  (string (string= value valid-value))
+                  (list (string= value (car valid-value))))))
+         (let ((valid-value (find-if #'predicate valid-values)))
+           (cond
+             (valid-value
+              (etypecase valid-value
+                (string valid-value)
+                (list (cadr valid-value))))
+             (t
+              (add-mapping-error value
+                                 "string must have one of the following ~
+                                 values: ~{~S~^, ~}"
+                                 valid-values)
+              value)))))
+      (t
+       value))))
 
 (defmethod generate-value (value (mapping string-mapping))
   (declare (ignore mapping))
