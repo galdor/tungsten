@@ -271,7 +271,12 @@
    ("enum" enum (:array))
    ("type"
     type
-    (:string :value ("object" "string" "integer" "number" "array" "boolean")))
+    (:string :value (("object" :object)
+                     ("string" :string)
+                     ("integer" :integer)
+                     ("number" :number)
+                     ("array" :array)
+                     ("boolean" :boolean))))
    ("allOf" all-of (:array :element (:or :mappings ((reference :type schema)
                                                     schema))))
    ("oneOf" one-of (:array :element (:or :mappings ((reference :type schema)

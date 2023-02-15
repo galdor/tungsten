@@ -67,7 +67,6 @@
       (write-string (document-version document) stream))))
 
 (defclass operation ()
-  ;; TODO requestBody
   ;; TODO responses
   ((id
     :type string
@@ -97,7 +96,10 @@
    (parameters
     :type list
     :initform nil
-    :accessor operation-parameters)))
+    :accessor operation-parameters)
+   (request-body
+    :type request-body
+    :accessor operation-request-body)))
 
 (defmethod print-object ((operation operation) stream)
   (print-unreadable-object (operation stream :type t)
@@ -106,7 +108,7 @@
 (deftype parameter-location ()
   '(member :query :header :path :cookie))
 
-(deftype parameter-style ()
+(deftype encoding-style ()
   '(member
     :matrix :label :form :simple :space-delimited :pipe-delimited
     :deep-object))
@@ -130,7 +132,7 @@
     :initform nil
     :accessor parameter-deprecated)
    (style
-    :type parameter-style
+    :type encoding-style
     :accessor parameter-style)
    (explode
     :type boolean
@@ -145,6 +147,64 @@
     (when (slot-boundp parameter 'name)
       (write-char #\Space stream)
       (prin1 (slot-value parameter 'name) stream))))
+
+(defclass request-body ()
+  ((description
+    :type (or string null)
+    :initform nil
+    :accessor request-body-description)
+   (required
+    :type boolean
+    :initform nil
+    :accessor request-body-required)
+   (content
+    :type list
+    :initform nil
+    :accessor request-body-content)))
+
+(defclass media-type ()
+  ((schema
+    :accessor media-type-schema)
+   (property-encodings
+    :type list
+    :initform nil
+    :accessor media-type-property-encodings)))
+
+(defclass property-encoding ()
+  ((content-type
+    :type string
+    :accessor property-encoding-content-type)
+   (headers
+    :type list
+    :initform nil
+    :accessor property-encoding-headers)
+   (style
+    :type encoding-style
+    :accessor property-encoding-style)
+   (explode
+    :type boolean
+    :accessor property-encoding-explode)))
+
+(defclass header ()
+  ((description
+    :type (or string null)
+    :initform nil
+    :accessor header-description)
+   (required
+    :type boolean
+    :accessor header-required)
+   (deprecated
+    :type boolean
+    :initform nil
+    :accessor header-deprecated)
+   (style
+    :type encoding-style
+    :accessor header-style)
+   (explode
+    :type boolean
+    :accessor header-explode)
+   (schema
+    :accessor header-schema)))
 
 (defun parse-document (string)
   (declare (type string string))
@@ -214,7 +274,8 @@
   (declare (type keyword method)
            (type list operation-value path-parameters)
            (type document document))
-  (let ((operation (make-instance 'operation)))
+  (let ((components-value (cdr (assoc 'components document-value)))
+        (operation (make-instance 'operation)))
     (setf (operation-method operation) method)
     (setf (operation-path-pattern operation) path-pattern)
     (dolist (member operation-value)
@@ -231,9 +292,10 @@
          (let ((parameter-values (cdr member))
                (parameters (copy-seq path-parameters)))
            (dotimes (i (length parameter-values))
-             (let* ((value (aref parameter-values i))
+             (let* ((value (resolve-component-value (aref parameter-values i)
+                                                    components-value))
                     (parameter
-                      (build-document/parameter value document-value))
+                      (build-parameter value document-value))
                     (name (parameter-name parameter))
                     (member (assoc name parameters)))
                (if member
@@ -242,6 +304,8 @@
            (setf (operation-parameters operation)
                  (mapcar #'cdr parameters))))
         (request-body
+         (setf (operation-request-body operation)
+               (build-request-body (cdr member) document-value))
          ;; TODO
          nil)
         (responses
@@ -250,7 +314,7 @@
     (setf (gethash (operation-id operation) (document-operations document))
           operation)))
 
-(defun build-document/parameter (parameter-value document-value)
+(defun build-parameter (parameter-value document-value)
   (declare (type list parameter-value document-value))
   (let ((components-value (cdr (assoc 'components document-value)))
         (parameter (make-instance 'parameter)))
@@ -271,9 +335,8 @@
         (explode
          (setf (parameter-explode parameter) (cdr member)))
         (schema
-         (let ((schema-value
-                 (resolve-component-value (cdr member) components-value)))
-           (setf (parameter-schema parameter) schema-value)))))
+         (setf (parameter-schema parameter)
+               (resolve-component-value (cdr member) components-value)))))
     (unless (slot-boundp parameter 'required)
       (setf (parameter-required parameter)
             (eq (parameter-location parameter) :path)))
@@ -291,21 +354,113 @@
       (setf (parameter-schema parameter) (build-schema nil)))
     parameter))
 
+(defun build-request-body (body-value document-value)
+  (declare (type list body-value document-value))
+  (let ((components-value (cdr (assoc 'components document-value)))
+        (body (make-instance 'request-body)))
+    (dolist (member body-value)
+      (case (car member)
+        (description
+         (setf (request-body-description body) (cdr member)))
+        (content
+         (let ((content nil))
+           (dolist (member (cdr member))
+             (let* ((media-type-name (car member))
+                    (media-type-value (cdr member))
+                    (media-type (make-instance 'media-type)))
+               (dolist (member media-type-value)
+                 (case (car member)
+                   (schema
+                    (setf (media-type-schema media-type)
+                          (resolve-component-value (cdr member)
+                                                   components-value)))
+                   (encoding
+                    (let ((encodings nil))
+                      (dolist (member (cdr member))
+                        (let* ((name (car member))
+                               (encoding-data (cdr member))
+                               (encoding
+                                 (build-property-encoding encoding-data
+                                                          document-value)))
+                          (push (cons name encoding) encodings)))
+                      (setf (media-type-property-encodings media-type)
+                            encodings)))))
+               (push (cons media-type-name media-type) content)))
+           (setf (request-body-content body) content)))))
+    body))
+
+(defun build-property-encoding (encoding-data document-value)
+  (declare (type list encoding-data document-value))
+  (let ((components-value (cdr (assoc 'components document-value)))
+        (encoding (make-instance 'property-encoding)))
+    (dolist (member encoding-data)
+      (case (car member)
+        (content-type
+         (setf (property-encoding-content-type encoding) (cdr member)))
+        (headers
+         (let ((headers nil))
+           (dolist (member (cdr member))
+             (let* ((name (car member))
+                    (header-data
+                      (resolve-component-value (cdr member)
+                                               components-value))
+                    (header (build-header header-data document-value)))
+               (push (cons name header) headers)))
+           (setf (property-encoding-headers encoding) headers)))
+        (style
+         (setf (property-encoding-style encoding) (cdr member)))
+        (explode
+         (setf (property-encoding-explode encoding) (cdr member))))
+      (unless (slot-boundp encoding 'explode)
+        (setf (property-encoding-explode encoding)
+              (eq (property-encoding-style encoding) :form)))
+      encoding)))
+
+(defun build-header (header-value document-value)
+  (declare (type list header-value document-value))
+  (let ((components-value (cdr (assoc 'components document-value)))
+        (header (make-instance 'header)))
+    (dolist (member header-value)
+      (case (car member)
+        (description
+         (setf (header-description header) (cdr member)))
+        (required
+         (setf (header-required header) (cdr member)))
+        (deprecated
+         (setf (header-deprecated header) (cdr member)))
+        (style
+         (setf (header-style header) (cdr member)))
+        (explode
+         (setf (header-explode header) (cdr member)))
+        (schema
+         (setf (header-schema header)
+               (resolve-component-value (cdr member) components-value)))))
+    (unless (slot-boundp header 'required)
+      (setf (header-required header) t))
+    (unless (slot-boundp header 'style)
+      (setf (header-style header) :simple))
+    (unless (slot-boundp header 'explode)
+      (setf (header-explode header)
+            (eq (header-style header) :form)))
+    (unless (slot-boundp header 'schema)
+      (setf (header-schema header) (build-schema nil)))
+    header))
+
 (defun resolve-component-value (object-value components-value)
   (declare (type list object-value components-value))
   (let ((visited-references nil))
     (labels ((component-group (ref-type)
-                 (ecase ref-type
-                   (callback 'callbacks)
-                   (example 'examples)
-                   (header 'headers)
-                   (link 'links)
-                   (parameter 'parameters)
-                   (path-item 'path-items)
-                   (request-body 'request-bodies)
-                   (response 'responses)
-                   (schema 'schemas)
-                   (security-scheme 'security-schemes)))
+               (ecase ref-type
+                 (callback 'callbacks)
+                 (example 'examples)
+                 (header 'headers)
+                 (link 'links)
+                 (parameter 'parameters)
+                 (path-item 'path-items)
+                 (request-body 'request-bodies)
+                 (response 'responses)
+                 (schema 'schemas)
+                 (security-scheme 'security-schemes)))
              (resolve (object-value)
                (let* ((reference (cdr (assoc 'ref object-value))))
                  (cond
