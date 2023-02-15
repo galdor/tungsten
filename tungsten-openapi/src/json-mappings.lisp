@@ -78,7 +78,7 @@
   (declare (ignore mapping))
   (uri:serialize value))
 
-(json:define-mapping openapi
+(json:define-mapping document
   :object
   :members
   (("openapi" openapi (:string))
@@ -191,12 +191,21 @@
   :object
   :members
   (("name" name (:string))
-   ("in" in (:string :value ("query" "header" "path" "cookie")))
+   ("in" in (:string :value (("query" :query)
+                             ("header" :header)
+                             ("path" :path)
+                             ("cookie" :cookie))))
    ("description" description (:string))
    ("required" required (:boolean))
    ("deprecated" deprecated (:boolean))
    ("allowEmptyValue" allow-empty-value (:boolean))
-   ("style" style (:string))
+   ("style" style (:string :value (("matrix" :matrix)
+                                   ("label" :label)
+                                   ("form" :form)
+                                   ("simple" :simple)
+                                   ("spaceDelimited" :space-delimited)
+                                   ("pipeDelimited" :pipe-delimited)
+                                   ("deepObject" :deep-object))))
    ("explode" explode (:boolean))
    ("allowReserved" allow-reserved (:boolean))
    ("schema" schema (:or :mappings ((reference :type schema) schema)))
