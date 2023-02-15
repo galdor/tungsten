@@ -3,6 +3,7 @@
 ;;; Reference: https://spec.openapis.org/oas/v3.1.0.html
 
 (json:register-mapping-class 'reference 'reference-json-mapping)
+(json:register-mapping-class 'responses 'responses-json-mapping)
 
 (defclass reference-json-mapping (json:object-mapping)
   ((type
@@ -77,6 +78,36 @@
 (defmethod json:generate-value (value (mapping reference-json-mapping))
   (declare (ignore mapping))
   (uri:serialize value))
+
+(defclass responses-json-mapping (json:object-mapping)
+  ()
+  (:default-initargs
+   :members
+   '(("default" :default (:or :mappings ((reference :type response) response))))
+   :value
+   '(:or :mappings ((reference :type response) response))))
+
+(defmethod json:validate-value :around (value (mapping responses-json-mapping))
+  (let ((value (call-next-method value mapping)))
+    (dolist (member value)
+      (let ((key (car member)))
+        (unless (eq key :default)
+          (rplaca member
+                  (cond
+                    ((every #'digit-char-p key)
+                     (parse-integer key))
+                    (t
+                     (json:add-mapping-error
+                      value "invalid response status code ~S" key)
+                     key))))))
+    value))
+
+(defmethod json:generate-value :around (value (mapping reference-json-mapping))
+  (declare (ignore mapping))
+  (dolist (member value)
+    (when (integerp (car member))
+      (rplaca member (princ-to-string (car member)))))
+  (call-next-method value))
 
 (json:define-mapping document
   :object
@@ -179,7 +210,7 @@
     (:array :element (:or :mappings ((reference :type parameter) parameter))))
    ("requestBody"
     request-body (:or :mappings ((reference :type request-body) request-body)))
-   ("responses" responses responses)
+   ("responses" responses (responses))
    ("callbacks"
     callbacks
     (:object :value (:or :mappings ((reference :type callback) callback))))
@@ -317,12 +348,6 @@
    ("prefix" prefix (:string))
    ("attribute" attribute (:boolean))
    ("wrapped" wrapped (:boolean))))
-
-(json:define-mapping responses
-  :object
-  :members
-  (("default" default (:or :mappings ((reference :type response) response))))
-  :value (:or :mappings ((reference :type response) response)))
 
 (json:define-mapping response
   :object

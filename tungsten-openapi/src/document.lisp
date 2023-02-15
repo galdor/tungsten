@@ -67,7 +67,6 @@
       (write-string (document-version document) stream))))
 
 (defclass operation ()
-  ;; TODO responses
   ((id
     :type string
     :accessor operation-id)
@@ -99,7 +98,15 @@
     :accessor operation-parameters)
    (request-body
     :type request-body
-    :accessor operation-request-body)))
+    :accessor operation-request-body)
+   (default-response
+    :type (or response null)
+    :initform nil
+    :accessor operation-default-response)
+   (responses
+    :type list
+    :initform nil
+    :accessor operation-responses)))
 
 (defmethod print-object ((operation operation) stream)
   (print-unreadable-object (operation stream :type t)
@@ -162,6 +169,41 @@
     :initform nil
     :accessor request-body-content)))
 
+(defclass response ()
+  ((description
+    :type (or string null)
+    :initform nil
+    :accessor response-description)
+   (headers
+    :type list
+    :initform nil
+    :accessor response-headers)
+   (content
+    :type list
+    :initform nil
+    :accessor response-content)))
+
+(defclass header ()
+  ((description
+    :type (or string null)
+    :initform nil
+    :accessor header-description)
+   (required
+    :type boolean
+    :accessor header-required)
+   (deprecated
+    :type boolean
+    :initform nil
+    :accessor header-deprecated)
+   (style
+    :type encoding-style
+    :accessor header-style)
+   (explode
+    :type boolean
+    :accessor header-explode)
+   (schema
+    :accessor header-schema)))
+
 (defclass media-type ()
   ((schema
     :accessor media-type-schema)
@@ -184,27 +226,6 @@
    (explode
     :type boolean
     :accessor property-encoding-explode)))
-
-(defclass header ()
-  ((description
-    :type (or string null)
-    :initform nil
-    :accessor header-description)
-   (required
-    :type boolean
-    :accessor header-required)
-   (deprecated
-    :type boolean
-    :initform nil
-    :accessor header-deprecated)
-   (style
-    :type encoding-style
-    :accessor header-style)
-   (explode
-    :type boolean
-    :accessor header-explode)
-   (schema
-    :accessor header-schema)))
 
 (defun parse-document (string)
   (declare (type string string))
@@ -305,12 +326,17 @@
                  (mapcar #'cdr parameters))))
         (request-body
          (setf (operation-request-body operation)
-               (build-request-body (cdr member) document-value))
-         ;; TODO
-         nil)
+               (build-request-body (cdr member) document-value)))
         (responses
-         ;; TODO
-         nil)))
+         (dolist (member (cdr member))
+           (let* ((code (car member))
+                 (value
+                   (resolve-component-value (cdr member) components-value))
+                 (response (build-response value document-value)))
+             (if (eq code :default)
+                 (setf (operation-default-response operation) response)
+                 (push (cons code response)
+                       (operation-responses operation))))))))
     (setf (gethash (operation-id operation) (document-operations document))
           operation)))
 
@@ -356,38 +382,65 @@
 
 (defun build-request-body (body-value document-value)
   (declare (type list body-value document-value))
-  (let ((components-value (cdr (assoc 'components document-value)))
-        (body (make-instance 'request-body)))
+  (let ((body (make-instance 'request-body)))
     (dolist (member body-value)
       (case (car member)
         (description
          (setf (request-body-description body) (cdr member)))
         (content
-         (let ((content nil))
-           (dolist (member (cdr member))
-             (let* ((media-type-name (car member))
-                    (media-type-value (cdr member))
-                    (media-type (make-instance 'media-type)))
-               (dolist (member media-type-value)
-                 (case (car member)
-                   (schema
-                    (setf (media-type-schema media-type)
-                          (resolve-component-value (cdr member)
-                                                   components-value)))
-                   (encoding
-                    (let ((encodings nil))
-                      (dolist (member (cdr member))
-                        (let* ((name (car member))
-                               (encoding-data (cdr member))
-                               (encoding
-                                 (build-property-encoding encoding-data
-                                                          document-value)))
-                          (push (cons name encoding) encodings)))
-                      (setf (media-type-property-encodings media-type)
-                            encodings)))))
-               (push (cons media-type-name media-type) content)))
-           (setf (request-body-content body) content)))))
+         (setf (request-body-content body)
+               (build-content (cdr member) document-value)))))
     body))
+
+(defun build-content (content-value document-value)
+  (declare (type list content-value document-value))
+  (let ((components-value (cdr (assoc 'components document-value)))
+        (content nil))
+    (dolist (member content-value)
+      (let* ((media-type-name (car member))
+             (media-type-value (cdr member))
+             (media-type (make-instance 'media-type)))
+        (dolist (member media-type-value)
+          (case (car member)
+            (schema
+             (setf (media-type-schema media-type)
+                   (resolve-component-value (cdr member)
+                                            components-value)))
+            (encoding
+             (let ((encodings nil))
+               (dolist (member (cdr member))
+                 (let* ((name (car member))
+                        (encoding-data (cdr member))
+                        (encoding
+                          (build-property-encoding encoding-data
+                                                   document-value)))
+                   (push (cons name encoding) encodings)))
+               (setf (media-type-property-encodings media-type)
+                     encodings)))))
+        (push (cons media-type-name media-type) content)))
+    content))
+
+(defun build-response (response-value document-value)
+  (declare (type list response-value document-value))
+  (let ((components-value (cdr (assoc 'components document-value)))
+        (response (make-instance 'response)))
+    (dolist (member response-value)
+      (case (car member)
+        (description
+         (setf (response-description response) (cdr member)))
+        (headers
+         (let ((headers nil))
+           (dolist (member (cdr member))
+             (let* ((name (car member))
+                    (header-data
+                      (resolve-component-value (cdr member) components-value))
+                    (header (build-header header-data document-value)))
+               (push (cons name header) headers)))
+           (setf (response-headers response) headers)))
+        (content
+         (setf (response-content response)
+               (build-content (cdr member) document-value)))))
+    response))
 
 (defun build-property-encoding (encoding-data document-value)
   (declare (type list encoding-data document-value))
