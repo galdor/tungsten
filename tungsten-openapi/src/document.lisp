@@ -294,7 +294,19 @@
 (defun resolve-component-value (object-value components-value)
   (declare (type list object-value components-value))
   (let ((visited-references nil))
-    (labels ((resolve (object-value)
+    (labels ((component-group (ref-type)
+                 (ecase ref-type
+                   (callback 'callbacks)
+                   (example 'examples)
+                   (header 'headers)
+                   (link 'links)
+                   (parameter 'parameters)
+                   (path-item 'path-items)
+                   (request-body 'request-bodies)
+                   (response 'responses)
+                   (schema 'schemas)
+                   (security-scheme 'security-schemes)))
+             (resolve (object-value)
                (let* ((reference (cdr (assoc 'ref object-value))))
                  (cond
                    (reference
@@ -307,9 +319,11 @@
                                                    (nreverse
                                                     visited-references))))
                       (push reference visited-references)
-                      (let ((component-value
-                              (cdr
-                               (assoc name components-value :test #'string=))))
+                      (let* ((ref-type (car reference))
+                             (group-name (component-group ref-type))
+                             (group (cdr (assoc group-name components-value)))
+                             (component-value
+                               (cdr (assoc name group :test #'string=))))
                         (unless component-value
                           (invalid-reference reference
                                              "missing target component"))
