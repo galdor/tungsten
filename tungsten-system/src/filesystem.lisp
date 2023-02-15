@@ -10,8 +10,9 @@
         (let* ((capacity (array-total-size data))
                (nb-left (- capacity offset)))
           (when (< nb-left block-size)
-            (setf data
-                  (adjust-array data (+ capacity (- block-size nb-left))))))
+            (let ((new-length (max (+ capacity (- block-size nb-left))
+                                   (floor (* capacity 3) 2))))
+              (setf data (adjust-array data new-length)))))
         (let ((end (read-sequence data file :start offset)))
           (when (= end offset)
             (return-from read-file (adjust-array data end)))
