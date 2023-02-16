@@ -181,6 +181,10 @@
     :initarg :class
     :initform nil
     :accessor object-mapping-class)
+   (name
+    :type (or symbol list)
+    :initarg :name
+    :initform nil)
    (value
     :type (or symbol list)
     :initarg :value
@@ -199,7 +203,9 @@
    :base-types '(:object)))
 
 (defmethod validate-value (value (mapping object-mapping))
-  (with-slots (class (value-mapping value) members required) mapping
+  (with-slots (class (name-mapping name) (value-mapping value)
+               members required)
+      mapping
     (let ((names (mapcar #'car members))
           (missing-members nil)
           (output-value (when class (make-instance class))))
@@ -231,6 +237,21 @@
                                       value-mapping)
                       (cdr member-value))))
             (push (cons (car member-value) decoded-value) output-value))))
+      ;; Member names
+      (when name-mapping
+        (dolist (member-value output-value)
+          (rplaca member-value
+                  (handler-case
+                      (validate (car member-value)
+                                name-mapping :pointer *mapping-pointer*)
+                    (invalid-value (condition)
+                      (dolist (mapping-error
+                               (invalid-value-mapping-errors condition))
+                        (add-mapping-error (car member-value)
+                                           "invalid key ~S: ~A"
+                                           (car member-value)
+                                           (mapping-error-description
+                                            mapping-error))))))))
       ;; Final value
       (if class
           output-value
