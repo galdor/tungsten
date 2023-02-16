@@ -6,5 +6,7 @@
    #:media-type-subtype
    #:media-type-parameters
    #:make-media-type
+   #:media-type-parameter
    #:serialize-media-type
-   #:media-type-parameter))
+   #:parse-media-type
+   #:normalize-media-type))
