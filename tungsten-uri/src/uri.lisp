@@ -1,6 +1,6 @@
 (in-package :uri)
 
-;;; Reference: RFC3986
+;;; Reference: RFC 3986
 ;;;
 ;;; In theory we need to handle differently URIs and relative references. The
 ;;; obvious representation would be to have a URI-REFERENCE base class, from
