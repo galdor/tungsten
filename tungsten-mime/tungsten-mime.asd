@@ -2,12 +2,14 @@
   :description "Utilities for Multipurpose Internet Mail Extensions."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
-  ("tungsten-core")
+  ("tungsten-core"
+   "tungsten-json")
   :pathname "src"
   :serial t
   :components
   ((:file "package")
-   (:file "media-types"))
+   (:file "media-types")
+   (:file "json"))
   :in-order-to ((test-op (test-op "tungsten-mime/test"))))
 
 (defsystem "tungsten-mime/test"
