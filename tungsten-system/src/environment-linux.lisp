@@ -10,7 +10,7 @@
   (let ((page-size (sysconf :sc-pagesize))
         (values
           (do* ((path #p"/proc/self/statm")
-                (string (read-file-string path :external-format :ascii))
+                (string (read-file path :external-format :ascii))
                 (start 0)
                 (end (or (position #\Newline string) (length string)))
                 (values (make-array 0 :element-type 'integer

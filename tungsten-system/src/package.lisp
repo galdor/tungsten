@@ -32,7 +32,6 @@
    #:join-thread
 
    #:read-file
-   #:read-file-string
 
    #:ipv4-address
    #:ipv6-address
