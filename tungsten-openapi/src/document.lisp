@@ -275,7 +275,7 @@
       (when parameter-values
         (dotimes (i (length parameter-values))
           (let* ((value (aref parameter-values i))
-                 (parameter (build-document/parameter value document-value))
+                 (parameter (build-parameter value document-value))
                  (name (parameter-name parameter))
                  (member (assoc name path-parameters)))
             (if member
@@ -377,7 +377,7 @@
       (setf (parameter-explode parameter)
             (eq (parameter-style parameter) :form)))
     (unless (slot-boundp parameter 'schema)
-      (setf (parameter-schema parameter) (build-schema nil)))
+      (setf (parameter-schema parameter) nil))
     parameter))
 
 (defun build-request-body (body-value document-value)
@@ -496,7 +496,7 @@
       (setf (header-explode header)
             (eq (header-style header) :form)))
     (unless (slot-boundp header 'schema)
-      (setf (header-schema header) (build-schema nil)))
+      (setf (header-schema header) nil))
     header))
 
 (defun resolve-component-value (object-value components-value)
