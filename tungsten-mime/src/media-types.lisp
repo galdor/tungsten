@@ -1,5 +1,7 @@
 (in-package :mime)
 
+;;; Reference: RFC 2045
+
 (define-condition invalid-media-type (parse-error)
   ((description
     :type string
