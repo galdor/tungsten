@@ -157,6 +157,7 @@
            (type client client))
   (let* ((target-uri (request-target request))
          (key (uri-connection-key target-uri)))
+    (add-new-request-header-field request "User-Agent" (user-agent))
     (setf (request-target request) (make-request-target target-uri))
     (setf (request-header-field request "Host") (host-header-field target-uri))
     ;; We cannot detect if a connection in the pool has timed out or failed
@@ -230,3 +231,7 @@
                    ((equalp scheme "https") 443))))
          (tls (equalp scheme "https")))
     (list host port tls)))
+
+(defun user-agent ()
+  "Return the default user agent used in client requests."
+  "Tungsten/dev")
