@@ -52,4 +52,4 @@
 
 (defmethod json:generate-value (value (mapping uri-json-mapping))
   (declare (ignore mapping))
-  (uri:serialize value))
+  (serialize value))
