@@ -36,6 +36,14 @@
                             :format-control format
                             :format-arguments arguments))
 
+(define-condition unknown-operation (error)
+  ((name
+    :initarg :name))
+  (:report
+   (lambda (condition stream)
+     (with-slots (name) condition
+       (format stream "Unknown OpenAPI operation ~S." name)))))
+
 (defclass document ()
   ((openapi-version
     :type (or string null)
@@ -73,9 +81,9 @@
    (method
     :type keyword
     :accessor operation-method)
-   (path-pattern
+   (path-template
     :type string
-    :accessor operation-path-pattern)
+    :accessor operation-path-template)
    (summary
     :type (or string null)
     :initform nil
@@ -97,7 +105,8 @@
     :initform nil
     :accessor operation-parameters)
    (request-body
-    :type request-body
+    :type (or request-body null)
+    :initform nil
     :accessor operation-request-body)
    (default-response
     :type (or response null)
@@ -268,7 +277,7 @@
   (declare (type list paths-value document-value)
            (type document document))
   (dolist (path-member paths-value)
-    (let* ((path-pattern (car path-member))
+    (let* ((path-template (car path-member))
            (path-value (cdr path-member))
            (parameter-values (cdr (assoc 'parameters path-value)))
            (path-parameters nil))
@@ -285,11 +294,11 @@
         (case (car member)
           ((get put post delete options head patch trace)
            (let ((method (intern (symbol-name (car member)) :keyword)))
-             (build-document/operation method path-pattern
+             (build-document/operation method path-template
                                        (cdr member) path-parameters
                                        document-value document))))))))
 
-(defun build-document/operation (method path-pattern
+(defun build-document/operation (method path-template
                                  operation-value path-parameters
                                  document-value document)
   (declare (type keyword method)
@@ -298,7 +307,7 @@
   (let ((components-value (cdr (assoc 'components document-value)))
         (operation (make-instance 'operation)))
     (setf (operation-method operation) method)
-    (setf (operation-path-pattern operation) path-pattern)
+    (setf (operation-path-template operation) path-template)
     (dolist (member operation-value)
       (case (car member)
         (operation-id
@@ -330,9 +339,9 @@
         (responses
          (dolist (member (cdr member))
            (let* ((code (car member))
-                 (value
-                   (resolve-component-value (cdr member) components-value))
-                 (response (build-response value document-value)))
+                  (value
+                    (resolve-component-value (cdr member) components-value))
+                  (response (build-response value document-value)))
              (if (eq code :default)
                  (setf (operation-default-response operation) response)
                  (push (cons code response)
@@ -397,15 +406,14 @@
   (let ((components-value (cdr (assoc 'components document-value)))
         (content nil))
     (dolist (member content-value)
-      (let* ((media-type-name (car member))
+      (let* ((media-range (car member))
              (media-type-value (cdr member))
              (media-type (make-instance 'media-type)))
         (dolist (member media-type-value)
           (case (car member)
             (schema
              (setf (media-type-schema media-type)
-                   (resolve-component-value (cdr member)
-                                            components-value)))
+                   (resolve-component-value (cdr member) components-value)))
             (encoding
              (let ((encodings nil))
                (dolist (member (cdr member))
@@ -417,7 +425,7 @@
                    (push (cons name encoding) encodings)))
                (setf (media-type-property-encodings media-type)
                      encodings)))))
-        (push (cons media-type-name media-type) content)))
+        (push (cons media-range media-type) content)))
     content))
 
 (defun build-response (response-value document-value)
@@ -539,3 +547,9 @@
                    (t
                     object-value)))))
       (resolve object-value))))
+
+(defun document-operation (document name)
+  (declare (type document document)
+           (type string name))
+  (or (gethash name (document-operations document))
+      (error 'unknown-operation :name name)))

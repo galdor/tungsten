@@ -355,7 +355,7 @@
   (("description" description (:string))
    ("headers"
     headers (:object :value (:or :mappings ((reference :type header) header))))
-   ("content" content (:object :value media-type))
+   ("content" content (:object :name (mime:media-range) :value media-type))
    ("links"
     links (:object :value (:or :mappings ((reference :type link) link)))))
   :required
@@ -373,7 +373,7 @@
   :object
   :members
   (("description" description (:string))
-   ("content" content (:object :value media-type))
+   ("content" content (:object :name (mime:media-range) :value media-type))
    ("required" required (:boolean))))
 
 (json:define-mapping media-type

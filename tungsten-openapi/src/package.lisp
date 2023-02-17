@@ -7,4 +7,5 @@
    #:document-version
    #:document-servers
    #:document-operations
+   #:document-operation
    #:parse-document))

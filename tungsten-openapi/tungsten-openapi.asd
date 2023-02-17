@@ -3,7 +3,9 @@
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
   ("tungsten-core"
+   "tungsten-http"
    "tungsten-json"
+   "tungsten-mime"
    "tungsten-uri")
   :pathname "src"
   :serial t
@@ -11,7 +13,8 @@
   ((:file "package")
    (:file "json-mappings")
    (:file "schema")
-   (:file "document"))
+   (:file "document")
+   (:file "operations"))
   :in-order-to ((test-op (test-op "tungsten-openapi/test"))))
 
 (defsystem "tungsten-openapi/test"
