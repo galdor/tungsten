@@ -21,4 +21,6 @@
    #:media-range-parameter
    #:serialize-media-range
    #:parse-media-range
-   #:normalize-media-range))
+   #:normalize-media-range
+   #:match-media-range
+   #:match-media-ranges))

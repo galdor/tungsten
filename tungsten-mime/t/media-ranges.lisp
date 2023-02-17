@@ -36,3 +36,16 @@
                  (mime:serialize-media-range
                   (mime:normalize-media-range
                    (mime:parse-media-range "tExT/*; EnCoding=UTF-8")))))
+
+(deftest match-media-range ()
+  (macrolet ((check-match (expected range type)
+               `(check-eq ,expected
+                          (mime:match-media-range (mime:media-range ,range)
+                                                  (mime:media-type ,type)))))
+    (check-match :exact "text/plain" "text/plain")
+    (check-match :exact "text/plain" "text/plain;charset=UTF-8")
+    (check-match :exact "text/plain;q=1.0" "text/plain")
+    (check-match :partial "text/*" "text/plain")
+    (check-match :wildcard "*/*" "text/plain")
+    (check-match nil "text/plain" "text/html")
+    (check-match nil "text/*" "application/json")))

@@ -110,3 +110,41 @@
     (dolist (parameter parameters)
       (rplaca parameter (string-downcase (car parameter))))
     media-range))
+
+(defun match-media-range (media-range media-type)
+  "Check if MEDIA-RANGE matches MEDIA-TYPE and return :EXACT if both type and
+subtype are the same, PARTIAL if types are the same and subtypes match due to
+a wildcard, WILDCARD if both types and subtypes match due to a wildcard, or
+NIL if there is no match."
+  (declare (type media-range media-range)
+           (type media-type media-type))
+  (let ((wildcard-type-p (eq (media-range-type media-range) '*))
+        (wildcard-subtype-p (eq (media-range-subtype media-range) '*)))
+    (when (or wildcard-type-p
+              (string= (media-range-type media-range)
+                       (media-type-type media-type)))
+      (when (or wildcard-subtype-p
+                (string= (media-range-subtype media-range)
+                         (media-type-subtype media-type)))
+        (cond
+          ((and wildcard-type-p wildcard-subtype-p)
+           :wildcard)
+          ((or wildcard-type-p wildcard-subtype-p)
+           :partial)
+          (t
+           :exact))))))
+
+(defun match-media-ranges (media-ranges media-type &key (key #'identity))
+  "Return a list of the media ranges in MEDIA-RANGES which match MEDIA-TYPE
+sorted by descending exactness."
+  (let ((matches nil))
+    (dolist (media-range media-ranges)
+      (let ((match (match-media-range (funcall key media-range) media-type)))
+        (when match
+          (push (cons media-range match) matches))))
+    (flet ((rank (match)
+             (ecase (cdr match)
+               (:exact 1)
+               (:partial 2)
+               (:wildcard 3))))
+      (mapcar #'car (sort matches #'< :key #'rank)))))
