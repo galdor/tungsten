@@ -302,12 +302,12 @@
    ("enum" enum (:array))
    ("type"
     type
-    (:string :value (("object" :object)
-                     ("string" :string)
+    (:string :value (("boolean" :boolean)
                      ("integer" :integer)
                      ("number" :number)
+                     ("string" :string)
                      ("array" :array)
-                     ("boolean" :boolean))))
+                     ("object" :object))))
    ("allOf" all-of (:array :element (:or :mappings ((reference :type schema)
                                                     schema))))
    ("oneOf" one-of (:array :element (:or :mappings ((reference :type schema)

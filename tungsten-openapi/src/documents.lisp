@@ -154,7 +154,9 @@
     :type boolean
     :accessor parameter-explode)
    (schema
-    :accessor parameter-schema)))
+    :accessor parameter-schema)
+   (json-mapping
+    :accessor parameter-json-mapping)))
 
 (defmethod print-object ((parameter parameter) stream)
   (print-unreadable-object (parameter stream :type t)
@@ -211,11 +213,15 @@
     :type boolean
     :accessor header-explode)
    (schema
-    :accessor header-schema)))
+    :accessor header-schema)
+   (json-mapping
+    :accessor header-json-mapping)))
 
 (defclass media-type ()
   ((schema
     :accessor media-type-schema)
+   (json-mapping
+    :accessor media-type-json-mapping)
    (property-encodings
     :type list
     :initform nil
@@ -371,7 +377,9 @@
          (setf (parameter-explode parameter) (cdr member)))
         (schema
          (setf (parameter-schema parameter)
-               (resolve-component-value (cdr member) components-value)))))
+               (resolve-component-value (cdr member) components-value))
+         (setf (parameter-json-mapping parameter)
+               (build-schema-json-mapping (parameter-schema parameter))))))
     (unless (slot-boundp parameter 'required)
       (setf (parameter-required parameter)
             (eq (parameter-location parameter) :path)))
@@ -413,7 +421,9 @@
           (case (car member)
             (schema
              (setf (media-type-schema media-type)
-                   (resolve-component-value (cdr member) components-value)))
+                   (resolve-component-value (cdr member) components-value))
+             (setf (media-type-json-mapping media-type)
+                   (build-schema-json-mapping (media-type-schema media-type))))
             (encoding
              (let ((encodings nil))
                (dolist (member (cdr member))
@@ -495,7 +505,9 @@
          (setf (header-explode header) (cdr member)))
         (schema
          (setf (header-schema header)
-               (resolve-component-value (cdr member) components-value)))))
+               (resolve-component-value (cdr member) components-value))
+         (setf (header-json-mapping header)
+               (build-schema-json-mapping (header-schema header))))))
     (unless (slot-boundp header 'required)
       (setf (header-required header) t))
     (unless (slot-boundp header 'style)

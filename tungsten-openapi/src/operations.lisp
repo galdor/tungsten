@@ -50,11 +50,11 @@
            (content-type (http:response-header-field response "Content-Type"))
            (media-type
              (operation-response-media-type operation status content-type))
-           (body (http:response-body response)))
-      (declare (ignore media-type))
-      ;; TODO Decode BODY according to MEDIA-TYPE.
-      ;;
-      ;; TODO Return (VALUES BODY RESPONSE)
+           (mapping (media-type-json-mapping media-type))
+           (body (when (http:response-body response)
+                   (json:parse (text:decode-string
+                                (http:response-body response))
+                               :mapping mapping))))
       (values body response))))
 
 (defun operation-uri (operation document &key parameters)
@@ -93,9 +93,12 @@
   (let ((response (or (cdr (assoc status (operation-responses operation)))
                       (operation-default-response operation))))
     (when response
-      (caar (mime:match-media-ranges (response-content response)
-                                     (mime:media-type content-type)
-                                     :key #'car)))))
+      (let* ((matches
+               (mime:match-media-ranges (response-content response)
+                                        (mime:media-type content-type)
+                                        :key #'car))
+             (first-match (car matches)))
+        (cdr first-match)))))
 
 (defun expand-path-template (template parameter-values parameters)
   (declare (type string template)

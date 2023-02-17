@@ -12,8 +12,8 @@
   :components
   ((:file "package")
    (:file "json-mappings")
-   (:file "schema")
-   (:file "document")
+   (:file "schemas")
+   (:file "documents")
    (:file "operations"))
   :in-order-to ((test-op (test-op "tungsten-openapi/test"))))
 
