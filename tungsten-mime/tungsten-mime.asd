@@ -9,6 +9,7 @@
   :components
   ((:file "package")
    (:file "media-types")
+   (:file "media-ranges")
    (:file "json"))
   :in-order-to ((test-op (test-op "tungsten-mime/test"))))
 
@@ -22,6 +23,7 @@
   :serial t
   :components
   ((:file "package")
-   (:file "media-types"))
+   (:file "media-types")
+   (:file "media-ranges"))
   :perform
   (test-op (op system) (symbol-call :test :run :package :mime-test)))

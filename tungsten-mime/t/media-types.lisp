@@ -20,13 +20,23 @@
 (deftest parse-media-type ()
   (macrolet ((check-media-type (expected string)
                `(check-string= ,expected (mime:serialize-media-type
-                                          (mime:parse-media-type ,string)))))
+                                          (mime:parse-media-type ,string))))
+             (check-invalid-media-type (string)
+               `(check-signals mime:invalid-media-type
+                               (mime:parse-media-type ,string))))
     (check-media-type "text/plain" "text/plain")
     (check-media-type "text/plain" " text	/	 plain  ")
     (check-media-type "text/plain;charset=UTF-8"
                       "text/plain ; charset	= UTF-8		")
     (check-media-type "x-tungsten/test;a=1;b=2;c=3"
-                      "x-tungsten/test;a = 1 ;b=	2 ; c =3 ")))
+                      "x-tungsten/test;a = 1 ;b=	2 ; c =3 ")
+    (check-invalid-media-type "text")
+    (check-invalid-media-type "text")
+    (check-invalid-media-type "text/")
+    (check-invalid-media-type "/plain")
+    (check-invalid-media-type "text/plain;a")
+    (check-invalid-media-type "text/plain;a=")
+    (check-invalid-media-type "text/plain;a=b;")))
 
 (deftest normalize-media-type ()
   (check-string= "text/plain;encoding=UTF-8"
