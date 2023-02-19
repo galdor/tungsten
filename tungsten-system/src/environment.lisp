@@ -27,3 +27,11 @@ process: the amount of virtual memory, the amount of resident memory and the
 amount of shared memory. All values are specified in bytes."
   (%memory-usage))
 
+(defun environment-variable (name)
+  "Return the value of the environment variable NAME or NIL if there is no
+environment variable with this name."
+  (handler-case
+      (getenv name)
+    (system-error (condition)
+      (declare (ignore condition))
+      nil)))

@@ -33,6 +33,11 @@
 (defun sysconf (name)
   (system-funcall ("sysconf" ((sysconf-name) :long) name)))
 
+(defun getenv (name)
+  (ffi:with-foreign-string (%name name)
+    (ffi:decode-foreign-string
+     (system-funcall ("getenv" ((:pointer) :pointer) %name)))))
+
 ;;;
 ;;; Time
 ;;;

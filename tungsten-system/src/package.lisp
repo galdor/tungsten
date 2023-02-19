@@ -92,4 +92,5 @@
    #:count-file-descriptors
    #:file-descriptor-limit
    #:page-size
-   #:memory-usage))
+   #:memory-usage
+   #:environment-variable))
