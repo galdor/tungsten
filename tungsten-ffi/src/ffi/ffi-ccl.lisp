@@ -172,6 +172,13 @@
 (defun %null-pointer ()
   (ccl:%null-ptr))
 
+(declaim (inline %pointer))
+(defun %pointer (value)
+  (declare (type (or pointer (integer 0))))
+  (etypecase value
+    (pointer value)
+    (integer (ccl:%int-to-ptr value))))
+
 (defun %null-pointer-p (%pointer)
   (ccl:%null-ptr-p %pointer))
 

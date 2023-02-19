@@ -137,6 +137,13 @@
 (defun %null-pointer ()
   (sb-sys:int-sap 0))
 
+(declaim (inline %pointer))
+(defun %pointer (value)
+  (declare (type (or pointer (integer 0))))
+  (etypecase value
+    (pointer value)
+    (integer (sb-sys:int-sap value))))
+
 (declaim (inline %null-pointer-p))
 (defun %null-pointer-p (%pointer)
   (zerop (sb-sys:sap-int %pointer)))

@@ -12,6 +12,11 @@
 (defun null-pointer ()
   (%null-pointer))
 
+(declaim (inline pointer))
+(defun pointer (value)
+  (declare (type (or pointer (integer 0))))
+  (%pointer value))
+
 (declaim (inline null-pointer-p))
 (defun null-pointer-p (%pointer)
   (%null-pointer-p %pointer))
