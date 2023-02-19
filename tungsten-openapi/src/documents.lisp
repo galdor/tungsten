@@ -377,7 +377,7 @@
          (setf (parameter-explode parameter) (cdr member)))
         (schema
          (setf (parameter-schema parameter)
-               (resolve-component-value (cdr member) components-value))
+               (resolve-schema-value (cdr member) components-value))
          (setf (parameter-json-mapping parameter)
                (build-schema-json-mapping (parameter-schema parameter))))))
     (unless (slot-boundp parameter 'required)
@@ -421,7 +421,7 @@
           (case (car member)
             (schema
              (setf (media-type-schema media-type)
-                   (resolve-component-value (cdr member) components-value))
+                   (resolve-schema-value (cdr member) components-value))
              (setf (media-type-json-mapping media-type)
                    (build-schema-json-mapping (media-type-schema media-type))))
             (encoding
@@ -505,7 +505,7 @@
          (setf (header-explode header) (cdr member)))
         (schema
          (setf (header-schema header)
-               (resolve-component-value (cdr member) components-value))
+               (resolve-schema-value (cdr member) components-value))
          (setf (header-json-mapping header)
                (build-schema-json-mapping (header-schema header))))))
     (unless (slot-boundp header 'required)
@@ -559,6 +559,31 @@
                    (t
                     object-value)))))
       (resolve object-value))))
+
+(defun resolve-schema-value (schema-value components-value)
+  (flet ((resolve (value)
+           (resolve-schema-value value components-value)))
+    (let ((schema-value
+            (resolve-component-value schema-value components-value)))
+      (dolist (member schema-value)
+        (case (car member)
+          (all-of
+           (rplacd member (map 'vector #'resolve (cdr member))))
+          (one-of
+           (rplacd member (map 'vector #'resolve (cdr member))))
+          (any-of
+           (rplacd member (map 'vector #'resolve (cdr member))))
+          (not
+           (rplacd member (resolve (cdr member))))
+          (items
+           (rplacd member (resolve (cdr member))))
+          (properties
+           (dolist (property (cdr member))
+             (rplacd property (resolve (cdr property)))))
+          (additional-properties
+           (unless (typep (cdr member) 'boolean)
+             (rplacd member (resolve (cdr member)))))))
+      schema-value)))
 
 (defun document-operation (document name)
   (declare (type document document)
