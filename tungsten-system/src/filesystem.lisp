@@ -1,5 +1,13 @@
 (in-package :system)
 
+(defun directory-path (path)
+  "Return a pathname referencing the directory at PATH."
+  (declare (type (or pathname string) path))
+  (make-pathname :directory (append (or (pathname-directory path)
+                                        (list :relative))
+                                    (list (file-namestring path)))
+                 :name nil :type nil :defaults path))
+
 (defun read-file (path &key external-format)
   (declare (type (or pathname string) path))
   (let ((data (make-array 0 :element-type 'core:octet :adjustable t))

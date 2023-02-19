@@ -35,3 +35,9 @@ environment variable with this name."
     (system-error (condition)
       (declare (ignore condition))
       nil)))
+
+(defun home-directory-path ()
+  "Return the path of the home directory of the current user"
+  (let ((namestring (environment-variable "HOME")))
+    (when namestring
+      (directory-path (pathname namestring)))))

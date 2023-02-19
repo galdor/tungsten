@@ -31,6 +31,7 @@
    #:make-thread
    #:join-thread
 
+   #:directory-path
    #:read-file
 
    #:ipv4-address
@@ -93,4 +94,5 @@
    #:file-descriptor-limit
    #:page-size
    #:memory-usage
-   #:environment-variable))
+   #:environment-variable
+   #:home-directory-path))
