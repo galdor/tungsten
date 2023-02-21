@@ -7,6 +7,7 @@
    #:entry-login
    #:entry-password
    #:entry-account
+   #:search-entries
 
    #:invalid-data
    #:invalid-token
