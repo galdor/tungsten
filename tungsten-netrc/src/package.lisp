@@ -1,3 +1,19 @@
 (defpackage :netrc
   (:use :cl)
-  (:export))
+  (:export
+   #:entry
+   #:entry-machine
+   #:entry-port
+   #:entry-login
+   #:entry-password
+   #:entry-account
+
+   #:invalid-data
+   #:invalid-token
+   #:invalid-port-number
+   #:missing-token
+   #:orphaned-token
+   #:parse-entries
+
+   #:default-path
+   #:load-entries))
