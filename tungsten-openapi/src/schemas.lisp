@@ -10,29 +10,67 @@
 ;;; in trying to precisely validate what the server returns. As long as we
 ;;; have enough information to encode request data and decode response data,
 ;;; we are good.
-
-;;; TODO all-of, one-of, any-of, not
-;;; TODO default
-;;; TODO nullable
+;;;
+;;; We have to work around JSON schema limitations. JSON schema does not
+;;; describe what data are: it simply lists what data may or may not look
+;;; like. Multiple valid JSON schemas are useless to decide how to represent
+;;; data. An obvious example would be {"not": {"type": "integer"}}.
+;;; Problematic constructs include:
+;;;
+;;; - Any schema without "type".
+;;;
+;;; - Any schema with a combinator ("allOf", "oneOf", "anyOf", "not") with
+;;;   other properties.
+;;;
+;;; - Any schema with multiple combinators.
+;;;
+;;; It is possible to expand combinators into manageable forms (e.g.
+;;; transforming {"minimum": 1, "oneOf": [{"type": "integer"}, {"type":
+;;; "boolean"}]} into {"oneOf": [{"type": "integer", "minimum": 1}, {"type":
+;;; "boolean", "minimum": 1}]}. But we should be able to avoid the extra work
+;;; since schemas tend to keep things simple.
 
 (defun build-schema-json-mapping (schema)
   (declare (type list schema))
-  (let ((type (cdr (assoc 'type schema))))
-    (case type
-      (:boolean
-       (build-schema-json-mapping/boolean schema))
-      (:integer
-       (build-schema-json-mapping/integer schema))
-      (:number
-       (build-schema-json-mapping/number schema))
-      (:string
-       (build-schema-json-mapping/string schema))
-      (:array
-       (build-schema-json-mapping/array schema))
-      (:object
-       (build-schema-json-mapping/object schema))
+  (let* ((combinator (find-if (lambda (property)
+                                (member property '(all-of one-of any-of not)))
+                              schema :key #'car))
+         (type (cdr (assoc 'type schema)))
+         (nullable (cdr (assoc 'nullable schema)))
+         (schema (cond
+                   (combinator
+                    (case (car combinator)
+                      (one-of
+                       `(:or :mappings ,(map 'list 'build-schema-json-mapping
+                                             (cdr combinator))))
+                      (any-of
+                       `(:or :mappings ,(map 'list 'build-schema-json-mapping
+                                             (cdr combinator))))
+                      (t
+                       '(:any))))
+                   (t
+                    (case type
+                      (:boolean
+                       (build-schema-json-mapping/boolean schema))
+                      (:integer
+                       (build-schema-json-mapping/integer schema))
+                      (:number
+                       (build-schema-json-mapping/number schema))
+                      (:string
+                       (build-schema-json-mapping/string schema))
+                      (:array
+                       (build-schema-json-mapping/array schema))
+                      (:object
+                       (build-schema-json-mapping/object schema))
+                      (t
+                       '(:any)))))))
+    (cond
+      ((and nullable (eq (car schema) :or))
+       `(:or :mappings ((:null) ,@(getf (cdr schema) :mappings))))
+      (nullable
+       `(:or :mappings ((:null) ,schema)))
       (t
-       '(:any)))))
+       schema))))
 
 (defun build-schema-json-mapping/boolean (schema)
   (declare (type list schema)
