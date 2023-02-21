@@ -13,14 +13,18 @@
               (merge-pathnames #p".netrc" home-path)
               nil)))))
 
-(defun load-entries* (&optional (path (default-path)))
-  (declare (type (or pathname string) path))
-  (parse-entries
-   (system:read-file path :external-format text:*default-encoding*)))
+(defun load-entries* (&optional (path (default-path))
+                      &key (if-does-not-exist :error))
+  (declare (type (or pathname string) path)
+           #+sbcl (sb-ext:muffle-conditions style-warning))
+  (let ((data (system:read-file path :external-format text:*default-encoding*
+                                     :if-does-not-exist if-does-not-exist)))
+    (when data
+      (parse-entries data))))
 
 (defun load-entries (&optional (path (default-path)))
   (declare (type (or pathname string) path))
-  (setf *entries* (load-entries* path)))
+  (setf *entries* (load-entries* path :if-does-not-exist nil)))
 
 (defun search-entries (&rest args &key machine port login account)
   (declare (type (or string null) machine login account)
