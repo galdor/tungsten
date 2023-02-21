@@ -155,32 +155,56 @@
 (defun finalize-and-send-request (request client)
   (declare (type request request)
            (type client client))
-  (let* ((target-uri (request-target request))
-         (key (uri-connection-key target-uri)))
-    (add-new-request-header-field request "User-Agent" (user-agent))
-    (setf (request-target request) (make-request-target target-uri))
-    (setf (request-header-field request "Host") (host-header-field target-uri))
-    ;; We cannot detect if a connection in the pool has timed out or failed
-    ;; due to a random IO error. When that happens, we will be notified while
-    ;; reading the response (read() will return zero). It makes sense to
-    ;; automatically retry at least once in this case.
-    (do ((nb-attempts 1 (1+ nb-attempts)))
-        (nil)
-      (flet ((maybe-reconnect ()
-               (lambda (condition)
-                 (declare (ignore condition))
-                 (when (= nb-attempts 1)
-                   (invoke-restart 'reconnect)))))
-        (restart-case
-            (handler-bind
-                ((connection-closed (maybe-reconnect))
-                 (system:system-error (maybe-reconnect))
-                 (openssl:openssl-error-stack (maybe-reconnect)))
-              (return-from finalize-and-send-request
-                (send-finalized-request request client key)))
-          (reconnect ()
-            :report "Reconnect and try to send the request again."
-            nil))))))
+  ;; Use a netrc entry if there is one matching the target host. Note that we
+  ;; do this before extracting the key since applying the netrc entry can
+  ;; change the port of the target URI.
+  (let* ((target (request-target request))
+         (host (uri:uri-host target))
+         (entries (netrc:search-entries :machine host)))
+    (when entries
+      (apply-netrc-entry (car entries) request))
+    (let ((key (uri-connection-key target)))
+      (add-new-request-header-field request "User-Agent" (user-agent))
+      (setf (request-target request) (make-request-target target))
+      (setf (request-header-field request "Host") (host-header-field target))
+      ;; We cannot detect if a connection in the pool has timed out or failed
+      ;; due to a random IO error. When that happens, we will be notified
+      ;; while reading the response (read() will return zero). It makes sense
+      ;; to automatically retry at least once in this case.
+      (do ((nb-attempts 1 (1+ nb-attempts)))
+          (nil)
+        (flet ((maybe-reconnect ()
+                 (lambda (condition)
+                   (declare (ignore condition))
+                   (when (= nb-attempts 1)
+                     (invoke-restart 'reconnect)))))
+          (restart-case
+              (handler-bind
+                  ((connection-closed (maybe-reconnect))
+                   (system:system-error (maybe-reconnect))
+                   (openssl:openssl-error-stack (maybe-reconnect)))
+                (return-from finalize-and-send-request
+                  (send-finalized-request request client key)))
+            (reconnect ()
+              :report "Reconnect and try to send the request again."
+              nil)))))))
+
+(defun apply-netrc-entry (entry request)
+  (declare (type netrc:entry entry)
+           (type request request))
+  (let ((target (request-target request))
+        (entry-port (netrc:entry-port entry))
+        (entry-login (netrc:entry-login entry))
+        (entry-password (netrc:entry-password entry)))
+    (when (and entry-port (null (uri:uri-port target)))
+      (setf (uri:uri-port target) entry-port))
+    (when entry-login
+      (let* ((credentials (format nil "~A:~@[~A~]" entry-login entry-password))
+             (value (concatenate 'string "Basic "
+                                 (text:encode-base64
+                                  (text:encode-string credentials)))))
+        (add-new-request-header-field request "Authorization" value))))
+  request)
 
 (defun send-finalized-request (request client connection-key)
   (declare (type request request)

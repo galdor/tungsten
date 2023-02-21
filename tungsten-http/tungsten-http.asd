@@ -7,7 +7,8 @@
    "tungsten-text"
    "tungsten-system"
    "tungsten-openssl"
-   "tungsten-uri")
+   "tungsten-uri"
+   "tungsten-netrc")
   :pathname "src"
   :serial t
   :components
