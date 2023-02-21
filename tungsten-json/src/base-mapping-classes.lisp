@@ -1,6 +1,7 @@
 (in-package :json)
 
 (register-mapping-class :any 'any-mapping)
+(register-mapping-class :null 'null-mapping)
 (register-mapping-class :boolean 'boolean-mapping)
 (register-mapping-class :number 'number-mapping)
 (register-mapping-class :integer 'integer-mapping)
@@ -19,6 +20,29 @@
 (defmethod generate-value (value (mapping any-mapping))
   (declare (ignore mapping))
   value)
+
+(defclass null-mapping (mapping)
+  ()
+  (:default-initargs
+   :base-types '(:null)))
+
+(defmethod validate-value (value (mapping null-mapping))
+  (declare (ignore mapping))
+  (cond
+    ((eq value :null)
+     nil)
+    (t
+     (add-mapping-error value "value is not null")
+     value)))
+
+(defmethod generate-value (value (mapping null-mapping))
+  (declare (ignore mapping))
+  (cond
+    (value
+     (add-mapping-error value "value is not null")
+     value)
+    (t
+     :null)))
 
 (defclass boolean-mapping (mapping)
   ((value
