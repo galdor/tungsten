@@ -7,7 +7,7 @@
    #:entry-login
    #:entry-password
    #:entry-account
-   #:search-entries
+   #:search-entries*
 
    #:invalid-data
    #:invalid-token
@@ -17,4 +17,6 @@
    #:parse-entries
 
    #:default-path
-   #:load-entries))
+   #:load-entries*
+   #:load-entries
+   #:search-entries))

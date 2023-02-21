@@ -28,7 +28,7 @@
     (with-slots (machine port login) entry
       (format stream "~@[~A~]~@[:~D~]" machine port))))
 
-(defun search-entries (entries &key machine port login account)
+(defun search-entries* (entries &key machine port login account)
   (declare (type list entries)
            (type (or string null) machine login account)
            (type (or (integer 1 65535) null) port))
