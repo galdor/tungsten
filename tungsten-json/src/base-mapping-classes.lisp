@@ -283,17 +283,25 @@
 
 (defmethod generate-value (value (mapping object-mapping))
   (with-slots (class (value-mapping value) members) mapping
-    (let ((names (mapcar #'car members))
+    (let ((names (mapcar #'first members))
+          (slots (mapcar #'second members))
           (output-value nil))
       ;; Defined members
       (dolist (member members)
         (destructuring-bind (name slot member-mapping) member
           (cond
             ((listp value)
-             (let ((member-value (assoc name value :test #'string=)))
+             (let ((member-value (find-if (lambda (value)
+                                            (etypecase (car value)
+                                              (symbol
+                                               (eq (car value) slot))
+                                              (string
+                                               (string= (car value) name))))
+                                          value)))
                (when member-value
                  (let ((encoded-value
-                         (generate-child name member-value member-mapping)))
+                         (generate-child name (cdr member-value)
+                                         member-mapping)))
                    (push (cons name encoded-value) output-value)))))
             (t
              (let* ((member-value (when (slot-boundp value slot)
@@ -304,13 +312,19 @@
       ;; Other members
       (unless class
         (dolist (member-value value)
-          (unless (member (car member-value) names :test #'string=)
-            (let ((encoded-value
-                    (if value-mapping
-                        (generate-child (car member-value) (cdr member-value)
-                                        value-mapping)
-                        (cdr member-value))))
-              (push (cons (car member-value) encoded-value) output-value)))))
+          (let ((defined
+                  (etypecase (car member-value)
+                    (symbol
+                     (member (car member-value) slots))
+                    (string
+                     (member (car member-value) names :test #'string=)))))
+            (unless defined
+              (let ((encoded-value
+                      (if value-mapping
+                          (generate-child (car member-value) (cdr member-value)
+                                          value-mapping)
+                          (cdr member-value))))
+                (push (cons (car member-value) encoded-value) output-value))))))
       ;; Final value
       (nreverse output-value))))
 
