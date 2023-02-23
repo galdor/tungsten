@@ -40,12 +40,12 @@
            (ignore body))
   (let* ((operation (document-operation document name))
          (method (operation-method operation))
-         (uri (operation-uri operation document :parameters parameters)))
-    ;; TODO Add header fields based on parameters with location :HEADER
-    ;;
+         (uri (operation-uri operation document :parameters parameters))
+         (header (build-parameter-header-fields
+                  parameters (operation-parameters operation))))
     ;; TODO Encode BODY according to the request body of OPERATION and pass it
     ;; to HTTP:SEND-REQUEST.
-    (let* ((response (http:send-request method uri))
+    (let* ((response (http:send-request method uri :header header))
            (status (http:response-status response))
            (content-type (http:response-header-field response "Content-Type"))
            (media-type
@@ -144,6 +144,23 @@
     (unless value
       (error 'missing-parameter-value :location :path :name expression))
     (encode-parameter-value value parameter)))
+
+(defun build-parameter-header-fields (parameter-values parameters)
+  (declare (type list parameter-values parameters))
+  (let ((fields nil))
+    (dolist (parameter parameters)
+      (when (eq (parameter-location parameter) :header)
+        (let* ((name (parameter-name parameter))
+               (value (third (find-if (lambda (value)
+                                        (and (eq (first value) :header)
+                                             (string= (second value) name)))
+                                      parameter-values))))
+          (cond
+            (value
+             (push (cons name value) fields))
+            ((parameter-required parameter)
+             (error 'missing-parameter-value :location :header
+                                             :name name))))))))
 
 (defun encode-parameter-value (value parameter)
   (declare (type parameter parameter)
