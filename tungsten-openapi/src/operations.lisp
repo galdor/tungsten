@@ -33,19 +33,25 @@
      (with-slots (location name) condition
        (format stream "Missing value for ~A parameter ~S." location name)))))
 
+(define-condition missing-request-body (error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "Missing request body."))))
+
 (defun execute-operation (document name &key parameters body)
   (declare (type document document)
            (type string name)
-           (type list parameters)
-           (ignore body))
+           (type list parameters))
   (let* ((operation (document-operation document name))
          (method (operation-method operation))
          (uri (operation-uri operation document :parameters parameters))
          (header (build-parameter-header-fields
-                  parameters (operation-parameters operation))))
-    ;; TODO Encode BODY according to the request body of OPERATION and pass it
-    ;; to HTTP:SEND-REQUEST.
-    (let* ((response (http:send-request method uri :header header))
+                  parameters (operation-parameters operation)))
+         (body-data (encode-operation-body operation body)))
+    (let* ((response
+             (http:send-request method uri :header header :body body-data))
            (status (http:response-status response))
            (content-type (http:response-header-field response "Content-Type"))
            (media-type
@@ -56,6 +62,30 @@
                                 (http:response-body response))
                                :mapping mapping))))
       (values body response))))
+
+(defun encode-operation-body (operation body)
+  (declare (type operation operation))
+  (let ((request-body (operation-request-body operation)))
+    (cond
+      ((and request-body body)
+       (dolist (content-type '("application/json"))
+         (let ((data (encode-operation-body* operation body content-type)))
+           (when data
+             (return-from encode-operation-body data)))))
+      ((and request-body (request-body-required request-body))
+       (error 'missing-request-body)))))
+
+(defun encode-operation-body* (operation body content-type)
+  (declare (type operation operation)
+           (type (or mime:media-type string) content-type))
+  (let* ((request-body (operation-request-body operation))
+         (content (request-body-content request-body))
+         (media-type (content-media-type content content-type)))
+    (when media-type
+      (core:string-case content-type
+        ("application/json"
+          (let ((mapping (media-type-json-mapping media-type)))
+            (json:serialize body :mapping mapping)))))))
 
 (defun operation-uri (operation document &key parameters)
   ;; According to OpenAPI specifications, "the path is appended (no relative
@@ -93,12 +123,7 @@
   (let ((response (or (cdr (assoc status (operation-responses operation)))
                       (operation-default-response operation))))
     (when response
-      (let* ((matches
-               (mime:match-media-ranges (response-content response)
-                                        (mime:media-type content-type)
-                                        :key #'car))
-             (first-match (car matches)))
-        (cdr first-match)))))
+      (content-media-type (response-content response) content-type))))
 
 (defun expand-path-template (template parameter-values parameters)
   (declare (type string template)
@@ -161,6 +186,18 @@
             ((parameter-required parameter)
              (error 'missing-parameter-value :location :header
                                              :name name))))))))
+
+(defun content-media-type (content content-type)
+  "Return the first media type object matching CONTENT-TYPE in CONTENT. Note
+that a content designates an alist of media types where the key is a media
+range."
+  (declare (type list content)
+           (type (or mime:media-type string) content-type))
+  (let* ((matches
+           (mime:match-media-ranges content (mime:media-type content-type)
+                                    :key #'car))
+         (first-match (car matches)))
+    (cdr first-match)))
 
 (defun encode-parameter-value (value parameter)
   (declare (type parameter parameter)
