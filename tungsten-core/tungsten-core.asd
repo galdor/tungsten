@@ -16,7 +16,8 @@
    (:file "buffer")
    (:file "input")
    (:file "conditions")
-   (:file "backtrace"))
+   (:file "backtrace")
+   (:file "macros"))
   :in-order-to ((test-op (test-op "tungsten-core/test"))))
 
 (defsystem "tungsten-core/test"

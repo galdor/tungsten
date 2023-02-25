@@ -63,4 +63,6 @@
    #:frame-source-file
    #:format-frame
    #:format-backtrace
-   #:backtrace))
+   #:backtrace
+
+   #:macroexpand-all))
