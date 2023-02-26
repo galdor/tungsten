@@ -42,10 +42,6 @@
   (dolist (frame backtrace)
     (format-frame frame stream :include-source-file include-source-file)))
 
-(defun backtrace (&key (start 0) (depth *backtrace-depth*))
-  (declare (type (integer 0) start depth))
-  (%backtrace start depth))
-
 #+ccl
 (progn
   (declaim (inline %backtrace))
@@ -90,3 +86,7 @@
                  frames)))
        :from :current-frame :start start :count count)
       (nreverse frames))))
+
+(defun backtrace (&key (start 0) (depth *backtrace-depth*))
+  (declare (type (integer 0) start depth))
+  (%backtrace start depth))
