@@ -19,13 +19,13 @@
   (error 'invalid-generation-data :format-control format
                                   :format-arguments arguments))
 
-(defmacro with-html ((&key stream) value)
+(defmacro with-html ((&key stream) &rest values)
   (if stream
       `(let ((*html-output* ,stream))
-         (generate ,value)
+         ,@(mapcar (lambda (value) `(generate ,value)) values)
          nil)
       `(with-output-to-string (*html-output*)
-         (generate ,value))))
+         ,@(mapcar (lambda (value) `(generate ,value)) values))))
 
 (defmacro generate (value)
   (cond
