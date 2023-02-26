@@ -2,6 +2,23 @@
 
 (defvar *html-output* nil)
 
+(define-condition invalid-generation-data ()
+  ((format-control
+    :type string
+    :initarg :format-control)
+   (format-arguments
+    :type list
+    :initarg :format-arguments))
+  (:report
+   (lambda (condition stream)
+     (with-slots (format-control format-arguments) condition
+       (format stream "Invalid HTML generation data: ~?."
+               format-control format-arguments)))))
+
+(defun invalid-generation-data (format &rest arguments)
+  (error 'invalid-generation-data :format-control format
+                                  :format-arguments arguments))
+
 (defmacro with-html ((&key stream) value)
   (if stream
       `(let ((*html-output* ,stream))
@@ -29,6 +46,8 @@
      `(generate-text ,value))))
 
 (defmacro generate-element (name attributes children)
+  (when (and (void-element-p name) children)
+    (invalid-generation-data "void element ~S cannot have children" name))
   (let ((name-string (string-downcase (symbol-name name))))
     `(progn
        (write-string ,(concatenate 'string "<" name-string) *html-output*)
