@@ -6,7 +6,8 @@
   :pathname "src"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "generation"))
   :in-order-to
   ((test-op (test-op "tungsten-html/test"))))
 
