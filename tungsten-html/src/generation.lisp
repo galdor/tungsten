@@ -70,7 +70,7 @@
                                    (string-downcase (symbol-name name))
                                    "=\"")
                      *html-output*)
-                    (write-string ,value *html-output*)
+                    (write-string (escape-attribute ,value) *html-output*)
                     (write-char #\" *html-output*)))
                 (t
                  `(write-string
@@ -100,10 +100,62 @@
   `(format *html-output* ,format ,@arguments))
 
 (defmacro generate-text (value)
-  `(write-string ,value *html-output*))
+  `(write-string (escape-text-element ,value) *html-output*))
 
 (defun void-element-p (element)
   (declare (type symbol element))
   (member element
           '(:area :base :br :col :embed :hr :img :input :link :meta :source
             :track :wbr)))
+
+(defun escape-text-element (string)
+  (flet ((special-character-p (character)
+           (or (char= character #\&)
+               (char= character #\ )
+               (char= character #\<)
+               (char= character #\>))))
+    (with-output-to-string (stream)
+      (do ((start 0)
+           (end (length string)))
+          ((>= start end)
+           nil)
+        (let* ((position (position-if #'special-character-p string
+                                      :start start))
+               (part-end (or position end)))
+          (write-string string stream :start start :end part-end)
+          (when position
+            (let ((character (char string position)))
+              (write-string
+               (cond
+                 ((char= character #\&) "&amp;")
+                 ((char= character #\ ) "&nbsp;")
+                 ((char= character #\<) "&lt;")
+                 ((char= character #\>) "&gt;")
+                 (t ""))
+               stream)))
+          (setf start (1+ part-end)))))))
+
+(defun escape-attribute (string)
+  (flet ((special-character-p (character)
+           (or (char= character #\&)
+               (char= character #\ )
+               (char= character #\"))))
+    (with-output-to-string (stream)
+      (do ((start 0)
+           (end (length string)))
+          ((>= start end)
+           nil)
+        (let* ((position (position-if #'special-character-p string
+                                      :start start))
+               (part-end (or position end)))
+          (write-string string stream :start start :end part-end)
+          (when position
+            (let ((character (char string position)))
+              (write-string
+               (cond
+                 ((char= character #\&) "&amp;")
+                 ((char= character #\ ) "&nbsp;")
+                 ((char= character #\") "&quot;")
+                 (t ""))
+               stream)))
+          (setf start (1+ part-end)))))))
