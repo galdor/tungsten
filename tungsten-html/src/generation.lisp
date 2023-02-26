@@ -34,7 +34,11 @@
      `(generate-element ,(caar value) ,(cdar value) ,(cdr value)))
     ;; (TAG &REST CHILDREN)
     ((and (listp value) (typep (car value) 'keyword))
-     `(generate-element ,(car value) nil ,(cdr value)))
+     (case (car value)
+       (:doctype
+        `(generate-doctype ,(cdr value)))
+       (t
+        `(generate-element ,(car value) nil ,(cdr value)))))
     ;; (FORMAT &REST ARGUMENTS)
     ((and (listp value) (stringp (car value)))
      `(generate-formatted-text ,(car value) ,(cdr value)))
@@ -44,6 +48,10 @@
     ;; Any other expression is expected to yield a string
     (t
      `(generate-text ,value))))
+
+(defmacro generate-doctype (arguments)
+  (let ((doctype (or (car arguments) "HTML")))
+    `(format *html-output* "<!DOCTYPE ~A>" ,doctype)))
 
 (defmacro generate-element (name attributes children)
   (when (and (void-element-p name) children)
