@@ -93,7 +93,11 @@
         (when (< i end)
           (parser-error parser "invalid trailing data after value")))
       (if mapping
-          (validate value mapping)
+          (restart-case
+              (validate value mapping)
+            (continue ()
+              :report "Ignore the validation error and return the value."
+              value))
           value))))
 
 (defun parse-value (parser)
