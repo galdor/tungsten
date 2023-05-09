@@ -42,6 +42,29 @@
      (declare (ignore condition))
      (format stream "Missing request body."))))
 
+(define-condition unexpected-response-status (error)
+  ((response
+    :type http:response
+    :initarg :response))
+  (:report
+   (lambda (condition stream)
+     (with-slots (response) condition
+       (format stream "Response has unexpected status ~D."
+               (http:response-status response))))))
+
+(define-condition unexpected-response-content-type (error)
+  ((response
+    :type http:response
+    :initarg :response)
+   (content-type
+    :type string
+    :initarg :content-type))
+  (:report
+   (lambda (condition stream)
+     (with-slots (content-type) condition
+       (format stream "Response has unexpected content type ~W."
+               content-type)))))
+
 (defun execute-operation (document name &key parameters body)
   (declare (type document document)
            (type string name)
@@ -50,20 +73,29 @@
          (method (operation-method operation))
          (uri (operation-uri operation document :parameters parameters))
          (header (build-parameter-header-fields
-                  parameters (operation-parameters operation)))
-         (body-data (encode-operation-body operation body)))
-    (let* ((response
-             (http:send-request method uri :header header :body body-data))
-           (status (http:response-status response))
-           (content-type (http:response-header-field response "Content-Type"))
-           (media-type
-             (operation-response-media-type operation status content-type))
-           (mapping (media-type-json-mapping media-type))
-           (body (when (http:response-body response)
-                   (json:parse (text:decode-string
-                                (http:response-body response))
-                               :mapping mapping))))
-      (values body response))))
+                  parameters (operation-parameters operation))))
+    (multiple-value-bind (body-data body-content-type)
+        (encode-operation-body operation body)
+      (push (cons "Content-Type" body-content-type) header)
+      (let* ((response
+               (http:send-request method uri :header header :body body-data))
+             (status (http:response-status response))
+             (content-type
+               (http:response-header-field response "Content-Type"))
+             (operation-response
+               (or (operation-response operation status)
+                   (error 'unexpected-response-status :response response)))
+             (media-type
+               (or (content-media-type (response-content operation-response)
+                                       content-type)
+                   (error 'unexpected-response-content-type
+                          :response response :content-type content-type)))
+             (mapping (media-type-json-mapping media-type))
+             (body (when (http:response-body response)
+                     (json:parse (text:decode-string
+                                  (http:response-body response))
+                                 :mapping mapping))))
+        (values body response)))))
 
 (defun encode-operation-body (operation body)
   (declare (type operation operation))
@@ -73,7 +105,7 @@
        (dolist (content-type '("application/json"))
          (let ((data (encode-operation-body* operation body content-type)))
            (when data
-             (return-from encode-operation-body data)))))
+             (return-from encode-operation-body (values data content-type))))))
       ((and request-body (request-body-required request-body))
        (error 'missing-request-body)))))
 
@@ -118,14 +150,11 @@
                   (string= (parameter-name parameter) name)))
            (operation-parameters operation)))
 
-(defun operation-response-media-type (operation status content-type)
+(defun operation-response (operation status)
   (declare (type operation operation)
-           (type http:response-status status)
-           (type string content-type))
-  (let ((response (or (cdr (assoc status (operation-responses operation)))
-                      (operation-default-response operation))))
-    (when response
-      (content-media-type (response-content response) content-type))))
+           (type http:response-status status))
+  (or (cdr (assoc status (operation-responses operation)))
+      (operation-default-response operation)))
 
 (defun expand-path-template (template parameter-values parameters)
   (declare (type string template)
