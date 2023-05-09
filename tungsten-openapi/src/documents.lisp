@@ -314,6 +314,7 @@
         (operation (make-instance 'operation)))
     (setf (operation-method operation) method)
     (setf (operation-path-template operation) path-template)
+    (setf (operation-parameters operation) (copy-seq path-parameters))
     (dolist (member operation-value)
       (case (car member)
         (operation-id
@@ -338,7 +339,8 @@
                    (rplacd member parameter)
                    (push (cons name parameter) parameters))))
            (setf (operation-parameters operation)
-                 (mapcar #'cdr parameters))))
+                 (append (operation-parameters operation)
+                         (mapcar #'cdr parameters)))))
         (request-body
          (setf (operation-request-body operation)
                (build-request-body (cdr member) document-value)))
