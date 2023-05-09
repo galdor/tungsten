@@ -8,4 +8,9 @@
    #:document-servers
    #:document-operations
    #:document-operation
-   #:parse-document))
+   #:parse-document
+
+   #:invalid-path-template
+   #:missing-parameter-value
+   #:missing-request-body
+   #:execute-operation))
