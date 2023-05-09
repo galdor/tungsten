@@ -37,7 +37,8 @@
 
 (enum
  (ctrl-command :int)
- ((:ssl-ctrl-set-min-proto-version "SSL_CTRL_SET_MIN_PROTO_VERSION")))
+ ((:ssl-ctrl-set-min-proto-version "SSL_CTRL_SET_MIN_PROTO_VERSION")
+  (:ssl-ctrl-set-tlsext-hostname "SSL_CTRL_SET_TLSEXT_HOSTNAME")))
 
 (bitset
  (ctx-options :uint64)
@@ -107,3 +108,12 @@
   (:data :pointer "data")
   (:data-size 'system:size-t "data_size")
   (:return-size 'system:size-t "return_size")))
+
+(enum
+ (filetype :int)
+ ((:ssl-filetype-pem "SSL_FILETYPE_PEM")
+  (:ssl-filetype-asn1 "SSL_FILETYPE_ASN1")))
+
+(enum
+ (tlsext-nametype :int)
+ ((:tlsext-nametype-host-name "TLSEXT_NAMETYPE_host_name")))

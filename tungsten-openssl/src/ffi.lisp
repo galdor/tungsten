@@ -263,6 +263,18 @@
 (defun ssl-free (%ssl)
   (openssl-funcall ("SSL_free" ((:pointer) :void) %ssl)))
 
+(defun ssl-ctrl (%context command long %pointer)
+  (openssl-funcall
+   ("SSL_ctrl" ((:pointer ctrl-command :long :pointer) :long)
+               %context command long %pointer)))
+
+(defun ssl-set-tlsext-host-name (%ssl hostname)
+  (ffi:with-foreign-string (%hostname hostname)
+    (ssl-ctrl %ssl :ssl-ctrl-set-tlsext-hostname
+                (ffi:encode-foreign-value :tlsext-nametype-host-name
+                                          'tlsext-nametype)
+                %hostname)))
+
 (defun ssl-set-fd (%ssl fd)
   (openssl-funcall ("SSL_set_fd" ((:pointer :int) :pointer) %ssl fd)))
 

@@ -51,7 +51,8 @@
                              (ca-certificate-directory-paths
                               *default-ca-certificate-directory-paths*)
                              certificate-path
-                             private-key-path)
+                             private-key-path
+                             server-name)
   "Create and return a TLS client connected to HOST and PORT."
   (declare (type system:host host)
            (type system:port-number port)
@@ -60,7 +61,8 @@
            (type boolean peer-verification)
            (type (integer 0) peer-verification-depth)
            (type list ca-certificate-paths ca-certificate-directory-paths)
-           (type (or pathname string null) certificate-path private-key-path))
+           (type (or pathname string null) certificate-path private-key-path)
+           (type (or string null) server-name))
   (let ((%context nil)
         (%ssl nil))
     (multiple-value-bind (socket address)
@@ -86,6 +88,11 @@
               (ssl-ctx-use-private-key-file %context private-key-path
                                             :ssl-filetype-pem))
             (setf %ssl (ssl-new %context))
+            (cond
+              (server-name
+               (ssl-set-tlsext-host-name %ssl server-name))
+              ((stringp host)
+               (ssl-set-tlsext-host-name %ssl host)))
             (ssl-set-fd %ssl socket)
             (ssl-connect %ssl)
             (make-instance 'tls-client :fd socket
