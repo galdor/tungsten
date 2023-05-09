@@ -10,6 +10,7 @@
    #:document-operation
    #:parse-document
 
+   #:*server-uri*
    #:invalid-path-template
    #:missing-parameter-value
    #:missing-request-body

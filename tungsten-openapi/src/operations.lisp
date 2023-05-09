@@ -1,5 +1,7 @@
 (in-package :openapi)
 
+(defvar *server-uri* nil)
+
 (define-condition invalid-path-template (error)
   ((template
     :type string
@@ -98,7 +100,7 @@
   (declare (type document document)
            (type operation operation)
            (type list parameters))
-  (let* ((server-uri (car (document-servers document)))
+  (let* ((server-uri (or *server-uri* (car (document-servers document))))
          (path-template (operation-path-template operation))
          (path (expand-path-template path-template parameters
                                      (operation-parameters operation)))
