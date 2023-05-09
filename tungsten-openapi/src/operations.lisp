@@ -188,8 +188,8 @@
            (type list parameter-values parameters))
   (let* ((parameter (find-if
                      (lambda (parameter)
-                       (and (eq (parameter-location parameter) :path)
-                            (string= (parameter-name parameter) expression)))
+                       (and (eq (parameter-location (cdr parameter)) :path)
+                            (string= (car parameter) expression)))
                      parameters))
          (value (third (find-if (lambda (value)
                                   (and (eq (first value) :path)
@@ -199,14 +199,14 @@
       (invalid-path-template template "unknown parameter ~S" expression))
     (unless value
       (error 'missing-parameter-value :location :path :name expression))
-    (encode-parameter-value value parameter)))
+    (encode-parameter-value value (cdr parameter))))
 
 (defun build-parameter-header-fields (parameter-values parameters)
   (declare (type list parameter-values parameters))
   (let ((fields nil))
     (dolist (parameter parameters)
-      (when (eq (parameter-location parameter) :header)
-        (let* ((name (parameter-name parameter))
+      (when (eq (parameter-location (cdr parameter)) :header)
+        (let* ((name (car parameter))
                (value (third (find-if (lambda (value)
                                         (and (eq (first value) :header)
                                              (string= (second value) name)))
@@ -214,7 +214,7 @@
           (cond
             (value
              (push (cons name value) fields))
-            ((parameter-required parameter)
+            ((parameter-required (cdr parameter))
              (error 'missing-parameter-value :location :header
                                              :name name))))))))
 
