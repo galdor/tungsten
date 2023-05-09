@@ -424,7 +424,9 @@
    ("flows" flows oauth-flows)
    ("openIdConnectUrl" openid-connect-url (uri:uri)))
   :required
-  ("type" "name" "in" "scheme" "flows" "openIdConnectUrl"))
+  ;; According to the specification, "name", "in", "flows" and
+  ;; "openIdConnectUrl" are mandatory. In practice, they do not matter.
+  ("type" "scheme"))
 
 (json:define-mapping oauth-flows
   :object
