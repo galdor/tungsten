@@ -1,5 +1,9 @@
 (in-package :http)
 
+(defparameter *client-netrc-authorization-scheme* :basic
+  "The HTTP authorization scheme used when applying netrc entries to requests.
+Must be either NIL, :BASIC or :BEARER.")
+
 (deftype connection-key ()
   'list)
 
@@ -160,8 +164,9 @@
   ;; change the port of the target URI.
   (let* ((target (request-target request))
          (host (uri:uri-host target))
-         (entries (netrc:search-entries :machine host)))
-    (when entries
+         (entries (when *client-netrc-authorization-scheme*
+                    (netrc:search-entries :machine host))))
+    (when (and *client-netrc-authorization-scheme* entries)
       (apply-netrc-entry (car entries) request))
     (let ((key (uri-connection-key target)))
       (add-new-request-header-field request "User-Agent" (user-agent))
@@ -199,10 +204,16 @@
     (when (and entry-port (null (uri:uri-port target)))
       (setf (uri:uri-port target) entry-port))
     (when entry-login
-      (let* ((credentials (format nil "~A:~@[~A~]" entry-login entry-password))
-             (value (concatenate 'string "Basic "
-                                 (text:encode-base64
-                                  (text:encode-string credentials)))))
+      (let ((value
+              (ecase *client-netrc-authorization-scheme*
+                (:basic
+                 (let ((credentials
+                         (format nil "~A:~@[~A~]" entry-login entry-password)))
+                   (concatenate 'string "Basic "
+                                (text:encode-base64
+                                 (text:encode-string credentials)))))
+                (:bearer
+                 (concatenate 'string "Bearer " entry-password)))))
         (add-new-request-header-field request "Authorization" value))))
   request)
 

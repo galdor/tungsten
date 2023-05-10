@@ -42,6 +42,7 @@
    #:add-response-header-field
    #:add-new-response-header-field
 
+   #:*client-netrc-authorization-scheme*
    #:client
    #:make-client
    #:client-connections
