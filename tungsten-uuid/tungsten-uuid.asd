@@ -2,7 +2,9 @@
   :description "Utilities for UUID unique identifiers."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
-  ("tungsten-core")
+  ("tungsten-core"
+   "tungsten-text"
+   "tungsten-time")
   :pathname "src"
   :serial t
   :components

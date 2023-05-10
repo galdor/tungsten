@@ -1,3 +1,11 @@
 (defpackage :uuid
   (:use :cl)
-  (:export))
+  (:export
+   #:version
+   #:uuid
+   #:uuid-octets
+   #:uuid-equal
+   #:generate
+   #:invalid-format
+   #:parse
+   #:serialize))
