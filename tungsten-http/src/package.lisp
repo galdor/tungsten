@@ -49,6 +49,8 @@
    #:disconnect-client
    #:*client*
    #:send-request
+   #:basic-authorization-header-field-value
+   #:bearer-authorization-header-field-value
 
    #:server
    #:connection

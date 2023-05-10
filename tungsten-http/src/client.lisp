@@ -207,13 +207,10 @@ Must be either NIL, :BASIC or :BEARER.")
       (let ((value
               (ecase *client-netrc-authorization-scheme*
                 (:basic
-                 (let ((credentials
-                         (format nil "~A:~@[~A~]" entry-login entry-password)))
-                   (concatenate 'string "Basic "
-                                (text:encode-base64
-                                 (text:encode-string credentials)))))
+                 (basic-authorization-header-field-value
+                  entry-login entry-password))
                 (:bearer
-                 (concatenate 'string "Bearer " entry-password)))))
+                 (bearer-authorization-header-field-value entry-password)))))
         (add-new-request-header-field request "Authorization" value))))
   request)
 
@@ -270,3 +267,13 @@ Must be either NIL, :BASIC or :BEARER.")
 (defun user-agent ()
   "Return the default user agent used in client requests."
   "Tungsten/dev")
+
+(defun basic-authorization-header-field-value (login password)
+  (let ((credentials
+          (format nil "~A:~@[~A~]" login password)))
+    (concatenate 'string "Basic "
+                 (text:encode-base64
+                  (text:encode-string credentials)))))
+
+(defun bearer-authorization-header-field-value (token)
+  (concatenate 'string "Bearer " token))
