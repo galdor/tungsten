@@ -51,6 +51,9 @@
    #:buffer-skip
    #:buffer-skip-to
 
+   #:unavailable-random-data
+   #:random-octets
+
    #:prompt-eval
 
    #:abort-protect

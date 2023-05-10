@@ -14,6 +14,7 @@
    (:file "octets")
    (:file "binary")
    (:file "buffer")
+   (:file "random")
    (:file "input")
    (:file "conditions")
    (:file "backtrace")
@@ -21,7 +22,7 @@
   :in-order-to ((test-op (test-op "tungsten-core/test"))))
 
 (defsystem "tungsten-core/test"
-  :description "Tests for the core system."
+  :description "Tests for the tungsten-core system."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
   ("tungsten-test"
