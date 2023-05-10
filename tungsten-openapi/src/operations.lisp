@@ -65,15 +65,17 @@
        (format stream "Response has unexpected content type ~W."
                content-type)))))
 
-(defun execute-operation (document name &key parameters body)
+(defun execute-operation (document name &key parameters body header)
   (declare (type document document)
            (type string name)
-           (type list parameters))
+           (type list parameters header))
   (let* ((operation (document-operation document name))
          (method (operation-method operation))
          (uri (operation-uri operation document :parameters parameters))
-         (header (build-parameter-header-fields
-                  parameters (operation-parameters operation))))
+         (header (append
+                  (build-parameter-header-fields
+                   parameters (operation-parameters operation))
+                  header)))
     (multiple-value-bind (body-data body-content-type)
         (encode-operation-body operation body)
       (push (cons "Content-Type" body-content-type) header)
