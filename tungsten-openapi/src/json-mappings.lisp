@@ -314,8 +314,8 @@
                                                     schema))))
    ("anyOf" any-of (:array :element (:or :mappings ((reference :type schema)
                                                     schema))))
-   ("not" not schema)
-   ("items" items schema)
+   ("not" not (:or :mappings ((reference :type schema) schema)))
+   ("items" items (:or :mappings ((reference :type schema) schema)))
    ("properties"
     properties (:object :value (:or :mappings ((reference :type schema)
                                                schema))))
