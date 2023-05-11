@@ -45,7 +45,8 @@
 (define-condition unexpected-response-status (error)
   ((response
     :type http:response
-    :initarg :response))
+    :initarg :response
+    :reader unexpected-response-status-response))
   (:report
    (lambda (condition stream)
      (with-slots (response) condition
@@ -55,10 +56,12 @@
 (define-condition unexpected-response-content-type (error)
   ((response
     :type http:response
-    :initarg :response)
+    :initarg :response
+    :reader unexpected-response-content-type-response)
    (content-type
     :type string
-    :initarg :content-type))
+    :initarg :content-type
+    :reader unexpected-response-content-type-content-type))
   (:report
    (lambda (condition stream)
      (with-slots (content-type) condition
