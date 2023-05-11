@@ -24,6 +24,7 @@
    #:register-mapping
    #:define-mapping
    #:delete-mapping
+   #:delete-package-mappings
    #:find-mapping
    #:mapping
    #:mapping-error

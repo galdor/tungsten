@@ -36,6 +36,16 @@
 (defun delete-mapping (name)
   (remhash name *mappings*))
 
+(defun delete-package-mappings (package)
+  (declare (type (or package keyword string) package))
+  (let ((package-name (package-name package)))
+    (maphash (lambda (name mapping)
+               (declare (ignore mapping))
+               (when (string= package-name
+                              (package-name (symbol-package name)))
+                 (remhash name *mappings*)))
+             *mappings*)))
+
 (defun find-mapping (name)
   (or (gethash name *mappings*)
       (error 'unknown-mapping :name name)))
