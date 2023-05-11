@@ -197,7 +197,7 @@
            (write-char (char-upcase character) stream)
            (setf lower-case-p t))
           ((upper-case-p character)
-           (when (and (< (1+ i) end)
+           (when (and (> i start) (< (1+ i) end)
                       (lower-case-p (char name (1+ i))))
              (write-char #\- stream))
            (write-char character stream))
