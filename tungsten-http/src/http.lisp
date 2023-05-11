@@ -85,7 +85,7 @@
 (deftype header-field ()
   '(cons string header-field-value))
 
-(define-condition missing-request-target-host ()
+(define-condition missing-request-target-host (error)
   ((target
     :type uri:uri
     :initarg :target))

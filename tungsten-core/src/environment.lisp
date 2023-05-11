@@ -1,6 +1,6 @@
 (in-package :core)
 
-(define-condition unsupported-feature ()
+(define-condition unsupported-feature (error)
   ((name
     :type string
     :initarg :name

@@ -6,7 +6,7 @@
 ;;; not expect the user to understand the difference, and they should only
 ;;; have to manipulate digests.
 
-(define-condition unsupported-digest-algorithm ()
+(define-condition unsupported-digest-algorithm (error)
   ((algorith
     :type symbol
     :initarg :algorithm

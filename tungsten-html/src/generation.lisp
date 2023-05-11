@@ -2,7 +2,7 @@
 
 (defvar *html-output* nil)
 
-(define-condition invalid-generation-data ()
+(define-condition invalid-generation-data (error)
   ((format-control
     :type string
     :initarg :format-control)

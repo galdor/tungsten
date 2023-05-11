@@ -1,6 +1,6 @@
 (in-package :openapi)
 
-(define-condition unsupported-elements ()
+(define-condition unsupported-elements (error)
   ((names
     :type string
     :initarg :name

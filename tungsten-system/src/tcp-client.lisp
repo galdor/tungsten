@@ -3,7 +3,7 @@
 (defparameter *default-tcp-client-read-timeout* 10)
 (defparameter *default-tcp-client-write-timeout* 10)
 
-(define-condition tcp-connection-failure ()
+(define-condition tcp-connection-failure (error)
   ((host
     :type host
     :initarg :host

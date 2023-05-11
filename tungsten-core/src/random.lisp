@@ -1,6 +1,6 @@
 (in-package :core)
 
-(define-condition unavailable-random-data ()
+(define-condition unavailable-random-data (error)
   ()
   (:report
    (lambda (condition stream)

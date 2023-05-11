@@ -43,7 +43,7 @@
        (setf (ldb (byte 8 6) (aref octets 8)) 2)))
     (uuid octets)))
 
-(define-condition invalid-format ()
+(define-condition invalid-format (error)
   ((string
     :type string
     :initarg :string))
