@@ -14,4 +14,6 @@
    #:invalid-path-template
    #:missing-parameter-value
    #:missing-request-body
+   #:unexpected-response-status
+   #:unexpected-response-content-type
    #:execute-operation))
