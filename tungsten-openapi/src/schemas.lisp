@@ -31,46 +31,54 @@
 ;;; since schemas tend to keep things simple.
 
 (defun build-schema-json-mapping (schema)
-  (declare (type list schema))
-  (let* ((combinator (find-if (lambda (property)
-                                (member property '(all-of one-of any-of not)))
-                              schema :key #'car))
-         (type (cdr (assoc 'type schema)))
-         (nullable (cdr (assoc 'nullable schema)))
-         (schema (cond
-                   (combinator
-                    (case (car combinator)
-                      (one-of
-                       `(:or :mappings ,(map 'list 'build-schema-json-mapping
-                                             (cdr combinator))))
-                      (any-of
-                       `(:or :mappings ,(map 'list 'build-schema-json-mapping
-                                             (cdr combinator))))
-                      (t
-                       '(:any))))
+  (declare (type (or list symbol) schema))
+  (cond
+    ((symbolp schema)
+     ;; if SCHEMA is a symbol, it has already been resolved to a mapping, and
+     ;; SCHEMA is the symbol identifying the mapping.
+     schema)
+    (t
+     (let* ((combinator
+              (find-if (lambda (property)
+                         (member property '(all-of one-of any-of not)))
+                       schema :key #'car))
+            (type (cdr (assoc 'type schema)))
+            (nullable (cdr (assoc 'nullable schema)))
+            (schema
+              (cond
+                (combinator
+                 (case (car combinator)
+                   (one-of
+                    `(:or :mappings ,(map 'list 'build-schema-json-mapping
+                                          (cdr combinator))))
+                   (any-of
+                    `(:or :mappings ,(map 'list 'build-schema-json-mapping
+                                          (cdr combinator))))
                    (t
-                    (case type
-                      (:boolean
-                       (build-schema-json-mapping/boolean schema))
-                      (:integer
-                       (build-schema-json-mapping/integer schema))
-                      (:number
-                       (build-schema-json-mapping/number schema))
-                      (:string
-                       (build-schema-json-mapping/string schema))
-                      (:array
-                       (build-schema-json-mapping/array schema))
-                      (:object
-                       (build-schema-json-mapping/object schema))
-                      (t
-                       '(:any)))))))
-    (cond
-      ((and nullable (eq (car schema) :or))
-       `(:or :mappings ((:null) ,@(getf (cdr schema) :mappings))))
-      (nullable
-       `(:or :mappings ((:null) ,schema)))
-      (t
-       schema))))
+                    '(:any))))
+                (t
+                 (case type
+                   (:boolean
+                    (build-schema-json-mapping/boolean schema))
+                   (:integer
+                    (build-schema-json-mapping/integer schema))
+                   (:number
+                    (build-schema-json-mapping/number schema))
+                   (:string
+                    (build-schema-json-mapping/string schema))
+                   (:array
+                    (build-schema-json-mapping/array schema))
+                   (:object
+                    (build-schema-json-mapping/object schema))
+                   (t
+                    '(:any)))))))
+       (cond
+         ((and nullable (eq (car schema) :or))
+          `(:or :mappings ((:null) ,@(getf (cdr schema) :mappings))))
+         (nullable
+          `(:or :mappings ((:null) ,schema)))
+         (t
+          schema))))))
 
 (defun build-schema-json-mapping/boolean (schema)
   (declare (type list schema)

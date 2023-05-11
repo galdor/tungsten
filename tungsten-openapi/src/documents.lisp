@@ -61,6 +61,10 @@
     :type list
     :initform nil
     :accessor document-servers)
+   (schema-mappings
+    :type hash-table
+    :initform (make-hash-table :test #'equal)
+    :accessor document-schema-mappings)
    (operations
     :type hash-table
     :initform (make-hash-table :test #'equal)
@@ -247,7 +251,10 @@
   (build-document (json:parse string :mapping 'document)))
 
 (defun build-document (document-value)
-  (let ((document (make-instance 'document)))
+  (let* ((document (make-instance 'document))
+         (components-value (cdr (assoc 'components document-value)))
+         (schemas-value (cdr (assoc 'schemas components-value))))
+    (build-document/schemas schemas-value document)
     (dolist (member document-value)
       (case (car member)
         (openapi
@@ -259,6 +266,46 @@
         (paths
          (build-document/paths (cdr member) document-value document))))
     document))
+
+(defun build-document/schemas (schemas-value document)
+  (declare (type list schemas-value)
+           (type document document))
+  (let ((schema-mappings (document-schema-mappings document)))
+    (dolist (member schemas-value)
+      (let* ((schema-name (car member))
+             (schema (cdr member)))
+        (unless (gethash schema-name schema-mappings)
+          (let ((mapping-name (json-name-to-symbol schema-name))
+                (mapping (build-schema-json-mapping
+                          (resolve-schema schema schemas-value))))
+            (json:register-mapping mapping-name (json:mapping mapping))
+            (setf (gethash schema-name schema-mappings)
+                  mapping-name)))))))
+
+(defun resolve-schema (schema schemas-value)
+  (declare (type list schema))
+  (labels ((resolve (schema)
+             (let ((reference (cdr (assoc 'ref schema))))
+               (cond
+                 (reference
+                  (let ((schema-name (cadr reference)))
+                    (unless (assoc schema-name schemas-value :test #'string=)
+                      (invalid-reference reference "missing target component"))
+                    (json-name-to-symbol schema-name)))
+                 (t
+                  (dolist (member schema schema)
+                    (case (car member)
+                      ((all-of one-of any-of)
+                       (rplacd member (map 'vector #'resolve (cdr member))))
+                      ((not items element)
+                       (rplacd member (resolve (cdr member))))
+                      (properties
+                       (dolist (property (cdr member))
+                         (rplacd property (resolve (cdr property)))))
+                      (additional-properties
+                       (unless (typep (cdr member) 'boolean)
+                         (rplacd member (resolve (cdr member))))))))))))
+    (resolve schema)))
 
 (defun build-document/info (value document)
   (declare (type list value)
@@ -331,8 +378,7 @@
            (dotimes (i (length parameter-values))
              (let* ((value (resolve-component-value (aref parameter-values i)
                                                     components-value))
-                    (parameter
-                      (build-parameter value document-value))
+                    (parameter (build-parameter value document-value))
                     (name (parameter-name parameter))
                     (member (assoc name parameters)))
                (if member
@@ -359,8 +405,9 @@
 
 (defun build-parameter (parameter-value document-value)
   (declare (type list parameter-value document-value))
-  (let ((components-value (cdr (assoc 'components document-value)))
-        (parameter (make-instance 'parameter)))
+  (let* ((components-value (cdr (assoc 'components document-value)))
+         (schemas-value (cdr (assoc 'schemas components-value)))
+         (parameter (make-instance 'parameter)))
     (dolist (member parameter-value)
       (case (car member)
         (name
@@ -378,10 +425,11 @@
         (explode
          (setf (parameter-explode parameter) (cdr member)))
         (schema
-         (setf (parameter-schema parameter)
-               (resolve-schema-value (cdr member) components-value))
+         (setf (parameter-schema parameter) (cdr member))
          (setf (parameter-json-mapping parameter)
-               (build-schema-json-mapping (parameter-schema parameter))))))
+               (build-schema-json-mapping
+                (resolve-schema (parameter-schema parameter)
+                                schemas-value))))))
     (unless (slot-boundp parameter 'required)
       (setf (parameter-required parameter)
             (eq (parameter-location parameter) :path)))
@@ -413,8 +461,9 @@
 
 (defun build-content (content-value document-value)
   (declare (type list content-value document-value))
-  (let ((components-value (cdr (assoc 'components document-value)))
-        (content nil))
+  (let* ((content nil)
+         (components-value (cdr (assoc 'components document-value)))
+         (schemas-value (cdr (assoc 'schemas components-value))))
     (dolist (member content-value)
       (let* ((media-range (car member))
              (media-type-value (cdr member))
@@ -422,10 +471,11 @@
         (dolist (member media-type-value)
           (case (car member)
             (schema
-             (setf (media-type-schema media-type)
-                   (resolve-schema-value (cdr member) components-value))
+             (setf (media-type-schema media-type) (cdr member))
              (setf (media-type-json-mapping media-type)
-                   (build-schema-json-mapping (media-type-schema media-type))))
+                   (build-schema-json-mapping
+                    (resolve-schema (media-type-schema media-type)
+                                    schemas-value))))
             (encoding
              (let ((encodings nil))
                (dolist (member (cdr member))
@@ -475,8 +525,7 @@
            (dolist (member (cdr member))
              (let* ((name (car member))
                     (header-data
-                      (resolve-component-value (cdr member)
-                                               components-value))
+                      (resolve-component-value (cdr member) components-value))
                     (header (build-header header-data document-value)))
                (push (cons name header) headers)))
            (setf (property-encoding-headers encoding) headers)))
@@ -491,8 +540,9 @@
 
 (defun build-header (header-value document-value)
   (declare (type list header-value document-value))
-  (let ((components-value (cdr (assoc 'components document-value)))
-        (header (make-instance 'header)))
+  (let* ((components-value (cdr (assoc 'components document-value)))
+         (schemas-value (cdr (assoc 'schemas components-value)))
+         (header (make-instance 'header)))
     (dolist (member header-value)
       (case (car member)
         (description
@@ -506,10 +556,10 @@
         (explode
          (setf (header-explode header) (cdr member)))
         (schema
-         (setf (header-schema header)
-               (resolve-schema-value (cdr member) components-value))
+         (setf (header-schema header) (cdr member))
          (setf (header-json-mapping header)
-               (build-schema-json-mapping (header-schema header))))))
+               (build-schema-json-mapping
+                (resolve-schema (header-schema header) schemas-value))))))
     (unless (slot-boundp header 'required)
       (setf (header-required header) t))
     (unless (slot-boundp header 'style)
@@ -562,30 +612,11 @@
                     object-value)))))
       (resolve object-value))))
 
-(defun resolve-schema-value (schema-value components-value)
-  (flet ((resolve (value)
-           (resolve-schema-value value components-value)))
-    (let ((schema-value
-            (resolve-component-value schema-value components-value)))
-      (dolist (member schema-value)
-        (case (car member)
-          (all-of
-           (rplacd member (map 'vector #'resolve (cdr member))))
-          (one-of
-           (rplacd member (map 'vector #'resolve (cdr member))))
-          (any-of
-           (rplacd member (map 'vector #'resolve (cdr member))))
-          (not
-           (rplacd member (resolve (cdr member))))
-          (items
-           (rplacd member (resolve (cdr member))))
-          (properties
-           (dolist (property (cdr member))
-             (rplacd property (resolve (cdr property)))))
-          (additional-properties
-           (unless (typep (cdr member) 'boolean)
-             (rplacd member (resolve (cdr member)))))))
-      schema-value)))
+(defun document-schema-mapping (document name)
+  (declare (type document document)
+           (type string name))
+  (with-slots (schema-mappings) document
+    (gethash name schema-mappings)))
 
 (defun document-operation (document name)
   (declare (type document document)
