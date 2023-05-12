@@ -7,6 +7,8 @@
    #:monotonic-clock
    #:*clock*
    #:with-clock
+   #:with-wall-clock
+   #:with-monotonic-clock
 
    #:timestamp
    #:timestamp-equal

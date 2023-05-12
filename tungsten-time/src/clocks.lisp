@@ -27,3 +27,11 @@
 (defmacro with-clock ((clock) &body body)
   `(let ((*clock* ,clock))
      ,@body))
+
+(defmacro with-wall-clock (&body body)
+  `(with-clock ((make-instance 'wall-clock))
+     ,@body))
+
+(defmacro with-monotonic-clock (&body body)
+  `(with-clock ((make-instance 'monotonic-clock))
+     ,@body))
