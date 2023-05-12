@@ -70,7 +70,7 @@
 
 (defun %wait-condition-variable (variable mutex &key timeout)
   ;; The way timeouts are implemented is wrong: the timeout duration should
-  ;; cover bothe time to acquire the lock and the time to wait on the
+  ;; cover both the time to acquire the lock and the time to wait on the
   ;; semaphore. We cannot do it the right way because CCL does not support
   ;; timeouts for lock acquisition. Not much we can do about it.
   (with-slots (lock semaphore handshake nb-waiters) variable
