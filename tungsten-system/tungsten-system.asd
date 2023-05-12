@@ -29,6 +29,7 @@
    (:file "ip-addresses")
    (:file "socket-addresses")
    (:file "io-streams")
+   (:file "pipes")
    (:file "network-stream")
    (:file "tcp-stream")
    (:file "tcp-client")

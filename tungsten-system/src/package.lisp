@@ -64,6 +64,8 @@
    #:io-stream-external-format
    #:io-stream-read-more
 
+   #:make-pipe
+
    #:network-stream
    #:network-stream-address
    #:network-stream-read-timeout

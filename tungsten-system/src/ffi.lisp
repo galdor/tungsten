@@ -117,6 +117,16 @@
                             (lognot removed-bitset)))))
 
 ;;;
+;;; Pipes
+;;;
+
+(defun pipe ()
+  (ffi:with-foreign-value (%fds :int :count 2)
+    (system-funcall ("pipe" ((:pointer) :int) %fds))
+    (values (ffi:foreign-value %fds :int 0)
+            (ffi:foreign-value %fds :int 1))))
+
+;;;
 ;;; Sockets
 ;;;
 
