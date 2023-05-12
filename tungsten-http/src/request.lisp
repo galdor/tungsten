@@ -102,7 +102,7 @@
     (finish-output stream)))
 
 (defun read-request (stream &aux (request (make-instance 'request)))
-  (declare (type system:io-stream stream))
+  (declare (type system:input-io-stream stream))
   (multiple-value-bind (method target version)
       (read-request-line stream)
     (setf (request-method request) method
@@ -117,7 +117,7 @@
   request)
 
 (defun read-request-line (stream)
-  (declare (type system:io-stream stream))
+  (declare (type system:input-io-stream stream))
   (let* ((buffer (system:io-stream-read-buffer stream))
          (eol-octets (text:eol-octets :crlf))
          (eol (loop

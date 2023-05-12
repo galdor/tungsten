@@ -53,7 +53,8 @@
    #:format-socket-address
    #:socket-address-equal
 
-   #:io-stream
+   #:input-io-stream
+   #:output-io-stream
    #:write-io-stream
    #:read-io-stream
    #:io-stream-fd

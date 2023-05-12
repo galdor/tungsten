@@ -1,27 +1,32 @@
 (in-package :system)
 
-(defclass io-stream (streams:fundamental-binary-input-stream
-                     streams:fundamental-character-input-stream
-                     streams:fundamental-binary-output-stream
-                     streams:fundamental-character-output-stream)
+(defclass base-io-stream ()
   ((fd
     :type (or fd null)
     :initarg :fd
     :initform nil
     :reader io-stream-fd)
-   (read-buffer
-    :type core:buffer
-    :initform (core:make-buffer 4096)
-    :reader io-stream-read-buffer)
-   (write-buffer
-    :type core:buffer
-    :initform (core:make-buffer 4096)
-    :reader io-stream-write-buffer)
    (external-format
     :type text:external-format
     :initarg :external-format
     :initform text:*default-external-format*
     :accessor io-stream-external-format)))
+
+(defclass input-io-stream (base-io-stream
+                           streams:fundamental-binary-input-stream
+                           streams:fundamental-character-input-stream)
+  ((read-buffer
+    :type core:buffer
+    :initform (core:make-buffer 4096)
+    :reader io-stream-read-buffer)))
+
+(defclass output-io-stream (base-io-stream
+                            streams:fundamental-binary-output-stream
+                            streams:fundamental-character-output-stream)
+  ((write-buffer
+    :type core:buffer
+    :initform (core:make-buffer 4096)
+    :reader io-stream-write-buffer)))
 
 (defgeneric read-io-stream (stream octets start end)
   (:documentation
@@ -33,7 +38,7 @@ octets read. Return 0 if end-of-file was reached."))
    "Write an octet vector to an IO stream and return the number of octets
 written."))
 
-(defmethod close ((stream io-stream) &key abort)
+(defmethod close ((stream base-io-stream) &key abort)
   (declare (ignore abort))
   (with-slots (fd) stream
     (when fd
@@ -41,10 +46,10 @@ written."))
       (setf fd nil)
       t)))
 
-(defmethod open-stream-p ((stream io-stream))
+(defmethod open-stream-p ((stream base-io-stream))
   (not (null (io-stream-fd stream))))
 
-(defmethod streams:stream-read-byte ((stream io-stream))
+(defmethod streams:stream-read-byte ((stream input-io-stream))
   (with-slots (fd read-buffer) stream
     (when (core:buffer-empty-p read-buffer)
       (let* ((read-size 4096)
@@ -58,7 +63,7 @@ written."))
         (aref (core:buffer-data read-buffer) (core:buffer-start read-buffer))
       (core:buffer-skip read-buffer 1))))
 
-(defmethod streams:stream-read-sequence ((stream io-stream) octets
+(defmethod streams:stream-read-sequence ((stream input-io-stream) octets
                                          &optional (start 0) end
                                          &aux (end (or end (length octets))))
   (declare (type core:octet-vector octets)
@@ -79,18 +84,18 @@ written."))
       (when (zerop (io-stream-read-more stream))
         (setf eof t)))))
 
-(defmethod streams:stream-clear-output ((stream io-stream))
+(defmethod streams:stream-clear-output ((stream output-io-stream))
   (with-slots (write-buffer) stream
     (core:buffer-reset write-buffer))
   nil)
 
-(defmethod streams:stream-write-byte ((stream io-stream) octet)
+(defmethod streams:stream-write-byte ((stream output-io-stream) octet)
   (declare (type core:octet octet))
   (with-slots (write-buffer) stream
     (core:buffer-append-octet write-buffer octet))
   octet)
 
-(defmethod streams:stream-write-sequence ((stream io-stream) octets
+(defmethod streams:stream-write-sequence ((stream output-io-stream) octets
                                           &optional (start 0) end)
   (declare (type core:octet-vector octets)
            (type (integer 0) start)
@@ -101,7 +106,7 @@ written."))
                                  :start start :end (or end (length octets)))))
   octets)
 
-(defmethod streams:stream-force-output ((stream io-stream))
+(defmethod streams:stream-force-output ((stream output-io-stream))
   (with-slots (fd write-buffer) stream
     (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
                                         (core:buffer-start write-buffer))
@@ -113,7 +118,7 @@ written."))
         (core:buffer-skip write-buffer nb-written))))
   nil)
 
-(defmethod streams:stream-finish-output ((stream io-stream))
+(defmethod streams:stream-finish-output ((stream output-io-stream))
   (with-slots (fd write-buffer) stream
     (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
                                         (core:buffer-start write-buffer))
@@ -129,7 +134,7 @@ written."))
           (core:buffer-skip write-buffer nb-written)))))
   nil)
 
-(defmethod streams:stream-read-char ((stream io-stream))
+(defmethod streams:stream-read-char ((stream input-io-stream))
   (with-slots (read-buffer external-format) stream
     (do ((encoding (text:external-format-encoding external-format)))
         (nil)
@@ -149,7 +154,7 @@ written."))
           (when (zerop nb-read)
             (return-from streams:stream-read-char :eof)))))))
 
-(defmethod streams:stream-unread-char ((stream io-stream) character)
+(defmethod streams:stream-unread-char ((stream input-io-stream) character)
   (declare (type character character))
   (with-slots (read-buffer external-format) stream
     (let* ((encoding (text:external-format-encoding external-format))
@@ -164,7 +169,7 @@ written."))
       (decf (core:buffer-start read-buffer) nb-octets)))
   nil)
 
-(defmethod streams:stream-read-char-no-hang ((stream io-stream))
+(defmethod streams:stream-read-char-no-hang ((stream input-io-stream))
   ;; This will not return a character if the read buffer is empty, even if it
   ;; could be possible to read the file descriptor and obtain at least one
   ;; character without blocking.
@@ -183,13 +188,13 @@ written."))
           (core:buffer-skip read-buffer nb-octets)
           character)))))
 
-(defmethod streams:stream-peek-char ((stream io-stream))
+(defmethod streams:stream-peek-char ((stream input-io-stream))
   (let ((character (streams:stream-read-char stream)))
     (unless (eq character :eof)
       (streams:stream-unread-char stream character))
     character))
 
-(defmethod streams:stream-listen ((stream io-stream))
+(defmethod streams:stream-listen ((stream input-io-stream))
   (let ((character (streams:stream-read-char-no-hang stream)))
     (cond
       ((or (null character)
@@ -199,7 +204,7 @@ written."))
        (streams:stream-unread-char stream character)
        t))))
 
-(defmethod streams:stream-read-line ((stream io-stream))
+(defmethod streams:stream-read-line ((stream input-io-stream))
   (with-slots (read-buffer external-format) stream
     (do* ((encoding (text:external-format-encoding external-format))
           (eol-style (text:external-format-eol-style external-format))
@@ -224,11 +229,11 @@ written."))
           (core:buffer-reset read-buffer)
           (return (values line t)))))))
 
-(defmethod streams:stream-clear-input ((stream io-stream))
+(defmethod streams:stream-clear-input ((stream input-io-stream))
   (with-slots (read-buffer) stream
     (core:buffer-reset read-buffer)))
 
-(defmethod streams:stream-write-char ((stream io-stream) character)
+(defmethod streams:stream-write-char ((stream output-io-stream) character)
   (declare (type character character))
   (with-slots (write-buffer external-format) stream
     (let* ((encoding (text:external-format-encoding external-format))
@@ -242,14 +247,14 @@ written."))
       (incf (core:buffer-end write-buffer) nb-octets)))
   character)
 
-(defmethod streams:stream-line-column ((stream io-stream))
+(defmethod streams:stream-line-column ((stream output-io-stream))
   (declare (ignore stream))
   nil)
 
-(defmethod streams:stream-start-line-p ((stream io-stream))
+(defmethod streams:stream-start-line-p ((stream output-io-stream))
   (eql (streams:stream-line-column stream) 0))
 
-(defmethod streams:stream-write-string ((stream io-stream) string
+(defmethod streams:stream-write-string ((stream output-io-stream) string
                                         &optional (start 0) end)
   (declare (type string string)
            (type (integer 0) start)
@@ -270,18 +275,18 @@ written."))
           (incf (core:buffer-end write-buffer) nb-octets)))))
   string)
 
-(defmethod streams:stream-terpri ((stream io-stream))
+(defmethod streams:stream-terpri ((stream output-io-stream))
   (with-slots (external-format) stream
     (let ((eol-style (text:external-format-eol-style external-format)))
       (streams:stream-write-sequence stream (text:eol-octets eol-style))))
   nil)
 
-(defmethod streams:stream-fresh-line ((stream io-stream))
+(defmethod streams:stream-fresh-line ((stream output-io-stream))
   (unless (streams:stream-start-line-p stream)
     (streams:stream-terpri stream)
     t))
 
-(defmethod streams:stream-advance-to-column ((stream io-stream) column)
+(defmethod streams:stream-advance-to-column ((stream output-io-stream) column)
   (declare (type (integer 0) column))
   (let ((current-column (streams:stream-line-column stream)))
     (when current-column
@@ -295,7 +300,7 @@ written."))
 number of octets read.
 
 Note that the number of octets read will be zero if end-of-file was reached."
-  (declare (type io-stream stream))
+  (declare (type output-io-stream stream))
   (with-slots (read-buffer) stream
     (let* ((read-size 4096)
            (position (core:buffer-reserve read-buffer read-size))

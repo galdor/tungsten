@@ -1,6 +1,6 @@
 (in-package :system)
 
-(defclass network-stream (io-stream)
+(defclass network-stream (input-io-stream output-io-stream)
   ((address
     :type socket-address
     :initarg :address

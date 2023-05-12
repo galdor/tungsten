@@ -118,7 +118,7 @@
     (finish-output stream)))
 
 (defun read-response (stream &aux (response (make-instance 'response)))
-  (declare (type system:io-stream stream))
+  (declare (type system:input-io-stream stream))
   (multiple-value-bind (version status reason)
       (read-status-line stream)
     (setf (response-status response) status
@@ -133,7 +133,7 @@
   response)
 
 (defun read-status-line (stream)
-  (declare (type system:io-stream stream))
+  (declare (type system:input-io-stream stream))
   (let* ((buffer (system:io-stream-read-buffer stream))
          (eol-octets (text:eol-octets :crlf))
          (eol (loop
