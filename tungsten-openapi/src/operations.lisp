@@ -217,10 +217,11 @@
                (value (third (find-if (lambda (value)
                                         (and (eq (first value) :query)
                                              (string= (second value) name)))
-                                      parameter-values))))
+                                      parameter-values)))
+               (encoded-value (encode-parameter-value value (cdr parameter))))
           (cond
             (value
-             (push (cons name value) query))
+             (push (cons name encoded-value) query))
             ((parameter-required (cdr parameter))
              (error 'missing-parameter-value :location :query
                                              :name name))))))))
@@ -234,10 +235,11 @@
                (value (third (find-if (lambda (value)
                                         (and (eq (first value) :header)
                                              (string= (second value) name)))
-                                      parameter-values))))
+                                      parameter-values)))
+               (encoded-value (encode-parameter-value value (cdr parameter))))
           (cond
             (value
-             (push (cons name value) fields))
+             (push (cons name encoded-value) fields))
             ((parameter-required (cdr parameter))
              (error 'missing-parameter-value :location :header
                                              :name name))))))))
