@@ -66,11 +66,11 @@
 
 (defclass number-mapping (mapping)
   ((min
-    :type (or float null)
+    :type (or number null)
     :initarg :min
     :initform nil)
    (max
-    :type (or float null)
+    :type (or number null)
     :initarg :max
     :initform nil))
   (:default-initargs
