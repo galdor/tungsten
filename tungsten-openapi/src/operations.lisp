@@ -209,7 +209,7 @@
 (defun build-parameter-header-fields (parameter-values parameters)
   (declare (type list parameter-values parameters))
   (let ((fields nil))
-    (dolist (parameter parameters)
+    (dolist (parameter parameters fields)
       (when (eq (parameter-location (cdr parameter)) :header)
         (let* ((name (car parameter))
                (value (third (find-if (lambda (value)
