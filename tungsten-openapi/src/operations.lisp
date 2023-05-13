@@ -144,6 +144,8 @@
          (uri (uri:copy-uri server-uri)))
     (setf (uri:uri-path uri)
           (concatenate 'string (uri:uri-path server-uri) path))
+    (setf (uri:uri-query uri)
+          (build-parameter-query parameters (operation-parameters operation)))
     uri))
 
 (defun operation-parameter (operation location name)
@@ -205,6 +207,23 @@
     (unless value
       (error 'missing-parameter-value :location :path :name expression))
     (encode-parameter-value value (cdr parameter))))
+
+(defun build-parameter-query (parameter-values parameters)
+  (declare (type list parameter-values parameters))
+  (let ((query nil))
+    (dolist (parameter parameters query)
+      (when (eq (parameter-location (cdr parameter)) :query)
+        (let* ((name (car parameter))
+               (value (third (find-if (lambda (value)
+                                        (and (eq (first value) :query)
+                                             (string= (second value) name)))
+                                      parameter-values))))
+          (cond
+            (value
+             (push (cons name value) query))
+            ((parameter-required (cdr parameter))
+             (error 'missing-parameter-value :location :query
+                                             :name name))))))))
 
 (defun build-parameter-header-fields (parameter-values parameters)
   (declare (type list parameter-values parameters))
