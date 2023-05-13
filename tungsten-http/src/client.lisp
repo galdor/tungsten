@@ -138,9 +138,14 @@ Must be either NIL, :BASIC or :BEARER.")
                                           :version :http-1.1
                                           :header header
                                           :body body)))
-    (when body
-      (add-new-request-header-field request "Content-Length"
-                                    (princ-to-string (length body))))
+    (when (or body
+              (eq method :post)
+              (equalp method "POST")
+              (eq method :put)
+              (equalp method "PUT"))
+      (let ((length (if body (length body) 0)))
+        (add-new-request-header-field request "Content-Length"
+                                      (princ-to-string length))))
     (let ((response (finalize-and-send-request request client)))
       (cond
         (follow-redirections
