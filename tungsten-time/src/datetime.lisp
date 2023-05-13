@@ -21,7 +21,9 @@ nanoseconds since 2000-03-01."
 
 (defmethod print-object ((datetime datetime) stream)
   (print-unreadable-object (datetime stream :type t)
-    (write-string (format-datetime datetime :rfc3339) stream)))
+    (with-slots (nanoseconds) datetime
+      (let ((format (if (zerop nanoseconds) :rfc3339-no-fraction :rfc3339)))
+        (write-string (format-datetime datetime format) stream)))))
 
 (defun datetime-equal (datetime1 datetime2)
   "Return T if DATETIME1 and DATETIME2 are equal or NIL else."
