@@ -21,6 +21,7 @@
    (:file "timestamp")
    (:file "calendar")
    (:file "datetime")
+   (:file "datetime-parsing")
    (:file "datetime-formatting"))
   :in-order-to ((test-op (test-op "tungsten-time/test"))))
 

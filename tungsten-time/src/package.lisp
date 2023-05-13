@@ -31,4 +31,7 @@
    #:decode-datetime
    #:current-datetime
 
+   #:datetime-parse-error
+   #:parse-rfc3339-datetime
+
    #:format-datetime))
