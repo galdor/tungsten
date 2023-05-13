@@ -385,8 +385,7 @@
                    (rplacd member parameter)
                    (push (cons name parameter) parameters))))
            (setf (operation-parameters operation)
-                 (append (operation-parameters operation)
-                         (mapcar #'cdr parameters)))))
+                 (append (operation-parameters operation) parameters))))
         (request-body
          (setf (operation-request-body operation)
                (build-request-body (cdr member) document-value)))
