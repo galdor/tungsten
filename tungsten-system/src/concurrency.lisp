@@ -89,7 +89,7 @@
 
 (defun make-thread (name function)
   (declare (type string name)
-           (type function function))
+           (type (or symbol function) function))
   (%make-thread name function))
 
 (defun join-thread (thread)
