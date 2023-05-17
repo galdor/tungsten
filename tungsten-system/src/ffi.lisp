@@ -51,7 +51,7 @@
         (mod microseconds 1000000)))
 
 ;;;
-;;; IO multiplexing
+;;; IO multiplexing (Linux)
 ;;;
 
 #+linux
@@ -80,6 +80,20 @@
                    (ffi:pointer+ ,%events
                                  (* ,i (ffi:foreign-type-size 'epoll-event)))))
              ,@body))))))
+
+;;;
+;;; IO multiplexing (BSD)
+;;;
+
+#+bsd
+(defun kqueue ()
+  (system-funcall ("kqueue" (() :int))))
+
+#+bsd
+(defun kevent (fd %changes nb-changes %events nb-events %timeout)
+  (system-funcall
+   ("kevent" ((:int :pointer :int :pointer :int :pointer) :int)
+             fd %changes nb-changes %events nb-events %timeout)))
 
 ;;;
 ;;; File descriptors

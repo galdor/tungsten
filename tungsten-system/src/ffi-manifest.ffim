@@ -5,6 +5,9 @@
 (type size-t "size_t")
 (type ssize-t "ssize_t")
 
+(type intptr-t "intptr_t")
+(type uintptr-t "uintptr_t")
+
 ;;;
 ;;; Locales
 ;;;
@@ -118,6 +121,11 @@
  ((:sec 'time-t "tv_sec")
   (:usec 'suseconds-t "tv_usec")))
 
+(struct
+ (timespec "struct timespec")
+ ((:tv-sec 'time-t "tv_sec")
+  (:tv-nsec :long "tv_nsec")))
+
 ;;;
 ;;; Environment
 ;;;
@@ -151,7 +159,7 @@
  ((:sc-pagesize "_SC_PAGESIZE")))
 
 ;;;
-;;; IO multiplexing
+;;; IO multiplexing (Linux)
 ;;;
 
 #+linux
@@ -192,6 +200,40 @@
  (epoll-event "struct epoll_event")
  ((:events 'epoll-events "events")
   (:data 'epoll-data "data")))
+
+;;;
+;;; IO multiplexing (BSD)
+;;;
+
+#+bsd
+(include "sys/event.h")
+
+#+bsd
+(enum
+ (kevent-filter :short)
+ ((:evfilt-read "EVFILT_READ")
+  (:evfilt-write "EVFILT_WRITE")
+  (:evfilt-timer "EVFILT_TIMER")))
+
+#+bsd
+(bitset
+ (kevent-flags :unsigned-short)
+ ((:ev-add "EV_ADD")
+  (:ev-enable "EV_ENABLE")
+  (:ev-disable "EV_DISABLE")
+  (:ev-delete "EV_DELETE")
+  (:ev-oneshot "EV_ONESHOT")
+  (:ev-error "EV_ERROR")))
+
+#+bsd
+(struct
+ (kevent "struct kevent")
+ ((:ident 'uintptr-t "ident")
+  (:filter 'kevent-filter "filter")
+  (:flags 'kevent-flags "flags")
+  (:fflags :unsigned-int "fflags")
+  (:data 'intptr-t "data")
+  (:udata :pointer "udata")))
 
 ;;;
 ;;; File descriptors

@@ -24,6 +24,7 @@
    (:file "concurrency-sbcl" :if-feature :sbcl)
    (:file "concurrency")
    (:file "io-multiplexing")
+   (:file "io-multiplexing-kqueue" :if-feature :bsd)
    (:file "io-multiplexing-epoll" :if-feature :linux)
    (:file "filesystem")
    (:file "ip-addresses")

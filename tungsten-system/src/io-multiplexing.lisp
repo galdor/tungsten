@@ -38,8 +38,10 @@
 (defgeneric read-and-dispatch-io-events (base &key timeout))
 
 (defun make-io-base ()
-  (make-instance #+linux 'epoll-io-base
-                 #-linux (core:unsupported-feature "io multiplexing")))
+  (make-instance #+bsd 'kqueue-io-base
+                 #+linux 'epoll-io-base
+                 #-(or bsd linux)
+                 (core:unsupported-feature "io multiplexing")))
 
 (defun watch-fd (base fd events handler)
   (declare (type io-base base)
