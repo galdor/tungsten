@@ -104,7 +104,8 @@
 
 (defun generate-c-struct (form stream)
   (destructuring-bind ((name c-name) (&rest members)) form
-    (format stream "printf(\"\\n(ffi:define-struct (~A :size %zu)\", ~
+    (format stream "printf(\"\\n(ffi:define-struct (~A :size %zu ~
+                                                    :sort-members t)\", ~
                            sizeof(~A));~%"
             name c-name)
     (format stream "puts(\"(\");~%")
