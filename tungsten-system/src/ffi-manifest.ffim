@@ -218,7 +218,6 @@
  ((:o-append "O_APPEND")
   (:o-dsync "O_DSYNC")
   (:o-nonblock "O_NONBLOCK")
-  (:o-rsync "O_RSYNC")
   (:o-sync "O_SYNC")))
 
 ;;
