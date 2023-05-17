@@ -115,7 +115,7 @@
                               (format nil "FFI_MEMBER_COUNT(~A, ~A)"
                                       c-name member-c-name)
                               (format nil "(size_t)~D" count))))
-          (format stream "printf(\"  (~S ~S :count %Zu :offset %Zu)\\n\", ~
+          (format stream "printf(\"  (~S ~S :count %zu :offset %zu)\\n\", ~
                                  ~A, offsetof(~A, ~A));~%"
                   member-name type
                   count-expr c-name member-c-name))))
@@ -134,7 +134,7 @@
                               (format nil "FFI_MEMBER_COUNT(~A, ~A)"
                                       c-name member-c-name)
                               (format nil "(size_t)~D" count))))
-          (format stream "printf(\"  (~S ~S :count %Zu)\\n\", ~A);~%"
+          (format stream "printf(\"  (~S ~S :count %zu)\\n\", ~A);~%"
                   member-name type count-expr))))
     (format stream "puts(\"))\");~%")))
 
