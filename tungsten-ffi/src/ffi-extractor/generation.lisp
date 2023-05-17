@@ -157,8 +157,8 @@ a keyword, a symbol, or a quoted symbol form such as (QUOTE SYSTEM:SIZE-T)."
   (ecase base-type
     (:char "\"%hhd\"")
     (:unsigned-char "\"hhu\"")
-    (:short "\"%hu\"")
-    (:unsigned-short "\"%hd\"")
+    (:short "\"%hd\"")
+    (:unsigned-short "\"%hu\"")
     (:int "\"%d\"")
     (:unsigned-int "\"%u\"")
     (:long "\"%ld\"")
