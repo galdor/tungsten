@@ -1,5 +1,10 @@
+(include "openssl/opensslv.h")
 (include "openssl/ssl.h")
 (include "openssl/err.h")
+
+(code "#if !(defined OPENSSL_VERSION_MAJOR) || OPENSSL_VERSION_MAJOR < 3")
+(code "#  error OpenSSL 3.x required")
+(code "#endif")
 
 (constant err-system-flag "ERR_SYSTEM_FLAG" :unsigned-int)
 (constant err-system-mask "ERR_SYSTEM_MASK")
