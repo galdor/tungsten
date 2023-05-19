@@ -1,3 +1,5 @@
+#+sbcl (require :sb-cltl2)
+
 ;; Create and use a temporary package to avoid polluting :CL-USER
 (defpackage :tungsten-init
   (:use :cl)
