@@ -23,6 +23,5 @@
               (vector-push-extend value values)
               (setf start (1+ value-end))))))
     (let ((virtual (* (aref values 0) page-size))
-          (resident (* (aref values 1) page-size))
-          (shared (* (aref values 2) page-size)))
-      (values virtual resident shared))))
+          (resident (* (aref values 1) page-size)))
+      (values virtual resident))))

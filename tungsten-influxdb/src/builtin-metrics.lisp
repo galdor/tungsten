@@ -14,12 +14,11 @@
                       :fields `(("count" . ,nb-threads))))))
 
 (defun collect-builtin-metrics/memory ()
-  (multiple-value-bind (virtual resident shared)
+  (multiple-value-bind (virtual resident)
       (system:memory-usage)
     (list (make-point "tungsten.system.memory"
                       :fields `(("virtual" . ,virtual)
-                                ("resident" . ,resident)
-                                ("shared" . ,shared))))))
+                                ("resident" . ,resident))))))
 
 (defun collect-builtin-metrics/file-descriptors ()
   (let ((count (system:count-file-descriptors))

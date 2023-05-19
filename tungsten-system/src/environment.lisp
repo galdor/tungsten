@@ -22,9 +22,9 @@ if there is no limit."
   (sysconf :sc-pagesize))
 
 (defun memory-usage ()
-  "Return three values indicating the amount of memory used by the current
-process: the amount of virtual memory, the amount of resident memory and the
-amount of shared memory. All values are specified in bytes."
+  "Return two values indicating the amount of memory used by the current
+process: the amount of virtual memory and the amount of resident memory. All
+values are specified in bytes."
   (%memory-usage))
 
 (defun environment-variable (name)
