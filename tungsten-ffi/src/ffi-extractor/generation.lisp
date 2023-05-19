@@ -42,6 +42,8 @@
     (case (car form)
       (include
        nil)
+      (code
+       (generate-code (cdr form) stream))
       (constant
        (generate-constant (cdr form) stream))
       (type
@@ -57,6 +59,10 @@
       (t
        (error "invalid manifest form ~S" form))))
   (format stream "}~%"))
+
+(defun generate-code (form stream)
+  (destructuring-bind (string) form
+    (write-string string stream)))
 
 (defun generate-constant (form stream)
   (destructuring-bind (name c-name &optional (type-form :int)) form
