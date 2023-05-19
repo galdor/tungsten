@@ -16,43 +16,29 @@
    (cflags
     :type list
     :initarg :cflags
-    :initform nil)
+    :initform nil
+    :accessor shared-library-cflags)
    (ldflags
     :type list
     :initarg :ldflags
-    :initform nil)
+    :initform nil
+    :accessor shared-library-ldflags)
    (libs
     :type list
     :initarg :libs
-    :initform nil))
+    :initform nil
+    :accessor shared-library-libs))
   (:default-initargs
    :type "so")
   (:documentation
    "The ASDF component representing a shared library and the C source and header
 files it is build from."))
 
-(defmethod shared-library-filename ((library shared-library))
+(defun shared-library-filename (library)
+  (declare (type shared-library library))
   (let ((name (asdf:component-name library)))
     (uiop:make-pathname* :name (concatenate 'string "lib" name)
                          :type (asdf:file-type library))))
-
-(defmethod shared-library-cflags-arguments ((library shared-library))
-  (with-slots (cflags) library
-    (mapcar (lambda (flag)
-              (concatenate 'string "-" flag))
-            cflags)))
-
-(defmethod shared-library-ldflags-arguments ((library shared-library))
-  (with-slots (ldflags) library
-    (mapcar (lambda (flag)
-              (concatenate 'string "-" flag))
-            ldflags)))
-
-(defmethod shared-library-libs-arguments ((library shared-library))
-  (with-slots (libs) library
-    (mapcar (lambda (lib)
-              (concatenate 'string "-l" lib))
-            libs)))
 
 (defmethod asdf:perform ((op asdf:compile-op) (library shared-library))
   (let* ((library-file (asdf:output-file op library))
@@ -67,11 +53,11 @@ files it is build from."))
           (t (error "Unhandled shared library source type ~S." type)))))
     (let ((command (append (list compiler)
                            (list "-shared" "-fPIC")
-                           (shared-library-cflags-arguments library)
-                           (shared-library-ldflags-arguments library)
+                           (shared-library-cflags library)
+                           (shared-library-ldflags library)
                            (list "-o" (namestring library-file))
                            (mapcar #'namestring c-source-files)
-                           (shared-library-libs-arguments library))))
+                           (shared-library-libs library))))
       (uiop:run-program command :force-shell t
                                 :output *standard-output*
                                 :error-output *error-output*))

@@ -48,7 +48,7 @@
     "ffi-test"
     :source-files ("ffi-test.c")
     :header-files ("ffi-test.h")
-    :cflags ("std=c99" "Wall" "Wextra" "Werror" "Wsign-conversion"))
+    :cflags ("-std=c99" "-Wall" "-Wextra" "-Werror" "-Wsign-conversion"))
    (:file "ffi-test-definitions")
    (:file "memory")
    (:file "foreign-values")
