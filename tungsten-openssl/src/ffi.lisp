@@ -4,7 +4,19 @@
 ;;; Library
 ;;;
 
-(ffi:use-foreign-library 'ssl "libssl.so.3")
+;; Detecting the right version of the OpenSSL shared library is a hard
+;; problem. On Linux is is usually available as libssl.so.3 somewhere
+;; accessible by default. On FreeBSD, the base system uses an old OpenSSL
+;; version, so 3.x must be installed from a package (e.g. openssl31).
+;; Infortunately it is installed as libssl.so.13, so we reference the absolute
+;; path of the libssl.so symbolic link.
+;;
+;; All of this is brittle and will probably cause issues on other platforms.
+;; We will improve it one step at a time.
+(ffi:use-foreign-library
+ 'ssl
+ #+freebsd "/usr/local/lib/libssl.so"
+ #-freebsd "libssl.so.3")
 
 (defun library-version ()
   "Return a string containing the version number of the OpenSSL library."
