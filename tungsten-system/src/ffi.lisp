@@ -1,16 +1,25 @@
 (in-package :system)
 
 ;;;
+;;; Libraries
+;;;
+
+#+freebsd
+(ffi:use-foreign-library 'kvm "libkvm.so")
+
+;;;
 ;;; Environment
 ;;;
 
-;; HOST_NAME_MAX is not available on FreeBSD for questionable reasons, so we
-;; use a large value and check for truncation.
-;;
-;; Note that we cannot use uname() because the size of the character arrays in
-;; the ustname structure is not specified.
+(defun getpid ()
+  (system-funcall ("getpid" (() pid-t))))
 
 (defun gethostname ()
+  ;; HOST_NAME_MAX is not available on FreeBSD for questionable reasons, so we
+  ;; use a large value and check for truncation.
+  ;;
+  ;; Note that we cannot use uname() because the size of the character arrays
+  ;; in the ustname structure is not specified.
   (let ((hostname-length 256))
     (ffi:with-foreign-value (%hostname :char :count hostname-length)
       (ffi:clear-foreign-memory %hostname hostname-length)
@@ -37,6 +46,67 @@
   (ffi:with-foreign-string (%name name)
     (ffi:decode-foreign-string
      (system-funcall ("getenv" ((:pointer) :pointer) %name)))))
+
+#+bsd
+(defun kinfo-getfile (pid)
+  (ffi:with-foreign-value (%count :int)
+    (let ((%info (system-funcall
+                  ("kinfo_getfile" ((pid-t :pointer) :pointer) pid %count))))
+      (system-funcall ("free" ((:pointer) :void) %info)))
+    (ffi:foreign-value %count :int)))
+
+     ;; kvm_t *
+     ;; kvm_openfiles(const char *execfile, const char *corefile,
+     ;;     const char *swapfile, int flags, char *errbuf);
+
+     ;; int
+     ;; kvm_close(kvm_t *kd);
+
+
+#+freebsd
+(defmacro with-kvm-openfiles ((%kvm exec-file core-file swap-file flags)
+                              &body body)
+  (let ((%exec-file (gensym "%EXEC-FILE-"))
+        (%core-file (gensym "%CORE-FILE-"))
+        (%swap-file (gensym "%SWAP-FILE-"))
+        (%error-buf (gensym "%ERROR-BUF-")))
+    `(ffi:with-foreign-strings ((,%exec-file ,exec-file)
+                                (,%core-file ,core-file)
+                                (,%swap-file ,swap-file))
+       (ffi:with-foreign-value (,%error-buf :char :count 1024)
+         (ffi:clear-foreign-memory ,%error-buf 1024)
+         (let ((,%kvm
+                 (system-funcall
+                  ("kvm_openfiles"
+                   ((:pointer :pointer :pointer kvm-openfiles-flags :pointer)
+                    :pointer)
+                   ,%exec-file ,%core-file ,%swap-file ,flags ,%error-buf)
+                  :error-value-function
+                  (lambda (return-value)
+                    (declare (ignore return-value))
+                    nil)
+                  :error-description-function
+                  (lambda (error-value)
+                    (declare (ignore error-value))
+                    (ffi:decode-foreign-string ,%error-buf)))))
+           (unwind-protect
+                (progn
+                  ,@body)
+             (system-funcall ("kvm_close" ((:pointer) :int) ,%kvm))))))))
+
+#+freebsd
+(defmacro do-kvm-getprocs ((%proc %kvm op arg) &body body)
+  (let ((%count (gensym "%COUNT-"))
+        (kinfo-proc-size (gensym "KINFO-PROC-SIZE-")))
+    `(ffi:with-foreign-value (,%count :int)
+       (let ((,kinfo-proc-size (ffi:foreign-type-size 'kinfo-proc))
+             (,%proc
+               (system-funcall
+                ("kvm_getprocs" ((:pointer kern-proc :int :pointer) :pointer)
+                                ,%kvm ,op ,arg ,%count))))
+         (dotimes (i (ffi:foreign-value ,%count :int))
+           ,@body
+           (setf ,%proc (ffi:pointer+ ,%proc ,kinfo-proc-size)))))))
 
 ;;;
 ;;; Time

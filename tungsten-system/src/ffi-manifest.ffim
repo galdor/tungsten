@@ -8,6 +8,13 @@
 (type intptr-t "intptr_t")
 (type uintptr-t "uintptr_t")
 
+(type pid-t "pid_t")
+
+#+freebsd
+(type vm-size-t "vm_size_t")
+#+freebsd
+(type segsz-t "segsz_t")
+
 ;;;
 ;;; Locales
 ;;;
@@ -133,6 +140,11 @@
 (include "sys/resource.h")
 (include "unistd.h")
 
+#+freebsd
+(include "sys/user.h") ; kinfo_proc
+#+freebsd
+(include "sys/sysctl.h") ; KERN_PROC_*
+
 (enum
  (resource-limit-value 'rlim-t)
  ((:rlim-infinity "RLIM_INFINITY")
@@ -157,6 +169,31 @@
 (enum
  (sysconf-name :int)
  ((:sc-pagesize "_SC_PAGESIZE")))
+
+#+freebsd
+(bitset
+ (kvm-openfiles-flags :int)
+ ((:o-rdonly "O_RDONLY")
+  (:o-wronly "O_WRONLY")
+  (:o-rdwr "O_RDWR")))
+
+#+freebsd
+(struct
+ (kinfo-proc "struct kinfo_proc")
+ ((:ki-size 'vm-size-t "ki_size")
+  (:ki-rssize 'segsz-t "ki_rssize")))
+
+#+freebsd
+(enum
+ (kern-proc :int)
+ ((:kern-proc-all "KERN_PROC_ALL")
+  (:kern-proc-proc "KERN_PROC_PROC")
+  (:kern-proc-pid "KERN_PROC_PID")
+  (:kern-proc-pgrp "KERN_PROC_PGRP")
+  (:kern-proc-session "KERN_PROC_SESSION")
+  (:kern-proc-tty "KERN_PROC_TTY")
+  (:kern-proc-uid "KERN_PROC_UID")
+  (:kern-proc-ruid "KERN_PROC_RUID")))
 
 ;;;
 ;;; IO multiplexing (Linux)

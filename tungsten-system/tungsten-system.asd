@@ -35,6 +35,7 @@
    (:file "tcp-stream")
    (:file "tcp-client")
    (:file "tcp-server")
+   (:file "environment-bsd" :if-feature :bsd)
    (:file "environment-linux" :if-feature :linux)
    (:file "environment"))
   :in-order-to ((test-op (test-op "tungsten-system/test"))))
