@@ -1,6 +1,11 @@
 (in-package :ffi-extractor)
 
-(defparameter *cflags* '("Wall" "Werror"))
+(defparameter *cflags*
+  '("-Wall" "-Werror"
+    "-I/usr/local/include"))
+
+(defparameter *ldflags*
+  '("-L /usr/local/lib"))
 
 (defun extract (manifest-path &key output-path
                                    c-program-path
@@ -21,7 +26,8 @@
            (mapcar (lambda (flag) (concatenate 'string "-" flag))
                    (append *cflags* cflags)))
          (ldflags-args
-           (mapcar (lambda (flag) (concatenate 'string "-" flag)) ldflags))
+           (mapcar (lambda (flag) (concatenate 'string "-" flag))
+                   (append *ldflags* ldflags)))
          (libs-args
            (mapcar (lambda (flag) (concatenate 'string "-l" flag)) libs)))
     ;; Generate the program
