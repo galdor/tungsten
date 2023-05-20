@@ -84,7 +84,8 @@
   (destructuring-bind ((name type-form) (&rest constants)) form
     (let* ((type (resolve-foreign-type-quoted-form type-form))
            (base-type (ffi:foreign-base-type type)))
-      (format stream "puts(\"\\n(ffi:define-enum (~A :base-type ~S)\");~%"
+      (format stream "puts(\"\\n(ffi:define-foreign-enumeration ~
+                             (~A :base-type ~S)\");~%"
               name type-form)
       (format stream "puts(\"(\");~%")
       (dolist (constant constants)
@@ -98,7 +99,8 @@
   (destructuring-bind ((name type-form) (&rest constants)) form
     (let* ((type (resolve-foreign-type-quoted-form type-form))
            (base-type (ffi:foreign-base-type type)))
-      (format stream "puts(\"\\n(ffi:define-bitset (~A :base-type ~S)\");~%"
+      (format stream "puts(\"\\n(ffi:define-foreign-bitset ~
+                             (~A :base-type ~S)\");~%"
               name type-form)
       (format stream "puts(\"(\");~%")
       (dolist (constant constants)
@@ -110,8 +112,8 @@
 
 (defun generate-c-struct (form stream)
   (destructuring-bind ((name c-name) (&rest members)) form
-    (format stream "printf(\"\\n(ffi:define-struct (~A :size %zu ~
-                                                    :sort-members t)\", ~
+    (format stream "printf(\"\\n(ffi:define-foreign-structure ~
+                             (~A :size %zu :sort-members t)\", ~
                            sizeof(~A));~%"
             name c-name)
     (format stream "puts(\"(\");~%")

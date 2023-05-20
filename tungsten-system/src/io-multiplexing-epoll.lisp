@@ -21,18 +21,20 @@
 (defmethod add-io-watcher ((base epoll-io-base) (watcher io-watcher))
   (with-slots (fd events) watcher
     (ffi:with-foreign-value (%event 'epoll-event)
-      (setf (ffi:struct-member %event 'epoll-event :events)
+      (setf (ffi:foreign-structure-member %event 'epoll-event :events)
             (io-events-to-epoll-events events))
-      (let ((%data (ffi:struct-member-pointer %event 'epoll-event :data)))
+      (let ((%data (ffi:foreign-structure-member-pointer %event 'epoll-event
+                                                         :data)))
         (setf (ffi:foreign-union-member %data 'epoll-data :fd) fd))
       (epoll-ctl (epoll-io-base-fd base) :epoll-ctl-add fd %event))))
 
 (defmethod update-io-watcher ((base epoll-io-base) (watcher io-watcher) events)
   (with-slots (fd) watcher
     (ffi:with-foreign-value (%event 'epoll-event)
-      (setf (ffi:struct-member %event 'epoll-event :events)
+      (setf (ffi:foreign-structure-member %event 'epoll-event :events)
             (io-events-to-epoll-events events))
-      (let ((%data (ffi:struct-member-pointer %event 'epoll-event :data)))
+      (let ((%data (ffi:foreign-structure-member-pointer %event 'epoll-event
+                                                         :data)))
         (setf (ffi:foreign-union-member %data 'epoll-data :fd) fd))
       (epoll-ctl (epoll-io-base-fd base) :epoll-ctl-mod fd %event))))
 
@@ -45,8 +47,10 @@
   (with-slots ((epoll-fd fd)) base
     (with-epoll-wait (%event epoll-fd 32 (or timeout -1))
       (let* ((events (epoll-events-to-io-events
-                      (ffi:struct-member %event 'epoll-event :events)))
-             (%data (ffi:struct-member-pointer %event 'epoll-event :data))
+                      (ffi:foreign-structure-member %event 'epoll-event
+                                                    :events)))
+             (%data (ffi:foreign-structure-member-pointer %event 'epoll-event
+                                                          :data))
              (fd (ffi:foreign-union-member %data 'epoll-data :fd)))
         (dispatch-fd-event base fd events)))))
 

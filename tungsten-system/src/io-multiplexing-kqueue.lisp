@@ -29,9 +29,9 @@
            (type (or fd ffi:pointer) ident)
            (type list flags)
            (type keyword filter))
-  (setf (ffi:struct-member %kevent 'kevent :ident) ident)
-  (setf (ffi:struct-member %kevent 'kevent :filter) filter)
-  (setf (ffi:struct-member %kevent 'kevent :flags) flags))
+  (setf (ffi:foreign-structure-member %kevent 'kevent :ident) ident)
+  (setf (ffi:foreign-structure-member %kevent 'kevent :filter) filter)
+  (setf (ffi:foreign-structure-member %kevent 'kevent :flags) flags))
 
 (defmethod add-io-watcher ((base kqueue-io-base) (watcher io-watcher))
   (with-slots (fd events) watcher
@@ -77,8 +77,9 @@
     (ffi:with-foreign-value (%timeout 'timespec)
       (when timeout
         (multiple-value-bind (seconds milliseconds) (floor timeout 1000)
-          (setf (ffi:struct-member %timeout 'timespec :tv-sec) seconds)
-          (setf (ffi:struct-member %timeout 'timespec :tv-nsec)
+          (setf (ffi:foreign-structure-member %timeout 'timespec :tv-sec)
+                seconds)
+          (setf (ffi:foreign-structure-member %timeout 'timespec :tv-nsec)
                 (* milliseconds 1000000))))
       (let ((nb-events (kevent (kqueue-io-base-fd base)
                                (ffi:null-pointer) 0 %kevents 32
@@ -87,8 +88,9 @@
           (let* ((%kevent
                    (ffi:pointer+ %kevents
                                  (* i (ffi:foreign-type-size 'kevent))))
-                 (fd (ffi:struct-member %kevent 'kevent :ident))
-                 (filter (ffi:struct-member %kevent 'kevent :filter))
+                 (fd (ffi:foreign-structure-member %kevent 'kevent :ident))
+                 (filter
+                   (ffi:foreign-structure-member %kevent 'kevent :filter))
                  (event (kqueue-filter-to-io-event filter)))
             (when event
               (dispatch-fd-event base fd (list event)))))))))

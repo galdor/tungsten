@@ -4,7 +4,7 @@
   (ffi:with-foreign-value (%timespec 'timespec)
     (system:system-funcall
      ("clock_gettime" ((clock-type :pointer) :int) clock-id %timespec))
-    (ffi:with-struct-members (((seconds :tv-sec)
-                               (nanoseconds :tv-nsec))
-                              %timespec 'timespec)
+    (ffi:with-foreign-structure-members (((seconds :tv-sec)
+                                          (nanoseconds :tv-nsec))
+                                         %timespec 'timespec)
       (values seconds nanoseconds))))

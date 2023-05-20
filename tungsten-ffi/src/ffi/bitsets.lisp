@@ -1,16 +1,16 @@
 (in-package :ffi)
 
-(defclass bitset (foreign-type)
+(defclass foreign-bitset (foreign-type)
   ((constants
     :type list
     :initarg :constants
-    :reader bitset-constants))
+    :reader foreign-bitset-constants))
   (:default-initargs
    :base-type :int
-   :encoder 'encode-bitset-value
-   :decoder 'decode-bitset-value))
+   :encoder 'encode-foreign-bitset-value
+   :decoder 'decode-foreign-bitset-value))
 
-(defun encode-bitset-value (bitset integer-or-values)
+(defun encode-foreign-bitset-value (bitset integer-or-values)
   (declare (type (or (integer 0) list) integer-or-values))
   (etypecase integer-or-values
     (integer
@@ -21,13 +21,13 @@
                 (etypecase constant-or-value
                   (symbol
                    (or (cdr (assoc constant-or-value constants))
-                       (error "unknown constant ~S for bitset ~S"
+                       (error "unknown constant ~S for foreign bitset ~S"
                               constant-or-value name)))
                   (integer
                    constant-or-value))))
          (apply #'logior (mapcar #'encode-value integer-or-values)))))))
 
-(defun decode-bitset-value (bitset value)
+(defun decode-foreign-bitset-value (bitset value)
   (declare (type integer value))
   (with-slots (name constants) bitset
     (let ((values nil))
@@ -35,7 +35,8 @@
         (unless (zerop (logand value (cdr constant)))
           (push (car constant) values))))))
 
-(defmacro define-bitset ((name &key (base-type :int)) (&rest constants))
+(defmacro define-foreign-bitset ((name &key (base-type :int))
+                                 (&rest constants))
   (let ((constant-pairs
           (mapcar
            (lambda (def)
@@ -43,6 +44,7 @@
                (cons constant value)))
            constants)))
     `(register-foreign-type
-      (make-instance 'bitset :name ',name
-                             :base-type (foreign-base-type ,base-type)
-                             :constants ',constant-pairs))))
+      (make-instance 'foreign-bitset
+                     :name ',name
+                     :base-type (foreign-base-type ,base-type)
+                     :constants ',constant-pairs))))

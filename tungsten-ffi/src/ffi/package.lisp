@@ -31,14 +31,14 @@
    #:foreign-string-length
    #:decode-foreign-string
 
-   #:define-enum
+   #:define-foreign-enumeration
 
-   #:define-bitset
+   #:define-foreign-bitset
 
-   #:define-struct
-   #:struct-member
-   #:struct-member-pointer
-   #:with-struct-members
+   #:define-foreign-structure
+   #:foreign-structure-member
+   #:foreign-structure-member-pointer
+   #:with-foreign-structure-members
 
    #:define-foreign-union
    #:foreign-union-member

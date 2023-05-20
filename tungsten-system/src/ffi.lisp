@@ -34,9 +34,9 @@
   (ffi:with-foreign-value (%limit 'rlimit)
     (ffi:clear-foreign-memory %limit (ffi:foreign-type-size 'rlimit))
     (system-funcall ("getrlimit" ((resource :pointer) :int) resource %limit))
-    (ffi:with-struct-members (((current :rlim-cur)
-                               (max :rlim-max))
-                              %limit 'rlimit)
+    (ffi:with-foreign-structure-members (((current :rlim-cur)
+                                          (max :rlim-max))
+                                         %limit 'rlimit)
       (values current max))))
 
 (defun sysconf (name)
@@ -115,9 +115,9 @@
 (defun initialize-timeval (%pointer microseconds)
   (declare (type ffi:pointer %pointer)
            (type (integer 0) microseconds))
-  (setf (ffi:struct-member %pointer 'timeval :sec)
+  (setf (ffi:foreign-structure-member %pointer 'timeval :sec)
         (floor microseconds 1000000))
-  (setf (ffi:struct-member %pointer 'timeval :usec)
+  (setf (ffi:foreign-structure-member %pointer 'timeval :usec)
         (mod microseconds 1000000)))
 
 ;;;
@@ -251,7 +251,8 @@
         (core:abort-protect
             (let* ((family
                      (ffi:decode-foreign-value
-                      (ffi:struct-member %address 'sockaddr-storage :ss-family)
+                      (ffi:foreign-structure-member %address 'sockaddr-storage
+                                                    :ss-family)
                       'address-family))
                    (address-class
                      (case family
@@ -293,7 +294,9 @@
                    ((ffi:null-pointer-p ,%info)
                     nil)
                 ,@body
-                (setf ,%info (ffi:struct-member ,%info 'addrinfo :ai-next)))
+                (setf ,%info
+                      (ffi:foreign-structure-member ,%info 'addrinfo
+                                                    :ai-next)))
            (system-funcall
             ("freeaddrinfo" ((:pointer) :void)
                             (ffi:foreign-value ,%result :pointer))))))))
