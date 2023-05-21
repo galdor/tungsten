@@ -33,7 +33,6 @@
   (:schema "SQLITE_SCHEMA")
   (:toobig "SQLITE_TOOBIG")
   (:warning "SQLITE_WARNING")
-
   (:abort-rollback "SQLITE_ABORT_ROLLBACK")
   (:auth-user "SQLITE_AUTH_USER")
   (:busy-recovery "SQLITE_BUSY_RECOVERY")

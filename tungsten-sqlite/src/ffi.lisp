@@ -6,9 +6,12 @@
 
 (ffi:use-foreign-library 'sqlite "libsqlite3.so")
 
-(defun library-version ()
+(defun sqlite3-libversion ()
   (let ((%string (ffi:foreign-funcall "sqlite3_libversion" (() :pointer))))
     (ffi:decode-foreign-string %string)))
+
+(defun sqlite3-threadsafe ()
+  (ffi:foreign-funcall "sqlite3_threadsafe" (() :int)))
 
 ;;;
 ;;; Errors

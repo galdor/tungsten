@@ -12,7 +12,8 @@
    ("ffi-extractor:manifest"
     "ffi-manifest"
     :package :sqlite)
-   (:file "ffi"))
+   (:file "ffi")
+   (:file "sqlite"))
   :in-order-to ((test-op (test-op "tungsten-sqlite/test"))))
 
 (defsystem "tungsten-sqlite/test"
