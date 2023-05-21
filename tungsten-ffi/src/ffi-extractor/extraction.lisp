@@ -1,8 +1,6 @@
 (in-package :ffi-extractor)
 
-(defparameter *cflags*
-  '("-Wall" "-Werror"
-    "-I/usr/local/include"))
+(defparameter *cflags* '("-Wall" "-Werror"))
 
 (defun extract (manifest-path &key output-path
                                    c-program-path

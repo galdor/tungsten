@@ -13,7 +13,8 @@
   ((:file "package")
    ("ffi-extractor:manifest"
     "ffi-manifest"
-    :package :openssl)
+    :package :openssl
+    :cflags (#+freebsd "-I/usr/local/include"))
    (:file "ffi")
    (:file "utils")
    (:file "tls-stream")
