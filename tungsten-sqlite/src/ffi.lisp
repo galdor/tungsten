@@ -4,7 +4,7 @@
 ;;; Library
 ;;;
 
-(ffi:use-foreign-library 'sqlite "libsqlite3.so")
+(ffi:use-asdf-shared-library 'sqlite "tungsten-sqlite" "sqlite")
 
 (defun library-version ()
   (let ((%string (ffi:foreign-funcall "sqlite3_libversion" (() :pointer))))

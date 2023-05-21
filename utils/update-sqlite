@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -eu
+
+root=$(realpath $(dirname "$0")/..)
+
+srcdir=$root/tungsten-sqlite/src/sqlite
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <archive-uri>" >&2
+    exit 1
+fi
+
+uri=$1
+
+curl -sSfL -o /tmp/sqlite.zip $uri
+unzip -q -d $srcdir/ /tmp/sqlite.zip
+mv $srcdir/sqlite-amalgamation-*/sqlite3.[hc] $srcdir/
+rm -rf $srcdir/sqlite-amalgamation-*
