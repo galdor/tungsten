@@ -36,8 +36,10 @@
       (push :memory flags))
     (let ((%database (sqlite3-open-v2 path-string flags nil)))
       (core:abort-protect
-          (make-instance 'database :path path
-                                   :%database %database)
+          (progn
+            (sqlite3-extended-result-codes %database t)
+            (make-instance 'database :path path
+                                     :%database %database))
         (sqlite3-close-v2 %database)))))
 
 (defun close-database (db)
