@@ -9,6 +9,8 @@
 
    #:size-t
    #:ssize-t
+   #:intptr-t
+   #:uintptr-t
 
    #:mutex
    #:make-mutex
