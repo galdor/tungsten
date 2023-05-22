@@ -1,5 +1,8 @@
 (include "sqlite3.h")
 
+(type int64 "sqlite3_int64")
+(type uint64 "sqlite3_uint64")
+
 (enum
  (result-code :int)
  ((:abort "SQLITE_ABORT")
@@ -121,3 +124,22 @@
   (:privatecache "SQLITE_OPEN_PRIVATECACHE")
   (:exrescode "SQLITE_OPEN_EXRESCODE")
   (:nofollow "SQLITE_OPEN_NOFOLLOW")))
+
+(bitset
+ (prepare-flags :int)
+ ((:persistent "SQLITE_PREPARE_PERSISTENT")
+  (:normalize "SQLITE_PREPARE_NORMALIZE")
+  (:no-vtab "SQLITE_PREPARE_NO_VTAB")))
+
+(enum
+ (destructor-type 'system:intptr-t)
+ ((:static "SQLITE_STATIC")
+  (:transient "SQLITE_TRANSIENT")))
+
+(enum
+ (data-type :int)
+ ((:integer "SQLITE_INTEGER")
+  (:float "SQLITE_FLOAT")
+  (:blob "SQLITE_BLOB")
+  (:null "SQLITE_NULL")
+  (:text "SQLITE_TEXT")))

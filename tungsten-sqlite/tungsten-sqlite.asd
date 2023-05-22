@@ -4,7 +4,8 @@
   :defsystem-depends-on
   ("tungsten-ffi")
   :depends-on
-  ("tungsten-core")
+  ("tungsten-core"
+   "tungsten-system")
   :pathname "src"
   :serial t
   :components

@@ -10,7 +10,8 @@
     :reader database-path)
    (%database
     :type ffi:pointer
-    :initarg :%database)))
+    :initarg :%database
+    :reader database-%database)))
 
 (defmethod print-object ((db database) stream)
   (print-unreadable-object (db stream :type t)
