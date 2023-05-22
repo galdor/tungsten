@@ -107,3 +107,17 @@
   (:readonly-recovery "SQLITE_READONLY_RECOVERY")
   (:readonly-rollback "SQLITE_READONLY_ROLLBACK")
   (:warning-autoindex "SQLITE_WARNING_AUTOINDEX")))
+
+(bitset
+ (open-flags :int)
+ ((:readonly "SQLITE_OPEN_READONLY")
+  (:readwrite "SQLITE_OPEN_READWRITE")
+  (:create "SQLITE_OPEN_CREATE")
+  (:uri "SQLITE_OPEN_URI")
+  (:memory "SQLITE_OPEN_MEMORY")
+  (:nomutex "SQLITE_OPEN_NOMUTEX")
+  (:fullmutex "SQLITE_OPEN_FULLMUTEX")
+  (:sharedcache "SQLITE_OPEN_SHAREDCACHE")
+  (:privatecache "SQLITE_OPEN_PRIVATECACHE")
+  (:exrescode "SQLITE_OPEN_EXRESCODE")
+  (:nofollow "SQLITE_OPEN_NOFOLLOW")))

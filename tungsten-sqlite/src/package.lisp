@@ -6,4 +6,9 @@
    #:sqlite-error-code
    #:sqlite-error-description
 
-   #:library-version))
+   #:library-version
+
+   #:database-access-mode
+   #:open-database
+   #:close-database
+   #:with-database))

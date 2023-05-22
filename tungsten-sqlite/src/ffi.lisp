@@ -48,3 +48,24 @@
            (error 'sqlite-error :function ,name
                                 :code ,code
                                 :description ,description))))))
+
+;;;
+;;; Databases
+;;;
+
+(defun sqlite3-open-v2 (filename flags vfs-module-name)
+  (ffi:with-foreign-strings ((%filename filename)
+                             (%vfs-module-name vfs-module-name))
+    (ffi:with-foreign-value (%database :pointer)
+      (sqlite-funcall ("sqlite3_open_v2"
+                       ((:pointer :pointer open-flags :pointer) :int)
+                       %filename %database flags %vfs-module-name))
+      (ffi:foreign-value %database :pointer))))
+
+(defun sqlite3-close-v2 (%db)
+  (sqlite-funcall ("sqlite3_close_v2" ((:pointer) :int) %db)))
+
+(defun sqlite3-extended-result-codes (%db enable)
+  (sqlite-funcall
+   ("sqlite3_extended_result_codes" ((:pointer :int) :int)
+                                    %db (if enable 1 0))))
