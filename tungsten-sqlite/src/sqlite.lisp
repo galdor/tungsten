@@ -1,5 +1,7 @@
 (in-package :sqlite)
 
+(defvar *database* nil)
+
 (deftype database-access-mode ()
   '(member :read-only :read-write))
 
@@ -48,16 +50,20 @@
   (with-slots (%database) db
     (sqlite3-close-v2 %database)))
 
-(defmacro with-database ((db path &rest options) &body body)
-  `(let ((,db (open-database ,path ,@options)))
+(defmacro with-database ((path &rest options) &body body)
+  `(let ((*database* (open-database ,path ,@options)))
      (unwind-protect
           (progn
             ,@body)
-       (close-database db))))
+       (close-database *database*))))
 
-(defmacro do-query-rows ((row db query &optional parameters) &body body)
+(defmacro do-query-rows ((row query &optional parameters
+                                    &key (database *database*))
+                         &body body)
+  (declare #+sbcl (sb-ext:muffle-conditions style-warning))
   (let ((%stmt (gensym "%STMT-")))
-    `(let ((,%stmt (sqlite3-prepare-v3 (database-%database ,db) ,query nil)))
+    `(let ((,%stmt (sqlite3-prepare-v3 (database-%database ,database)
+                                       ,query nil)))
        (unwind-protect
             (progn
               (bind-statement-parameters ,%stmt ,parameters)
@@ -68,14 +74,24 @@
                   ,@body)))
          (sqlite3-finalize ,%stmt)))))
 
-(defun query (db query &optional parameters)
+(defun query (query &optional parameters
+                    &key (database *database*))
+  (declare (type string query)
+           (type sequence parameters)
+           (type database database)
+           #+sbcl (sb-ext:muffle-conditions style-warning))
   (let ((results nil))
-    (do-query-rows (row db query parameters)
+    (do-query-rows (row query parameters :database database)
       (push row results))
     (nreverse results)))
 
-(defun query-row (db query &optional parameters)
-  (do-query-rows (row db query parameters)
+(defun query-row (query &optional parameters
+                        &key (database *database*))
+  (declare (type string query)
+           (type sequence parameters)
+           (type database database)
+           #+sbcl (sb-ext:muffle-conditions style-warning))
+  (do-query-rows (row query parameters :database database)
     (return-from query-row row)))
 
 (defun bind-statement-parameters (%stmt parameters)

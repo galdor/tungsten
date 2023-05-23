@@ -8,6 +8,7 @@
    #:sqlite-error-code
    #:sqlite-error-description
 
+   #:*database*
    #:database-access-mode
    #:open-database
    #:close-database
