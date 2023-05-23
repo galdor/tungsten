@@ -129,6 +129,9 @@
       (t
        (sqlite-error "sqlite3_step" code)))))
 
+(defun sqlite3-data-count (%stmt)
+  (ffi:foreign-funcall "sqlite3_data_count" ((:pointer) :int) %stmt))
+
 (defun sqlite3-column-type (%stmt index)
   (ffi:foreign-funcall "sqlite3_column_type"
                        ((:pointer :int) data-type) %stmt index))
@@ -156,6 +159,3 @@
                                       ((:pointer :int) :pointer) %stmt index))
         (length (sqlite3-column-bytes %stmt index)))
     (ffi:decode-foreign-string %string :length length)))
-
-(defun sqlite3-reset (%stmt)
-  (sqlite-funcall ("sqlite3_reset" ((:pointer) :int) %stmt)))

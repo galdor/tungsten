@@ -54,3 +54,87 @@
           (progn
             ,@body)
        (close-database db))))
+
+(defmacro do-query-rows ((row db query &optional parameters) &body body)
+  (let ((%stmt (gensym "%STMT-")))
+    `(let ((,%stmt (sqlite3-prepare-v3 (database-%database ,db) ,query nil)))
+       (unwind-protect
+            (progn
+              (bind-statement-parameters ,%stmt ,parameters)
+              (loop
+                (unless (sqlite3-step ,%stmt)
+                  (return))
+                (let ((,row (read-statement-row ,%stmt)))
+                  ,@body)))
+         (sqlite3-finalize ,%stmt)))))
+
+(defun query (db query &optional parameters)
+  (let ((results nil))
+    (do-query-rows (row db query parameters)
+      (push row results))
+    (nreverse results)))
+
+(defun query-row (db query &optional parameters)
+  (do-query-rows (row db query parameters)
+    (return-from query-row row)))
+
+(defun bind-statement-parameters (%stmt parameters)
+  (declare (type ffi:pointer %stmt)
+           (type sequence parameters))
+  (let ((parameter-vector (coerce parameters 'vector)))
+    (dotimes (i (length parameter-vector))
+      (bind-statement-parameter %stmt (1+ i) (aref parameter-vector i)))))
+
+(defun bind-statement-parameter (%stmt i parameter)
+  (declare (type ffi:pointer %stmt)
+           (type (integer 1) i))
+  (let ((parameter-type (query-parameter-type parameter))
+        (parameter-value (if (consp parameter) (cdr parameter) parameter)))
+    (ecase parameter-type
+      (:null
+       (sqlite3-bind-null %stmt i))
+      (:integer
+       (sqlite3-bind-int64 %stmt i parameter-value))
+      (:float
+       (sqlite3-bind-double %stmt i (float parameter-value 0.0d0)))
+      (:text
+       (sqlite3-bind-text %stmt i parameter-value))
+      (:blob
+       (sqlite3-bind-blob64 %stmt i parameter-value)))))
+
+(defun read-statement-row (%stmt)
+  (declare (type ffi:pointer %stmt))
+  (let* ((nb-columns (sqlite3-data-count %stmt))
+         (row (make-array nb-columns)))
+    (dotimes (i nb-columns row)
+      (setf (aref row i) (read-statement-column %stmt i)))))
+
+(defun read-statement-column (%stmt index)
+  (declare (type ffi:pointer %stmt)
+           (type (integer 0) index))
+  (ecase (sqlite3-column-type %stmt index)
+    (:null
+     nil)
+    (:integer
+     (sqlite3-column-int64 %stmt index))
+    (:float
+     (sqlite3-column-double %stmt index))
+    (:text
+     (sqlite3-column-text %stmt index))
+    (:blob
+     (sqlite3-column-blob %stmt index))))
+
+(defun query-parameter-type (value)
+  (cond
+    ((null value)
+     :null)
+    ((consp value)
+     (car value))
+    ((integerp value)
+     :integer)
+    ((floatp value)
+     :float)
+    ((stringp value)
+     :text)
+    ((arrayp value)
+     :blob)))
