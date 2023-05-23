@@ -14,7 +14,8 @@
     "ffi-manifest"
     :package :sqlite)
    (:file "ffi")
-   (:file "sqlite"))
+   (:file "sqlite")
+   (:file "transactions"))
   :in-order-to ((test-op (test-op "tungsten-sqlite/test"))))
 
 (defsystem "tungsten-sqlite/test"

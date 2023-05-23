@@ -15,4 +15,7 @@
    #:with-database
    #:do-query-rows
    #:query
-   #:query-row))
+   #:query-row
+
+   #:transaction-type
+   #:with-transaction))
