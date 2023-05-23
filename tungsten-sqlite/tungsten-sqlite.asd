@@ -27,6 +27,7 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "sqlite"))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :sqlite-test)))
