@@ -27,12 +27,15 @@
       `(with-output-to-string (*html-output*)
          ,@(mapcar (lambda (value) `(generate ,value)) values))))
 
+(defmacro html (value)
+  `(generate ,value))
+
 (defmacro generate (value)
   (cond
     ;; ((TAG &REST ATTRIBUTES) &REST CHILDREN)
     ((and (listp value) (listp (car value)) (typep (caar value) 'keyword))
      `(generate-element ,(caar value) ,(cdar value) ,(cdr value)))
-    ;; (TAG &REST CHILDREN)
+    ;; (TAG &REST CHILDREN) or (SPECIAL-TAG &REST ARGUMENTS)
     ((and (listp value) (typep (car value) 'keyword))
      (case (car value)
        (:doctype
@@ -45,9 +48,9 @@
     ;; STRING
     ((stringp value)
      `(generate-text ,value))
-    ;; Any other expression is expected to yield a string
+    ;; Any other expression is expanded to itself
     (t
-     `(generate-text ,value))))
+     value)))
 
 (defmacro generate-doctype (arguments)
   (let ((doctype (or (car arguments) "HTML")))
