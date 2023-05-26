@@ -38,23 +38,30 @@
     ;; (TAG &REST CHILDREN) or (SPECIAL-TAG &REST ARGUMENTS)
     ((and (listp value) (typep (car value) 'keyword))
      (case (car value)
+       ;; (:FORMAT FORMAT &REST ARGUMENTS)
+       (:format
+        `(generate-formatted-text ,(cadr value) ,@(cddr value)))
+       ;; (:DOCTYPE STRING)
        (:doctype
         `(generate-doctype ,(cdr value)))
+       ;; (:RAW &REST STRINGS)
        (:raw
         `(generate-raw-data (list ,@(cdr value))))
+       ;; (:COMMENT &REST STRINGS)
        (:comment
         `(generate-comment (list ,@(cdr value))))
+       ;; (TAG &REST CHILDREN)
        (t
         `(generate-element ,(car value) nil ,(cdr value)))))
-    ;; (FORMAT &REST ARGUMENTS)
-    ((and (listp value) (stringp (car value)))
-     `(generate-formatted-text ,(car value) ,(cdr value)))
     ;; STRING
     ((stringp value)
      `(generate-text ,value))
     ;; Any other expression is expanded to itself
     (t
      value)))
+
+(defmacro generate-formatted-text (format &rest arguments)
+  `(format *html-output* ,format ,@arguments))
 
 (defmacro generate-doctype (arguments)
   (let ((doctype (or (car arguments) "HTML")))
@@ -129,9 +136,6 @@
       (if (typep (car attributes) 'keyword)
           (push (cons name nil) groups)
           (push (cons name (pop attributes)) groups)))))
-
-(defmacro generate-formatted-text (format arguments)
-  `(format *html-output* ,format ,@arguments))
 
 (defmacro generate-text (value)
   `(write-string (escape-text-element ,value) *html-output*))
