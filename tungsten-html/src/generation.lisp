@@ -40,6 +40,8 @@
      (case (car value)
        (:doctype
         `(generate-doctype ,(cdr value)))
+       (:raw
+        `(generate-raw-data ',(cdr value)))
        (t
         `(generate-element ,(car value) nil ,(cdr value)))))
     ;; (FORMAT &REST ARGUMENTS)
@@ -55,6 +57,15 @@
 (defmacro generate-doctype (arguments)
   (let ((doctype (or (car arguments) "HTML")))
     `(format *html-output* "<!DOCTYPE ~A>" ,doctype)))
+
+(defmacro generate-raw-data (arguments)
+  (let ((argument (gensym "ELEMENT-")))
+    `(dolist (,argument ,arguments)
+       (etypecase ,argument
+         (string
+          (write-string ,argument *html-output*))
+         (function
+          (write-string (funcall ,argument) *html-output*))))))
 
 (defmacro generate-element (name attributes children)
   (when (and (void-element-p name) children)
