@@ -42,6 +42,8 @@
         `(generate-doctype ,(cdr value)))
        (:raw
         `(generate-raw-data ',(cdr value)))
+       (:comment
+        `(generate-comment ',(cdr value)))
        (t
         `(generate-element ,(car value) nil ,(cdr value)))))
     ;; (FORMAT &REST ARGUMENTS)
@@ -66,6 +68,18 @@
           (write-string ,argument *html-output*))
          (function
           (write-string (funcall ,argument) *html-output*))))))
+
+(defmacro generate-comment (arguments)
+  (let ((argument (gensym "ELEMENT-")))
+    `(progn
+       (write-string "<!-- " *html-output*)
+       (dolist (,argument ,arguments)
+         (etypecase ,argument
+           (string
+            (write-string ,argument *html-output*))
+           (function
+            (write-string (funcall ,argument) *html-output*))))
+       (write-string " -->" *html-output*))))
 
 (defmacro generate-element (name attributes children)
   (when (and (void-element-p name) children)
