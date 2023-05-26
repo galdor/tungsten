@@ -73,6 +73,34 @@
          (write-string ,argument *html-output*))
        (write-string " -->" *html-output*))))
 
+(defmacro generate-element-attribute (name value)
+  (cond
+    (value
+     `(progn
+        (write-string
+         ,(concatenate 'string " "
+                       (string-downcase (symbol-name name))
+                       "=\"")
+         *html-output*)
+        ,(cond
+           ((listp value)
+            (let ((word (gensym "WORD-"))
+                  (i (gensym "I-")))
+              `(let ((,i 0))
+                 (dolist (,word ,value)
+                   (unless (zerop ,i)
+                     (write-char #\Space *html-output*))
+                   (write-string (escape-attribute ,word) *html-output*)
+                   (incf ,i)))))
+           (t
+            `(write-string (escape-attribute ,value) *html-output*)))
+        (write-char #\" *html-output*)))
+    (t
+     `(write-string
+       ,(concatenate 'string " "
+                     (string-downcase (symbol-name name)))
+       *html-output*))))
+
 (defmacro generate-element (name attributes children)
   (when (and (void-element-p name) children)
     (invalid-generation-data "void element ~S cannot have children" name))
@@ -82,21 +110,7 @@
        ,@(mapcar
           (lambda (group)
             (destructuring-bind (name . value) group
-              (cond
-                (value
-                 `(progn
-                    (write-string
-                     ,(concatenate 'string " "
-                                   (string-downcase (symbol-name name))
-                                   "=\"")
-                     *html-output*)
-                    (write-string (escape-attribute ,value) *html-output*)
-                    (write-char #\" *html-output*)))
-                (t
-                 `(write-string
-                   ,(concatenate 'string " "
-                                 (string-downcase (symbol-name name)))
-                   *html-output*)))))
+              `(generate-element-attribute ,name ,value)))
           (group-attributes attributes))
        (write-char #\> *html-output*)
        ,@(mapcar
