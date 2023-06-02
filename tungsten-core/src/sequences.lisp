@@ -2,10 +2,12 @@
 
 (defun shuffle (sequence)
   "Return a randomly reordered copy of SEQUENCE."
+  (declare (type sequence sequence))
   (nshuffle (copy-seq sequence)))
 
 (defun nshuffle (sequence)
   "Randomly reorder SEQUENCE in a destructive way and return it."
+  (declare (type sequence sequence))
   (etypecase sequence
     (array (nshuffle-array sequence))
     (list (nshuffle-list sequence))))
