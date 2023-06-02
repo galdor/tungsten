@@ -14,6 +14,7 @@
 
    #:iota
 
+   #:foldl
    #:shuffle
    #:nshuffle
 
