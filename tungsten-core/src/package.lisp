@@ -51,6 +51,8 @@
    #:buffer-reset
    #:buffer-skip
    #:buffer-skip-to
+   #:buffer-starts-with-octet
+   #:buffer-starts-with-octets
 
    #:unavailable-random-data
    #:random-octets

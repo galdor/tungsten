@@ -34,3 +34,32 @@
     (core:buffer-append-octets buffer (core:octet-vector* 7 8 9))
     (check-buffer-equal #(4 5 6 7 8 9) buffer)))
 
+(deftest buffer-starts-with-octet ()
+  (let ((buffer (core:make-buffer 32)))
+    (check-false (core:buffer-starts-with-octet buffer 1))
+    (core:buffer-append-octet buffer 1)
+    (check-true (core:buffer-starts-with-octet buffer 1))
+    (core:buffer-append-octet buffer 2)
+    (core:buffer-append-octet buffer 3)
+    (core:buffer-skip buffer 1)
+    (check-true (core:buffer-starts-with-octet buffer 2))))
+
+(deftest buffer-starts-with-octets ()
+  (let ((buffer (core:make-buffer 32)))
+    (check-false
+     (core:buffer-starts-with-octets buffer (core:octet-vector* 1 2 3)))
+    (core:buffer-append-octet buffer 1)
+    (check-false
+     (core:buffer-starts-with-octets buffer (core:octet-vector* 1 2 3)))
+    (core:buffer-append-octet buffer 2)
+    (core:buffer-append-octet buffer 3)
+    (check-true
+     (core:buffer-starts-with-octets buffer (core:octet-vector* 1 2 3)))
+    (core:buffer-skip buffer 1)
+    (check-false
+     (core:buffer-starts-with-octets buffer (core:octet-vector* 1 2 3)))
+    (check-true
+     (core:buffer-starts-with-octets buffer (core:octet-vector* 2 3)))
+    (core:buffer-append-octet buffer 4)
+    (check-true
+     (core:buffer-starts-with-octets buffer (core:octet-vector* 2 3)))))

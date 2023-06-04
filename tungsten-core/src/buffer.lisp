@@ -169,3 +169,23 @@ content and return the position of the first free octet in the buffer."
     (when (= start end)
       (setf start 0
             end 0))))
+
+(defun buffer-starts-with-octet (buffer octet)
+  (declare (type buffer buffer)
+           (type octet octet))
+  (with-slots (data start end) buffer
+    (and (> (- end start) 0)
+         (= (aref data start) octet))))
+
+(defun buffer-starts-with-octets (buffer octets)
+  (declare (type buffer buffer)
+           (type octet-vector octets))
+  (with-slots (data start end) buffer
+    (let ((nb-octets (length octets)))
+      (and (>= (- end start) nb-octets)
+           (do ((i start (1+ i))
+                (j 0 (1+ j)))
+               ((>= j nb-octets)
+                t)
+             (when (/= (aref data i) (aref octets j))
+               (return nil)))))))
