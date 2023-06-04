@@ -67,15 +67,15 @@
    #:format-socket-address
    #:socket-address-equal
 
-   #:input-io-stream
-   #:output-io-stream
-   #:write-io-stream
-   #:read-io-stream
    #:io-stream-fd
    #:io-stream-address
    #:io-stream-read-buffer
    #:io-stream-write-buffer
    #:io-stream-external-format
+   #:input-io-stream
+   #:output-io-stream
+   #:read-io-stream
+   #:write-io-stream
    #:io-stream-read-more
 
    #:make-pipe
@@ -85,11 +85,14 @@
    #:network-stream-read-timeout
    #:network-stream-write-timeout
 
+   #:read-event-required
+   #:write-event-required
    #:tcp-timeout
    #:tcp-timeout-stream
    #:tcp-read-timeout
    #:tcp-write-timeout
    #:tcp-stream
+   #:tcp-stream-non-blocking
 
    #:*default-tcp-client-read-timeout*
    #:*default-tcp-client-write-timeout*
@@ -103,6 +106,7 @@
    #:make-tcp-client
 
    #:tcp-server
+   #:tcp-server-io-base
    #:start-tcp-server
    #:stop-tcp-server
 
