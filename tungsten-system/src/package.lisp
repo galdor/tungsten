@@ -33,6 +33,18 @@
    #:make-thread
    #:join-thread
 
+   #:io-event
+   #:io-base
+   #:io-watcher
+   #:io-watcher-fd
+   #:io-watcher-registeredp
+   #:io-watcher-events
+   #:io-watcher-handler
+   #:close-io-base
+   #:make-io-base
+   #:watch-fd
+   #:unwatch-fd
+
    #:directory-path
    #:read-file
 
