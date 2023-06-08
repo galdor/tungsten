@@ -52,11 +52,13 @@
     (with-mutex (mutex)
       (let ((watcher (or (gethash fd fd-watchers)
                          (make-instance 'io-watcher :fd fd :events events
-                                                    :handler handler))))
+                                        :handler handler))))
         (cond
           ((io-watcher-registeredp watcher)
            (update-io-watcher base watcher events)
-           (setf (io-watcher-events watcher) events))
+           (setf (io-watcher-events watcher) events)
+           (when handler
+             (setf (io-watcher-handler watcher) handler)))
           (t
            (add-io-watcher base watcher)
            (setf (io-watcher-registeredp watcher) t)
