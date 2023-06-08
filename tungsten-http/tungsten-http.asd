@@ -16,6 +16,7 @@
    (:file "http")
    (:file "statuses")
    (:file "request")
+   (:file "request-reader")
    (:file "response")
    (:file "client")
    (:file "server")

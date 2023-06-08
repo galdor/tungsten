@@ -65,6 +65,11 @@
   (:default-initargs
    :description "header too large"))
 
+(define-condition body-too-large (http-parse-error)
+  ()
+  (:default-initargs
+   :description "body too large"))
+
 (deftype request-method ()
   '(or symbol string))
 
@@ -296,7 +301,7 @@
       (setf start (1+ comma)))))
 
 (defun body-chunked-p (header)
-  ;; RFC 9112 6.3.
+  ;; RFC 9112 6.3. Message Body Length
   ;;
   ;; If a Transfer-Encoding header field is present in a request and the
   ;; chunked transfer coding is not the final encoding, the message body
@@ -310,93 +315,129 @@
         (header-field-tokens header "Transfer-Encoding"))
   nil)
 
-(defun read-header (stream)
-  (declare (type stream stream))
+(defun read-header-field (stream &key header-length)
+  (declare (type system:input-io-stream stream)
+           (type (or (integer 0) null) header-length))
   (do ((buffer (system:io-stream-read-buffer stream))
        (eol-octets (text:eol-octets :crlf))
        (eol nil)
        (header nil))
       ((and eol (= eol (core:buffer-start buffer)))
-       (core:buffer-skip buffer (length eol-octets))
-       (nreverse header))
-    (when (>= (core:buffer-length buffer) *max-header-length*)
-      (error 'header-too-large :data (core:buffer-content buffer)))
+       nil)
     (setf eol (search eol-octets (core:buffer-data buffer)
                       :start2 (core:buffer-start buffer)
                       :end2 (core:buffer-end buffer)))
     (cond
       ((and eol (> eol (core:buffer-start buffer)))
-       (cond
-         ((htab-octet-p
-           (aref (core:buffer-data buffer) (core:buffer-start buffer)))
-          ;; Header field continuation
-          (when (null header)
-            (http-parse-error "invalid header field continuation"))
-          (let ((start (position-if-not 'htab-octet-p (core:buffer-data buffer)
-                                        :start (core:buffer-start buffer)
-                                        :end eol)))
-            (rplacd (car header)
-                    (concatenate 'vector (cdar header)
-                                 (core:octet-vector* #.(char-code #\Space))
-                                 (subseq (core:buffer-data buffer)
-                                         start eol)))))
-         (t
-          ;; Header field
-          (multiple-value-bind (name value)
-              (parse-header-field (core:buffer-data buffer)
-                                  (core:buffer-start buffer) eol)
-            (push (cons name value) header))))
-       (core:buffer-skip-to buffer (+ eol (length eol-octets))))
+       (let* ((field-end (+ eol (length eol-octets)))
+              (nb-octets (- field-end (core:buffer-start buffer))))
+         (when (and header-length
+                    (> (+ header-length nb-octets) *max-header-length*))
+           (error 'header-too-large))
+         (cond
+           ((htab-octet-p
+             (aref (core:buffer-data buffer) (core:buffer-start buffer)))
+            ;; Header field continuation
+            (let* ((start
+                     (position-if-not 'htab-octet-p (core:buffer-data buffer)
+                                      :start (core:buffer-start buffer)
+                                      :end eol))
+                   (continuation (subseq (core:buffer-data buffer) start eol)))
+              (core:buffer-skip-to buffer field-end)
+              (return-from read-header-field
+                (values (cons 'continuation continuation) nb-octets))))
+           (t
+            ;; Header field
+            (multiple-value-bind (name value)
+                (parse-header-field (core:buffer-data buffer)
+                                    (core:buffer-start buffer) eol)
+              (core:buffer-skip-to buffer field-end)
+              (return-from read-header-field
+                (values (cons 'field (cons name value)) nb-octets)))))))
       ((null eol)
        (when (zerop (system:io-stream-read-more stream))
          (error 'connection-closed))))))
 
-(defun read-trailer (stream)
-  (read-header stream))
+(defun add-header-field-continuation (header continuation)
+  (when (null header)
+    (http-parse-error "invalid header field continuation"))
+  (let ((last-field (car header)))
+    (rplacd last-field
+            (concatenate 'vector (cdr last-field)
+                         (core:octet-vector* #.(char-code #\Space))
+                         continuation))))
 
-(defun read-body-and-trailer (header stream)
-  (declare (type header header)
-           (type stream stream))
+(defun body-representation (header)
+  (declare (type header header))
   (let ((content-length (header-content-length header))
         (chunked (body-chunked-p header)))
     (when (and chunked content-length)
       (http-parse-error "Content-Length set with chunked body"))
     (cond
       (chunked
-       (do ((body (make-array 0 :element-type 'core:octet :adjustable t))
-            (body-length 0)
-            (chunk-length nil))
-           ((eql chunk-length 0)
-            (values
-             (adjust-array body body-length)
-             (read-trailer stream)))
-         (setf chunk-length (read-chunk-header stream))
-         (when (> chunk-length 0)
-           (setf body (adjust-array body (+ body-length chunk-length)))
-           (when (< (read-sequence body stream :start body-length)
-                    chunk-length)
-             (http-parse-error "truncated chunk"))
-           (incf body-length chunk-length)
-           (unless (and (= (read-byte stream) #.(char-code #\Return))
-                        (= (read-byte stream) #.(char-code #\Newline)))
-             (http-parse-error "missing chunk end-of-line sequence")))))
+       '(chunked))
       (content-length
-       (let* ((body (make-array content-length :element-type 'core:octet))
-              (nb-read (read-sequence body stream)))
-         (when (< nb-read content-length)
-           (http-parse-error "truncated body"))
-         (values body nil)))
+       (cons 'plain content-length))
       (t
-       (values nil nil)))))
+       nil))))
 
-(defun read-chunk-header (stream)
-  (declare (type stream stream))
-  (let* ((line (read-line stream))
-         (end (or (position #\; line) (length line))))
-    (handler-case
-        (let ((length (parse-integer line :end end :radix 16)))
-          (unless (>= length 0)
-            (http-parse-error "invalid negative chunk length ~S" line))
-          length)
-      (error ()
-        (http-parse-error "invalid chunk header ~S" line)))))
+(defun read-chunk (stream body &key max-length)
+  ;; This could be much simpler, but we must be able to use it with a
+  ;; non-blocking stream in the server. So we cannot just read the header then
+  ;; the chunk itself: if the chunk is not entirely available, we will trigger
+  ;; a SYSTEM:READ-EVENT-REQUIRED condition and lose the chunk header.
+  (declare (type system:input-io-stream stream)
+           (type core:octet-vector body)
+           (type (or (integer 0) null) max-length))
+  (let* ((buffer (system:io-stream-read-buffer stream))
+         (eol-octets (text:eol-octets :crlf))
+         (header-end (loop
+                       (let ((end (search eol-octets (core:buffer-data buffer)
+                                          :start2 (core:buffer-start buffer)
+                                          :end2 (core:buffer-end buffer))))
+                         (when end
+                           (return end)))
+                       (when (zerop (system:io-stream-read-more stream))
+                         (error 'connection-closed))))
+         (header-start (core:buffer-start buffer))
+         (header-length (+ (- header-end header-start) 2)) ; CRLF
+         (header-string (text:decode-string (core:buffer-data buffer)
+                                            :start header-start
+                                            :end header-end
+                                            :encoding :ascii))
+         (chunk-length-end
+           (or (position #\; header-string) (length header-string)))
+         (chunk-length
+           (handler-case
+               (parse-integer header-string :end chunk-length-end :radix 16)
+             (error ()
+               (http-parse-error "invalid chunk header ~S" header-string))))
+         (body-length (length body)))
+    (when (and max-length (> chunk-length max-length))
+      (error 'body-too-large))
+    (when (< chunk-length 0)
+      (http-parse-error "invalid negative chunk length"))
+    (cond
+      ((> chunk-length 0)
+       ;; Read until we have the entire chunk in the read buffer
+       (do ((minimum-length (+ header-length chunk-length 2))) ; CRLF
+           ((>= (core:buffer-length buffer) minimum-length))
+         (when (zerop (system:io-stream-read-more stream))
+           (error 'connection-closed)))
+       ;; Copy the chunk to the body array
+       (setf body (adjust-array body (+ body-length chunk-length)))
+       (let* ((chunk-start (+ (core:buffer-start buffer) header-length))
+              (chunk-end (+ chunk-start chunk-length)))
+         (replace body (core:buffer-data buffer)
+                  :start1 body-length
+                  :start2 chunk-start :end2 chunk-end)
+         (core:buffer-skip-to buffer chunk-end))
+       ;; Check the CRLF termination sequence
+       (unless (core:buffer-starts-with-octets buffer eol-octets)
+         (http-parse-error "missing chunk end-of-line sequence"))
+       ;; Skip it
+       (core:buffer-skip buffer 2))
+      (t
+       ;; When the chunk is empty, we just need to skip the header
+       (core:buffer-skip buffer header-length)))
+    (values body chunk-length)))

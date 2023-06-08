@@ -12,6 +12,7 @@
    #:request-line-too-long
    #:status-line-too-long
    #:header-too-large
+   #:body-too-large
    #:request-method
    #:request-method-equal
    #:response-status

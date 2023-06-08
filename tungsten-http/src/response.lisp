@@ -54,10 +54,10 @@
                  :header (cons (cons "Content-Type" "text/plain") header)
                  :body body))
 
-(defun make-error-response (status error)
+(defun make-error-response (status message)
   (declare (type response-status status)
-           (type error error))
-  (make-plain-text-response status (princ-to-string error)))
+           (type string message))
+  (make-plain-text-response status message))
 
 (defun response-header-field (response name)
   (declare (type response response)
@@ -106,7 +106,6 @@
             (value (cdr field)))
         (format stream "~A: ~A~%" name value)))
     (terpri stream)
-    (finish-output stream)
     ;; Body
     (etypecase body
       (null
@@ -114,8 +113,7 @@
       (core:octet-vector
        (write-sequence body stream))
       (string
-       (write-string body stream)))
-    (finish-output stream)))
+       (write-string body stream)))))
 
 (defun read-response (stream &aux (response (make-instance 'response)))
   (declare (type system:input-io-stream stream))
@@ -124,10 +122,11 @@
     (setf (response-status response) status
           (response-reason response) reason
           (response-version response) version))
-  (let ((header (read-header stream)))
+  (let* ((header (read-response-header stream))
+         (body-representation (body-representation header)))
     (setf (response-header response) header)
     (multiple-value-bind (body trailer)
-        (read-body-and-trailer header stream)
+        (read-response-body-and-trailer body-representation stream)
       (setf (response-body response) body
             (response-trailer response) trailer)))
   response)
@@ -169,6 +168,51 @@
       ;; End
       (core:buffer-skip-to buffer (+ eol (length eol-octets)))
       (values version status reason))))
+
+(defun read-response-header (stream)
+  (declare (type system:input-io-stream stream))
+  (do ((header nil)
+       (header-end nil))
+      (nil)
+    (let ((field-data (read-header-field stream)))
+      (cond
+        ((null field-data)
+         (core:buffer-skip (system:io-stream-read-buffer stream) 2) ; CRLF
+         (return-from read-response-header (nreverse header)))
+        ((eq (car field-data) 'field)
+         (push (cdr field-data) header))
+        ((eq (car field-data) 'continuation)
+         (add-header-field-continuation header (cdr field-data)))))))
+
+(defun read-response-trailer (stream)
+  (declare (type system:input-io-stream stream))
+  (let ((buffer (system:io-stream-read-buffer stream)))
+    (cond
+      ((core:buffer-starts-with-octets buffer (text:eol-octets :crlf))
+       (core:buffer-skip buffer 2)
+       nil)
+      (t
+       (read-response-header stream)))))
+
+(defun read-response-body-and-trailer (representation stream)
+  (declare (type system:input-io-stream stream))
+  (ecase (car representation)
+    (plain
+     (let* ((content-length (cdr representation))
+            (body (make-array content-length :element-type 'core:octet))
+            (nb-read (read-sequence body stream)))
+       (when (< nb-read content-length)
+         (error 'connection-closed))
+       body))
+    (chunked
+     (do ((body (make-array 0 :element-type 'core:octet))
+          (body-length 0)
+          (chunk-length nil))
+         ((eql chunk-length 0)
+          (values body (read-response-trailer stream)))
+       (multiple-value-setq (body chunk-length)
+         (read-chunk stream body))
+       (incf body-length chunk-length)))))
 
 (defun response-redirection-location (response)
   (declare (type response response))
@@ -215,7 +259,8 @@
 
 (defun finalize-response/content-length (response)
   (declare (type response response))
-  ;; We assume that FINALIZE-RESPONSE/BODY has already been called
+  ;; We assume that FINALIZE-RESPONSE/BODY has already been called, so the
+  ;; body can only be NIL or an octet vector.
   (with-slots (body) response
     (let ((body-length (if body (length body) 0)))
       (add-new-response-header-field response "Content-Length"
