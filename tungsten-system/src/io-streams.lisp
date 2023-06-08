@@ -236,15 +236,9 @@ written."))
 (defmethod streams:stream-write-char ((stream output-io-stream) character)
   (declare (type character character))
   (with-slots (write-buffer external-format) stream
-    (let* ((encoding (text:external-format-encoding external-format))
-           (nb-octets
-             (text:encoded-character-length character :encoding encoding))
-           (position (core:buffer-reserve write-buffer nb-octets)))
-      (text:encode-string (string character)
-                          :encoding encoding
-                          :octets (core:buffer-data write-buffer)
-                          :offset position)
-      (incf (core:buffer-end write-buffer) nb-octets)))
+    (let ((encoding (text:external-format-encoding external-format)))
+      (core:buffer-append-string write-buffer (string character)
+                                 :encoding encoding)))
   character)
 
 (defmethod streams:stream-line-column ((stream output-io-stream))
@@ -259,20 +253,11 @@ written."))
   (declare (type string string)
            (type (integer 0) start)
            (type (or (integer 0) null) end))
-  (let* ((end (or end (length string)))
-         (nb-characters (- end start)))
-    (when (> nb-characters 0)
-      (with-slots (write-buffer external-format) stream
-        (let* ((encoding (text:external-format-encoding external-format))
-               (nb-octets
-                 (text:encoded-string-length string :encoding encoding
-                                                    :start start :end end))
-               (position (core:buffer-reserve write-buffer nb-octets)))
-          (text:encode-string string :encoding encoding
-                                     :start start :end end
-                                     :octets (core:buffer-data write-buffer)
-                                     :offset position)
-          (incf (core:buffer-end write-buffer) nb-octets)))))
+  (with-slots (write-buffer external-format) stream
+    (let ((encoding (text:external-format-encoding external-format)))
+      (core:buffer-append-string write-buffer string
+                                 :encoding encoding
+                                 :start start :end end)))
   string)
 
 (defmethod streams:stream-terpri ((stream output-io-stream))
