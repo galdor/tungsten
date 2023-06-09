@@ -4,6 +4,9 @@
   "Ask the user for a value by printing MESSAGE to STREAM, reading an
 expression, evaluating it, and returning the list of values yielded by the
 evaluation."
-  (format stream message)
+  (declare (type string message)
+           (type stream stream))
+  (fresh-line stream)
+  (write-string message stream)
   (finish-output stream)
   (multiple-value-list (eval (read stream))))
