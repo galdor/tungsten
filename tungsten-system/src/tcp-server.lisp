@@ -98,7 +98,6 @@
       (core:abort-protect
           (let ((stream (make-instance 'tcp-stream :fd connection-socket
                                                    :address address)))
-            (fcntl-setfl-add-remove-flags socket nil '(:o-nonblock))
             (funcall connection-handler stream))
         (close-fd connection-socket)))))
 
