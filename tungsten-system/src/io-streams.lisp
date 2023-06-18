@@ -108,14 +108,15 @@ written."))
 
 (defmethod streams:stream-force-output ((stream output-io-stream))
   (with-slots (fd write-buffer) stream
-    (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
-                                        (core:buffer-start write-buffer))
-      (let ((nb-written
-              (write-io-stream stream
-                               (core:buffer-data write-buffer)
-                               (core:buffer-start write-buffer)
-                               (core:buffer-end write-buffer))))
-        (core:buffer-skip write-buffer nb-written))))
+    (unless (core:buffer-empty-p write-buffer)
+      (ffi:with-pinned-vector-data (%data (core:buffer-data write-buffer)
+                                          (core:buffer-start write-buffer))
+        (let ((nb-written
+                (write-io-stream stream
+                                 (core:buffer-data write-buffer)
+                                 (core:buffer-start write-buffer)
+                                 (core:buffer-end write-buffer))))
+          (core:buffer-skip write-buffer nb-written)))))
   nil)
 
 (defmethod streams:stream-finish-output ((stream output-io-stream))
