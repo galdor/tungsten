@@ -33,6 +33,14 @@
     :initform nil
     :reader tcp-stream-non-blocking)))
 
+(defmethod initialize-instance :after ((stream tcp-stream)
+                                       &key &allow-other-keys)
+  (with-slots (fd) stream
+    (ffi:with-foreign-value (%one :int)
+      (setf (ffi:foreign-value %one :int) 1)
+      (setsockopt fd :sol-tcp :tcp-nodelay
+                  %one (ffi:foreign-type-size :int)))))
+
 (defmethod close :before ((stream tcp-stream) &key abort)
   (declare (ignore abort))
   (with-slots (fd) stream
