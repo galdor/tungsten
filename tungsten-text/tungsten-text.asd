@@ -16,7 +16,8 @@
    (:file "utf-8")
    (:file "iso-8859-1")
    (:file "hex-encoding")
-   (:file "base64"))
+   (:file "base64")
+   (:file "buffers"))
   :in-order-to ((test-op (test-op "tungsten-text/test"))))
 
 (defsystem "tungsten-text/test"
