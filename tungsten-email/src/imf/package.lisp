@@ -1,6 +1,17 @@
 (defpackage :imf
   (:use :cl)
   (:export
+   #:mailbox
+   #:mailbox-display-name
+   #:mailbox-local-part
+   #:mailbox-domain
+   #:group
+   #:group-display-name
+   #:group-mailboxes
+   #:address
+   #:make-mailbox
+   #:make-group
+
    #:header
    #:body
    #:message

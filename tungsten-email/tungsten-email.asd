@@ -13,6 +13,7 @@
     :serial t
     :components
     ((:file "package")
+     (:file "addresses")
      (:file "message"))))
   :in-order-to ((test-op (test-op "tungsten-email/test"))))
 
