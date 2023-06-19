@@ -41,3 +41,40 @@
            (type list mailboxes))
   (make-instance 'group :display-name display-name
                         :mailboxes mailboxes))
+
+(defun serialize-address (address)
+  (declare (type address address))
+  (etypecase address
+    (mailbox
+     (serialize-mailbox address))
+    (group
+     (serialize-group address))))
+
+(defun serialize-mailbox (mailbox)
+  (declare (type mailbox mailbox))
+  (with-slots (display-name local-part domain) mailbox
+    (let ((address-specification
+            (serialize-address-specification local-part domain)))
+      (cond
+        (display-name
+         (concatenate 'string display-name " <" address-specification ">"))
+        (t
+         address-specification)))))
+
+(defun serialize-group (group)
+  (declare (type group group))
+  (with-slots (display-name mailboxes) group
+    (with-output-to-string (stream)
+      (write-string display-name stream)
+      (write-string ": " stream)
+      (let ((i 0))
+        (dolist (mailbox mailboxes)
+          (when (> i 0)
+            (write-string ", " stream))
+          (write-string (serialize-mailbox mailbox) stream)
+          (incf i)))
+      (write-char #\; stream))))
+
+(defun serialize-address-specification (local-part domain)
+  (declare (type string local-part domain))
+  (concatenate 'string local-part "@" domain))

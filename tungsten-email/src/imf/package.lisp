@@ -11,6 +11,9 @@
    #:address
    #:make-mailbox
    #:make-group
+   #:serialize-address
+   #:serialize-mailbox
+   #:serialize-group
 
    #:header
    #:body
