@@ -42,6 +42,14 @@
   (make-instance 'group :display-name display-name
                         :mailboxes mailboxes))
 
+(defmethod print-object ((mailbox mailbox) stream)
+  (print-unreadable-object (mailbox stream :type t)
+    (write-string (serialize-mailbox mailbox) stream)))
+
+(defmethod print-object ((group group) stream)
+  (print-unreadable-object (group stream :type t)
+    (write-string (group-display-name group) stream)))
+
 (defun serialize-address (address)
   (declare (type address address))
   (etypecase address
