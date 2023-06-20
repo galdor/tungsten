@@ -77,4 +77,8 @@
 
 (defun serialize-address-specification (local-part domain)
   (declare (type string local-part domain))
-  (concatenate 'string local-part "@" domain))
+  (concatenate 'string
+               (if (dot-atom-text-p local-part)
+                   local-part
+                   (quote-string local-part))
+               "@" domain))
