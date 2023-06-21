@@ -13,6 +13,7 @@
     :serial t
     :components
     ((:file "package")
+     (:file "line-writer")
      (:file "coding")
      (:file "addresses")
      (:file "message"))))
