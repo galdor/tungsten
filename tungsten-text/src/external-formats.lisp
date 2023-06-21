@@ -34,3 +34,11 @@
     (:cr #.(core:octet-vector* 13))
     (:lf #.(core:octet-vector* 10))
     (:crlf #.(core:octet-vector* 13 10))))
+
+(declaim (inline eol-string))
+(defun eol-string (style)
+  (declare (type eol-style style))
+  (ecase style
+    (:cr #.(string (code-char 13)))
+    (:lf #.(string (code-char 10)))
+    (:crlf #.(format nil "~C~C" (code-char 13) (code-char 10)))))

@@ -27,6 +27,7 @@
    #:external-format-encoding
    #:external-format-eol-style
    #:eol-octets
+   #:eol-string
 
    #:invalid-utf8-leading-octet
    #:invalid-utf8-continuation-octet
