@@ -4,8 +4,9 @@
 
 (defclass line-writer ()
   ((max-line-length
-    :type (integer 1)
+    :type (or (integer 1) null)
     :initarg :max-line-length
+    :initform nil
     :reader line-writer-max-line-length)
    (line
     :type string)
@@ -20,19 +21,21 @@
 (defmethod initialize-instance :after ((writer line-writer)
                                        &key &allow-other-keys)
   (with-slots (max-line-length line) writer
-    (setf line (make-array max-line-length :element-type 'character
-                                           :adjustable t :fill-pointer 0))))
+    (when max-line-length
+      (setf line (make-array max-line-length :element-type 'character
+                                             :adjustable t :fill-pointer 0)))))
 
-(defun make-line-writer (stream &key (max-line-length 76))
+(defun make-line-writer (stream &key max-line-length)
   (declare (type stream stream)
-           (type (integer 1) max-line-length))
+           (type (or (integer 1) null) max-line-length))
   (make-instance 'line-writer :max-line-length max-line-length
                               :stream stream))
 
 (defmacro with-line-writer ((stream &rest args) &body body)
   `(let ((*line-writer* (make-line-writer ,stream ,@args)))
      ,@body
-     (line-writer-flush *line-writer*)))
+     (when (line-writer-max-line-length *line-writer*)
+       (line-writer-flush *line-writer*))))
 
 (defmacro with-line-writer/string ((&rest args) &body body)
   (let ((stream (gensym "STREAM-")))
@@ -43,40 +46,52 @@
 (defun write-token (token &optional (writer *line-writer*))
   (declare (type (or string character (member :space :eol)) token)
            (type line-writer writer))
-  (with-slots (line force-fold stream) writer
-    (flet ((append-string (string)
-             (when (> (fill-pointer line) 0)
-               (let* ((capacity (- (array-dimension line 0)
-                                   (fill-pointer line))))
-                 (when (or force-fold (>= (length string) capacity))
-                   ;; If the string does not fit in the current line, we have
-                   ;; to fold it.
-                   (line-writer-flush writer)
-                   (write-string (text:eol-string :crlf) stream)
-                   (write-char #\Space stream)
-                   (setf force-fold nil))))
-             (cond
-               ((< (length string) (array-dimension line 0))
-                ;; If the string fits in the line buffer, we just append it
-                (let ((start1 (fill-pointer line)))
-                  (incf (fill-pointer line) (length string))
-                  (replace line string :start1 start1)))
-               (t
-                ;; If the string is longer than the line limit, we have no
-                ;; choice but to write it directly to the output stream and
-                ;; too bad for the line length limit. We also set the
-                ;; FORCE-FOLD flag to make sure the next token is written on
-                ;; the next line.
-                (write-string string stream)
-                (setf force-fold t)))))
-      (cond
-        ((eq token :eol)
-         (line-writer-flush writer)
-         (write-string (text:eol-string :crlf) stream))
-        ((eq token :space)
-         (append-string " "))
-        (t
-         (append-string (string token)))))))
+  (with-slots (max-line-length line force-fold stream) writer
+    (cond
+      (max-line-length
+       (flet ((append-string (string)
+                (when (> (fill-pointer line) 0)
+                  (let* ((capacity (- (array-dimension line 0)
+                                      (fill-pointer line))))
+                    (when (or force-fold (>= (length string) capacity))
+                      ;; If the string does not fit in the current line, we
+                      ;; have to fold it.
+                      (line-writer-flush writer)
+                      (write-string (text:eol-string :crlf) stream)
+                      (write-char #\Space stream)
+                      (setf force-fold nil))))
+                (cond
+                  ((< (length string) (array-dimension line 0))
+                   ;; If the string fits in the line buffer, we just append it
+                   (let ((start1 (fill-pointer line)))
+                     (incf (fill-pointer line) (length string))
+                     (replace line string :start1 start1)))
+                  (t
+                   ;; If the string is longer than the line limit, we have no
+                   ;; choice but to write it directly to the output stream and
+                   ;; too bad for the line length limit. We also set the
+                   ;; FORCE-FOLD flag to make sure the next token is written
+                   ;; on the next line.
+                   (write-string string stream)
+                   (setf force-fold t)))))
+         (cond
+           ((eq token :eol)
+            (line-writer-flush writer)
+            (write-string (text:eol-string :crlf) stream))
+           ((eq token :space)
+            (append-string " "))
+           (t
+            (append-string (string token))))))
+      (t
+       ;; If there is no line length limit, we don't need the line buffer and
+       ;; just write to the stream.
+       (cond
+         ((eq token :eol)
+          (write-string (text:eol-string :crlf) stream))
+         ((eq token :space)
+          (write-char #\Space stream))
+         (t
+          (write-string (string token) stream)))))))
 
 (defun line-writer-flush (writer)
   (declare (type line-writer writer))
