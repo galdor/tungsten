@@ -43,14 +43,16 @@
        (with-line-writer (,stream ,@args)
          ,@body))))
 
-(defun write-token (token &optional (writer *line-writer*))
+(defun write-token (token &key (writer *line-writer*)
+                               no-folding)
   (declare (type (or string character (member :space :eol)) token)
            (type line-writer writer))
   (with-slots (max-line-length line force-fold stream) writer
     (cond
       (max-line-length
        (flet ((append-string (string)
-                (when (> (fill-pointer line) 0)
+                (when (and (> (fill-pointer line) 0)
+                           (not no-folding))
                   (let* ((capacity (- (array-dimension line 0)
                                       (fill-pointer line))))
                     (when (or force-fold (>= (length string) capacity))
@@ -95,12 +97,12 @@
 
 (defun line-writer-flush (writer)
   (declare (type line-writer writer))
-  (with-slots (line stream) writer
-    (unless (zerop (fill-pointer line))
-      ;; If there was a trailing whitespace, we don't need it
-      ;; anymore since we'll have one in the next line
-      ;; continuation.
-      (when (char= (char line (1- (length line))) #\Space)
-        (decf (fill-pointer line)))
-      (write-string line stream)
-      (setf (fill-pointer line) 0))))
+  (when (slot-boundp writer 'line)
+    (with-slots (line stream) writer
+      (unless (zerop (fill-pointer line))
+        ;; If there was a trailing whitespace, we don't need it anymore since
+        ;; we'll have one in the next line continuation.
+        (when (char= (char line (1- (length line))) #\Space)
+          (decf (fill-pointer line)))
+        (write-string line stream)
+        (setf (fill-pointer line) 0)))))
