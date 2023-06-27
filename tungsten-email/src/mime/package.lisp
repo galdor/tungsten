@@ -23,4 +23,6 @@
    #:parse-media-range
    #:normalize-media-range
    #:match-media-range
-   #:match-media-ranges))
+   #:match-media-ranges
+
+   #:encode-quoted-printable))

@@ -16,7 +16,8 @@
     ((:file "package")
      (:file "media-types")
      (:file "media-ranges")
-     (:file "json")))
+     (:file "json")
+     (:file "quoted-printable")))
    (:module
     "imf"
     :serial t
