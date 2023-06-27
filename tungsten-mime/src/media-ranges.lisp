@@ -4,7 +4,7 @@
 ;;;
 ;;; It might seem strange not to put this in tungsten-http, but media ranges
 ;;; are used in other standards such as OpenAPI 3.x specifications where they
-;;; are named "media type ranges". Ultimately, it media ranges are a simple
+;;; are named "media type ranges". Ultimately, media ranges are a simple
 ;;; extension to media types and fit it just fine in tungsten-mime.
 
 (define-condition invalid-media-range (parse-error)
