@@ -4,7 +4,7 @@
   'list)
 
 (deftype body ()
-  'string)
+  '(or string core:octet-vector))
 
 (defclass message ()
   ((header
@@ -32,8 +32,7 @@
       (write-header-tokens header)
       (when body
         (write-token :eol)
-        ;; TODO Encoding
-        (write-token body)))))
+        (serialize-body body stream)))))
 
 (defun write-header-tokens (header)
   (declare (type header header))
@@ -74,3 +73,12 @@
        capitalized-name)
     (setf (char capitalized-name i) (char-upcase (char name i)))
     (incf i)))
+
+(defun serialize-body (body stream)
+  (declare (type body body)
+           (type stream stream))
+  (etypecase body
+    (string
+     (mime:encode-quoted-printable body stream))
+    (core:octet-vector
+     (write-string (text:encode-base64 body) stream))))
