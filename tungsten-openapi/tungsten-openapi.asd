@@ -5,7 +5,7 @@
   ("tungsten-core"
    "tungsten-http"
    "tungsten-json"
-   "tungsten-mime"
+   "tungsten-email"
    "tungsten-uri")
   :pathname "src"
   :serial t

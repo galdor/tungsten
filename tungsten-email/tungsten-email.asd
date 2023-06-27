@@ -3,12 +3,21 @@
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
   ("tungsten-core"
-   "tungsten-text"
-   "tungsten-system")
+   "tungsten-json"
+   "tungsten-system"
+   "tungsten-text")
   :pathname "src"
   :serial t
   :components
   ((:module
+    "mime"
+    :serial t
+    :components
+    ((:file "package")
+     (:file "media-types")
+     (:file "media-ranges")
+     (:file "json")))
+   (:module
     "imf"
     :serial t
     :components
@@ -28,6 +37,15 @@
   :pathname "t"
   :serial t
   :components
-  ((:file "package"))
+  ((:module
+    "mime"
+    :serial t
+    :components
+    ((:file "package")))
+   (:module
+    "imf"
+    :serial t
+    :components
+    ((:file "package"))))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :email-test)))
