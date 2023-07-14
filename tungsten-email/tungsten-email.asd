@@ -4,6 +4,7 @@
   :depends-on
   ("tungsten-core"
    "tungsten-json"
+   "tungsten-openssl"
    "tungsten-system"
    "tungsten-text")
   :pathname "src"
@@ -26,7 +27,13 @@
      (:file "line-writer")
      (:file "coding")
      (:file "addresses")
-     (:file "message"))))
+     (:file "message")))
+   (:module
+    "smtp"
+    :serial t
+    :components
+    ((:file "package")
+     (:file "client"))))
   :in-order-to ((test-op (test-op "tungsten-email/test"))))
 
 (defsystem "tungsten-email/test"
@@ -45,6 +52,11 @@
     ((:file "package")))
    (:module
     "imf"
+    :serial t
+    :components
+    ((:file "package")))
+   (:module
+    "smtp"
     :serial t
     :components
     ((:file "package"))))
