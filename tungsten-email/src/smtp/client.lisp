@@ -16,7 +16,11 @@
    (stream
     :type (or system:network-stream null)
     :initarg :stream
-    :reader client-stream)))
+    :reader client-stream)
+   (domains
+    :type list
+    :initform nil
+    :reader client-domains)))
 
 (defmethod print-object ((client client) stream)
   (print-unreadable-object (client stream :type t)
@@ -40,8 +44,10 @@
               (system:make-tcp-client host port
                                       :external-format external-format)))))
     (core:abort-protect
-        (make-instance 'client :host host :port port :tls tls
-                               :stream stream)
+        (let ((client (make-instance 'client :host host :port port :tls tls
+                                             :stream stream)))
+          (read-greeting-response client)
+          client)
       (close stream))))
 
 (defun disconnect-client (client)

@@ -33,7 +33,8 @@
     :serial t
     :components
     ((:file "package")
-     (:file "client"))))
+     (:file "client")
+     (:file "protocol"))))
   :in-order-to ((test-op (test-op "tungsten-email/test"))))
 
 (defsystem "tungsten-email/test"
