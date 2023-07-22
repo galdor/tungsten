@@ -90,10 +90,47 @@
 
 (defun read-greeting-response (client)
   (declare (type client client))
-  (with-slots (domains) client
+  (with-slots (server-domains) client
     (do-response-lines (code text client)
       (220
        (let ((space (position #\Space text)))
          (unless space
            (smtp-parse-error "invalid greeting format ~S" text))
-         (push (subseq text 0 space) domains))))))
+         (push (subseq text 0 space) server-domains))))))
+
+(defun send-ehlo-command (host client)
+  (declare (type system:host host)
+           (type client client))
+  (with-slots (keywords) client
+    (write-command "EHLO" (format-host host) client)
+    (let ((first-line t))
+      (do-response-lines (code text client)
+        (250
+         (cond
+           (first-line
+            (setf first-line nil))
+           (t
+            (push (parse-ehlo-keyword text) keywords))))))))
+
+(defun parse-ehlo-keyword (string)
+  (declare (type string string))
+  (do ((start 0)
+       (end (length string))
+       (words nil))
+      ((>= start end)
+       (nreverse words))
+    (let* ((space (position #\Space string :start start))
+           (word-end (or space end)))
+      (push (subseq string start word-end) words)
+      (setf start (1+ word-end)))))
+
+(defun format-host (host)
+  (declare (type system:host host))
+  (etypecase host
+    (string
+     host)
+    (system:ipv4-address
+     (system:format-ip-address host))
+    (system:ipv6-address
+     ;; RFC 5321 4.1.3. Address Literals
+     (concatenate 'string "IPv6:" (system:format-ip-address host)))))

@@ -17,10 +17,14 @@
     :type (or system:network-stream null)
     :initarg :stream
     :reader client-stream)
-   (domains
+   (server-domains
     :type list
     :initform nil
-    :reader client-domains)))
+    :reader client-server-domains)
+   (keywords
+    :type list
+    :initform nil
+    :reader client-keywords)))
 
 (defmethod print-object ((client client) stream)
   (print-unreadable-object (client stream :type t)
@@ -30,7 +34,7 @@
       (when (client-tls-p client)
         (write-string " TLS" stream)))))
 
-(defun make-client (host port &key tls)
+(defun make-client (host port &key tls (local-host "localhost"))
   (declare (type system:host host)
            (type system:port-number port)
            (type boolean tls))
@@ -47,6 +51,7 @@
         (let ((client (make-instance 'client :host host :port port :tls tls
                                              :stream stream)))
           (read-greeting-response client)
+          (send-ehlo-command local-host client)
           client)
       (close stream))))
 
