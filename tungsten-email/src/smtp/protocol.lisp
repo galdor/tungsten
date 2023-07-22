@@ -1,9 +1,12 @@
 (in-package :smtp)
 
-(define-condition smtp-parse-error (parse-error)
+(define-condition smtp-error (error)
+  ())
+
+(define-condition smtp-parse-error (smtp-error parse-error)
   ((description
-     :type string
-     :initarg :description))
+    :type string
+    :initarg :description))
   (:report
    (lambda (condition stream)
      (with-slots (description) condition
@@ -12,6 +15,27 @@
 (defun smtp-parse-error (format &rest args)
   (let ((description (apply #'format nil format args)))
     (error 'smtp-parse-error :description description)))
+
+(define-condition unexpected-smtp-response (smtp-error)
+  ((code
+    :type integer
+    :initarg :code
+    :reader unexpected-smtp-response-code)
+   (text
+    :type string
+    :initarg :text
+    :reader unexpected-smtp-response-text))
+  (:report
+   (lambda (condition stream)
+     (with-slots (code) condition
+       (format stream "unexpected SMTP response ~D" code)))))
+
+(defun write-command (command text client)
+  (declare (type client client))
+  (with-slots (stream) client
+    (let ((line (concatenate 'string command " " text)))
+      (write-line line stream))
+    (finish-output stream)))
 
 (defun parse-response-line (line)
   (declare (type string line))
@@ -39,13 +63,37 @@
     (let ((line (read-line (client-stream client))))
       (push (parse-response-line line) lines))))
 
+(defmacro do-response-lines ((code text client) &rest forms)
+  (let ((client-var (gensym "CLIENT-"))
+        (lines (gensym "LINES-"))
+        (line (gensym "LINE-")))
+    `(let* ((,client-var ,client)
+            (,lines (read-response ,client-var)))
+       (dolist (,line ,lines)
+         (let ((,code (first ,line))
+               (,text (third ,line)))
+           (cond
+             ,@(mapcar
+                (lambda (form)
+                  (etypecase (car form)
+                    ;; (CODE FORM)
+                    (integer
+                     `((= ,code ,(car form))
+                       ,@(cdr form)))
+                    ;; ((MIN-CODE . MAX-CODE) FORM)
+                    ((cons integer integer)
+                     `((<= ,(caar form) ,code ,(cdar form))
+                       ,@(cdr form)))))
+                forms)
+             (t
+              (error 'unexpected-smtp-response :code ,code :text ,text))))))))
+
 (defun read-greeting-response (client)
   (declare (type client client))
   (with-slots (domains) client
-    (let ((lines (read-response client)))
-      (dolist (line lines nil)
-        (let* ((text (third line))
-               (space (position #\Space text)))
-          (unless space
-            (smtp-parse-error "invalid greeting format ~S" text))
-          (push (subseq text 0 space) domains))))))
+    (do-response-lines (code text client)
+      (220
+       (let ((space (position #\Space text)))
+         (unless space
+           (smtp-parse-error "invalid greeting format ~S" text))
+         (push (subseq text 0 space) domains))))))
