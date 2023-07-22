@@ -43,7 +43,10 @@
 
 (defun make-tls-client (host port
                         &key (external-format text:*default-external-format*)
-                             read-timeout write-timeout
+                             (read-timeout
+                              system:*default-tcp-client-read-timeout*)
+                             (write-timeout
+                              system:*default-tcp-client-write-timeout*)
                              (ciphers *default-tls-client-ciphers*)
                              (peer-verification t)
                              (peer-verification-depth 20)
