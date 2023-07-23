@@ -118,11 +118,52 @@
        (end (length string))
        (words nil))
       ((>= start end)
-       (nreverse words))
+       (let* ((words (nreverse words))
+              (name (car words))
+              (parameters (cdr words)))
+         (cond
+           ((equalp name "8BITMIME")
+            '(:8bitmime))
+           ((equalp name "AUTH")
+            (parse-ehlo-keyword-parameters/auth parameters))
+           ((equalp name "CHUNKING")
+            '(:chunking))
+           ((equalp name "ENHANCEDSTATUSCODES")
+            '(:enhancedstatuscodes))
+           ((equalp name "PIPELINING")
+            '(:pipelining))
+           ((equalp name "SIZE")
+            (parse-ehlo-keyword-parameters/size parameters))
+           ((equalp name "SMTPUTF8")
+            '(:smtputf8))
+           (t
+            words))))
     (let* ((space (position #\Space string :start start))
            (word-end (or space end)))
       (push (subseq string start word-end) words)
       (setf start (1+ word-end)))))
+
+(defun parse-ehlo-keyword-parameters/auth (strings)
+  (declare (type list strings))
+  ;; RFC 4954 SMTP Service Extension for Authentication
+  (flet ((parse-mechanism (string)
+           (if (member string '("CRAM-MD5" "GSSAPI" "DIGEST-MD5" "LOGIN" "MD5"
+                                "OAUTH10A" "OAUTHBEARER" "PLAIN"
+                                "PLAIN-CLIENTTOKEN" "XOAUTH" "XOAUTH2")
+                       :test #'equalp)
+               (list (intern string :keyword))
+               string)))
+    (cons :auth (mapcar #'parse-mechanism strings))))
+
+(defun parse-ehlo-keyword-parameters/size (strings)
+  (declare (type list strings))
+  ;; RFC 1870 SMTP Service Extension for Message Size Declaration
+  (unless (= (length strings) 1)
+    (smtp-parse-error "invalid parameters for SIZE EHLO keyword"))
+  (let ((string (car strings)))
+    (unless (every #'digit-char-p string)
+      (smtp-parse-error "invalid parameter ~S for SIZE EHLO keyword"))
+    (list :size (parse-integer string))))
 
 (defun format-host (host)
   (declare (type system:host host))

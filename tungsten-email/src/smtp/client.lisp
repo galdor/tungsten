@@ -61,3 +61,10 @@
     (close stream)
     (setf stream nil))
   nil)
+
+(defun client-maximum-message-size (client)
+  (declare (type client client))
+  (with-slots (keywords) client
+    (let ((entry (assoc :size keywords)))
+      (when (and entry (> (second entry) 0))
+        (second entry)))))
