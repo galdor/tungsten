@@ -24,7 +24,11 @@
    (keywords
     :type list
     :initform nil
-    :reader client-keywords)))
+    :reader client-keywords)
+   (credentials
+    :initarg :credentials
+    :initform nil
+    :reader client-credentials)))
 
 (defmethod print-object ((client client) stream)
   (print-unreadable-object (client stream :type t)
@@ -34,11 +38,12 @@
       (when (client-tls-p client)
         (write-string " TLS" stream)))))
 
-(defun make-client (host port &key tls (local-host "localhost"))
+(defun make-client (host port &key tls (local-host "localhost") credentials)
   (declare (type system:host host)
            (type system:port-number port)
            (type boolean tls))
-  (let* ((external-format '(:ascii :eol-style :crlf))
+  (let* ((credentials (finalize-client-credentials host port credentials))
+         (external-format '(:ascii :eol-style :crlf))
          (stream
            (cond
              (tls
@@ -49,9 +54,12 @@
                                       :external-format external-format)))))
     (core:abort-protect
         (let ((client (make-instance 'client :host host :port port :tls tls
-                                             :stream stream)))
+                                             :stream stream
+                                             :credentials credentials)))
           (read-greeting-response client)
           (send-ehlo-command local-host client)
+          (when credentials
+            (authenticate-client client))
           client)
       (close stream))))
 
@@ -68,3 +76,25 @@
     (let ((entry (assoc :size keywords)))
       (when (and entry (> (second entry) 0))
         (second entry)))))
+
+(defun finalize-client-credentials (host port credentials)
+  (declare (type system:host host)
+           (type system:port-number port)
+           (type list credentials))
+  (let* ((username (cdr (assoc :username credentials)))
+         (password (lookup-netrc-password host port username)))
+    (unless (assoc :password credentials)
+      (cons (cons :password password)
+            credentials))))
+
+(defun lookup-netrc-password (host port &optional username)
+  (let ((entry (car (netrc:search-entries :machine host
+                                          :port port
+                                          :login username))))
+    (when entry
+      (netrc:entry-password entry))))
+
+(defun client-credential (client name)
+  (declare (type client client)
+           (type symbol name))
+  (cdr (assoc name (client-credentials client))))

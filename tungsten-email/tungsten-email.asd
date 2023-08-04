@@ -4,6 +4,7 @@
   :depends-on
   ("tungsten-core"
    "tungsten-json"
+   "tungsten-netrc"
    "tungsten-openssl"
    "tungsten-system"
    "tungsten-text")
@@ -34,7 +35,9 @@
     :components
     ((:file "package")
      (:file "client")
-     (:file "protocol"))))
+     (:file "protocol")
+     (:file "sasl")
+     (:file "sasl-plain"))))
   :in-order-to ((test-op (test-op "tungsten-email/test"))))
 
 (defsystem "tungsten-email/test"

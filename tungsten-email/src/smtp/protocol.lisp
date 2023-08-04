@@ -151,7 +151,7 @@
                                 "OAUTH10A" "OAUTHBEARER" "PLAIN"
                                 "PLAIN-CLIENTTOKEN" "XOAUTH" "XOAUTH2")
                        :test #'equalp)
-               (list (intern string :keyword))
+               (intern string :keyword)
                string)))
     (cons :auth (mapcar #'parse-mechanism strings))))
 
