@@ -1,4 +1,9 @@
 (defpackage :libssh
   (:use :cl)
   (:export
-   #:library-version))
+   #:library-version
+
+   #:libssh-error
+   #:libssh-error-function
+   #:libssh-error-code
+   #:libssh-error-description))

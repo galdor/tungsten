@@ -1,1 +1,8 @@
 (include "libssh/libssh.h")
+
+(enum
+ (ssh-error :int)
+ ((:ssh-ok "SSH_OK")
+  (:ssh-error "SSH_ERROR")
+  (:ssh-again "SSH_AGAIN")
+  (:ssh-eof "SSH_EOF")))
