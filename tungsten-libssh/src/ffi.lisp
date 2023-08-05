@@ -76,12 +76,15 @@
 ;;; Sessions
 ;;;
 
-(defun ssh-connect (%session)
-  (libssh-funcall ("ssh_connect" ((:pointer) ssh-error) %session)
-                  :error-source %session))
+(defun ssh-new ()
+  (libssh-funcall ("ssh_new" (() :pointer))))
 
 (defun ssh-free (%session)
   (libssh-funcall ("ssh_free" ((:pointer) :void) %session)))
+
+(defun ssh-connect (%session)
+  (libssh-funcall ("ssh_connect" ((:pointer) ssh-error) %session)
+                  :error-source %session))
 
 (defun ssh-disconnect (%session)
   (libssh-funcall ("ssh_disconnect" ((:pointer) :void) %session)

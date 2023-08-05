@@ -9,19 +9,19 @@
 (defun connect-session (host &key (port 22))
   (declare (type system:host host)
            (type system:port-number port))
-  (let (socket %session)
+  ;; Note that the session owns the socket so we must not try to close it
+  ;; once it has been assigned to the session.
+  (let* ((socket (system:make-tcp-socket host port))
+         (%session (core:abort-protect
+                       (ssh-new)
+                     (system:close-fd socket))))
     (core:abort-protect
         (progn
-          (setf socket (system:make-tcp-socket host port))
-          (setf %session (libssh-funcall ("ssh_new" (() :pointer))))
           (ssh-options-set/string %session :ssh-options-host host)
           (ssh-options-set/int %session :ssh-options-fd socket)
           (ssh-connect %session)
           (make-instance 'session :%session %session))
-      (when %session
-        (ssh-free %session))
-      (when socket
-        (system:close-fd socket)))))
+      (ssh-free %session))))
 
 (defun disconnect-session (session)
   (declare (type session session))
