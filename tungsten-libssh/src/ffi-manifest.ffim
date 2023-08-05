@@ -12,7 +12,7 @@
   (:ssh-eof "SSH_EOF")))
 
 ;;;
-;;; Session options
+;;; Sessions
 ;;;
 
 (enum
@@ -61,3 +61,13 @@
   (:ssh-options-rekey-time "SSH_OPTIONS_REKEY_TIME")
   (:ssh-options-rsa-min-size "SSH_OPTIONS_RSA_MIN_SIZE")
   (:ssh-options-identity-agent "SSH_OPTIONS_IDENTITY_AGENT")))
+
+;;;
+;;; Keys
+;;;
+
+(enum
+ (ssh-publickey-hash :int)
+ ((:ssh-publickey-hash-sha1 "SSH_PUBLICKEY_HASH_SHA1")
+  (:ssh-publickey-hash-md5 "SSH_PUBLICKEY_HASH_MD5")
+  (:ssh-publickey-hash-sha256 "SSH_PUBLICKEY_HASH_SHA256")))

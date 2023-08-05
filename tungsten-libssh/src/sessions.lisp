@@ -36,3 +36,16 @@
           (progn
             ,@body)
        (disconnect-session session))))
+
+(defun session-public-key-hash (session hash)
+  (declare (type session session)
+           (type (member :md5 :sha1 :sha256) hash))
+  (with-slots (%session) session
+    (let ((%key (ssh-get-server-publickey %session))
+          (hash-type (ecase hash
+                       (:md5 :ssh-publickey-hash-md5)
+                       (:sha1 :ssh-publickey-hash-sha1)
+                       (:sha256 :ssh-publickey-hash-sha256))))
+      (unwind-protect
+           (ssh-get-publickey-hash %key hash-type)
+        (ssh-key-free %key)))))

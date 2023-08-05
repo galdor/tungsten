@@ -119,3 +119,33 @@
   (ffi:with-foreign-value (%value :unsigned-int)
     (setf (ffi:foreign-value %value :unsigned-int) value)
     (ssh-options-set %session option %value)))
+
+(defun ssh-get-server-publickey (%session)
+  (declare (type ffi:pointer %session))
+  (ffi:with-foreign-value (%key :pointer)
+    (libssh-funcall ("ssh_get_server_publickey" ((:pointer :pointer) :int)
+                                                %session %key)
+                    :error-source %session)
+    (ffi:foreign-value %key :pointer)))
+
+;;;
+;;; Keys
+;;;
+
+(defun ssh-key-free (%key)
+  (declare (type ffi:pointer %key))
+  (libssh-funcall ("ssh_key_free" ((:pointer) :void) %key)))
+
+(defun ssh-get-publickey-hash (%key hash-type)
+  (declare (type ffi:pointer %key)
+           (type keyword hash-type))
+  (ffi:with-foreign-values ((%hash :pointer)
+                            (%hash-size 'system:size-t))
+    (libssh-funcall ("ssh_get_publickey_hash"
+                     ((:pointer ssh-publickey-hash :pointer :pointer) :int)
+                     %key hash-type %hash %hash-size))
+    (unwind-protect
+         (let ((hash-size (ffi:foreign-value %hash-size 'system:size-t)))
+           (ffi:read-foreign-memory (ffi:foreign-value %hash :pointer)
+                                    hash-size))
+      (libssh-funcall ("ssh_clean_pubkey_hash" ((:pointer) :void) %hash)))))
