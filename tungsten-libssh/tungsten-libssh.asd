@@ -4,7 +4,8 @@
   :defsystem-depends-on
   ("tungsten-ffi")
   :depends-on
-  ("tungsten-core")
+  ("tungsten-core"
+   "tungsten-system")
   :pathname "src"
   :serial t
   :components
@@ -13,7 +14,8 @@
     "ffi-manifest"
     :package :libssh
     :cflags (#+freebsd "-I/usr/local/include"))
-   (:file "ffi"))
+   (:file "ffi")
+   (:file "sessions"))
   :in-order-to ((test-op (test-op "tungsten-libssh/test"))))
 
 (defsystem "tungsten-libssh/test"

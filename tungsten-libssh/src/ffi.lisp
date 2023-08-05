@@ -65,7 +65,43 @@
        (when ,(case result-type
                 (:pointer
                  `(ffi:null-pointer-p ,result))
+                (:int
+                 `(< ,result 0))
                 (ssh-error
                  `(not (eql ,result :ssh-ok))))
          (libssh-error ,function-name ,error-source))
        ,result)))
+
+;;;
+;;; Session options
+;;;
+
+(defun ssh-options-set (%session option %value)
+  (declare (type ffi:pointer %session %value)
+           (type keyword option))
+  (libssh-funcall ("ssh_options_set" ((:pointer ssh-option :pointer) :int)
+                                     %session option %value)
+                  :error-source %session))
+
+(defun ssh-options-set/string (%session option value)
+  (declare (type ffi:pointer %session)
+           (type keyword option)
+           (type string value))
+  (ffi:with-foreign-string (%value value)
+    (ssh-options-set %session option %value)))
+
+(defun ssh-options-set/int (%session option value)
+  (declare (type ffi:pointer %session)
+           (type keyword option)
+           (type integer value))
+  (ffi:with-foreign-value (%value :int)
+    (setf (ffi:foreign-value %value :int) value)
+    (ssh-options-set %session option %value)))
+
+(defun ssh-options-set/unsigned-int (%session option value)
+  (declare (type ffi:pointer %session)
+           (type keyword option)
+           (type (integer 0) value))
+  (ffi:with-foreign-value (%value :unsigned-int)
+    (setf (ffi:foreign-value %value :unsigned-int) value)
+    (ssh-options-set %session option %value)))

@@ -1,8 +1,63 @@
 (include "libssh/libssh.h")
 
+;;;
+;;; Errors
+;;;
+
 (enum
  (ssh-error :int)
  ((:ssh-ok "SSH_OK")
   (:ssh-error "SSH_ERROR")
   (:ssh-again "SSH_AGAIN")
   (:ssh-eof "SSH_EOF")))
+
+;;;
+;;; Session options
+;;;
+
+(enum
+ (ssh-option :int)
+ ((:ssh-options-host "SSH_OPTIONS_HOST")
+  (:ssh-options-port "SSH_OPTIONS_PORT")
+  (:ssh-options-port-str "SSH_OPTIONS_PORT_STR")
+  (:ssh-options-fd "SSH_OPTIONS_FD")
+  (:ssh-options-user "SSH_OPTIONS_USER")
+  (:ssh-options-ssh-dir "SSH_OPTIONS_SSH_DIR")
+  (:ssh-options-identity "SSH_OPTIONS_IDENTITY")
+  (:ssh-options-add-identity "SSH_OPTIONS_ADD_IDENTITY")
+  (:ssh-options-knownhosts "SSH_OPTIONS_KNOWNHOSTS")
+  (:ssh-options-timeout "SSH_OPTIONS_TIMEOUT")
+  (:ssh-options-timeout-usec "SSH_OPTIONS_TIMEOUT_USEC")
+  (:ssh-options-ssh1 "SSH_OPTIONS_SSH1")
+  (:ssh-options-ssh2 "SSH_OPTIONS_SSH2")
+  (:ssh-options-log-verbosity "SSH_OPTIONS_LOG_VERBOSITY")
+  (:ssh-options-log-verbosity-str "SSH_OPTIONS_LOG_VERBOSITY_STR")
+  (:ssh-options-ciphers-c-s "SSH_OPTIONS_CIPHERS_C_S")
+  (:ssh-options-ciphers-s-c "SSH_OPTIONS_CIPHERS_S_C")
+  (:ssh-options-compression-c-s "SSH_OPTIONS_COMPRESSION_C_S")
+  (:ssh-options-compression-s-c "SSH_OPTIONS_COMPRESSION_S_C")
+  (:ssh-options-proxycommand "SSH_OPTIONS_PROXYCOMMAND")
+  (:ssh-options-bindaddr "SSH_OPTIONS_BINDADDR")
+  (:ssh-options-stricthostkeycheck "SSH_OPTIONS_STRICTHOSTKEYCHECK")
+  (:ssh-options-compression "SSH_OPTIONS_COMPRESSION")
+  (:ssh-options-compression-level "SSH_OPTIONS_COMPRESSION_LEVEL")
+  (:ssh-options-key-exchange "SSH_OPTIONS_KEY_EXCHANGE")
+  (:ssh-options-hostkeys "SSH_OPTIONS_HOSTKEYS")
+  (:ssh-options-gssapi-server-identity "SSH_OPTIONS_GSSAPI_SERVER_IDENTITY")
+  (:ssh-options-gssapi-client-identity "SSH_OPTIONS_GSSAPI_CLIENT_IDENTITY")
+  (:ssh-options-gssapi-delegate-credentials
+   "SSH_OPTIONS_GSSAPI_DELEGATE_CREDENTIALS")
+  (:ssh-options-hmac-c-s "SSH_OPTIONS_HMAC_C_S")
+  (:ssh-options-hmac-s-c "SSH_OPTIONS_HMAC_S_C")
+  (:ssh-options-password-auth "SSH_OPTIONS_PASSWORD_AUTH")
+  (:ssh-options-pubkey-auth "SSH_OPTIONS_PUBKEY_AUTH")
+  (:ssh-options-kbdint-auth "SSH_OPTIONS_KBDINT_AUTH")
+  (:ssh-options-gssapi-auth "SSH_OPTIONS_GSSAPI_AUTH")
+  (:ssh-options-global-knownhosts "SSH_OPTIONS_GLOBAL_KNOWNHOSTS")
+  (:ssh-options-nodelay "SSH_OPTIONS_NODELAY")
+  (:ssh-options-publickey-accepted-types "SSH_OPTIONS_PUBLICKEY_ACCEPTED_TYPES")
+  (:ssh-options-process-config "SSH_OPTIONS_PROCESS_CONFIG")
+  (:ssh-options-rekey-data "SSH_OPTIONS_REKEY_DATA")
+  (:ssh-options-rekey-time "SSH_OPTIONS_REKEY_TIME")
+  (:ssh-options-rsa-min-size "SSH_OPTIONS_RSA_MIN_SIZE")
+  (:ssh-options-identity-agent "SSH_OPTIONS_IDENTITY_AGENT")))
