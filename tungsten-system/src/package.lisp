@@ -106,6 +106,7 @@
    #:tcp-client-host
    #:tcp-client-port
    #:make-tcp-client
+   #:make-tcp-socket
 
    #:tcp-server
    #:tcp-server-io-base

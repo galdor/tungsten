@@ -52,7 +52,7 @@
            (type port-number port)
            (type (or (real 0) null) read-timeout write-timeout))
   (multiple-value-bind (socket address)
-      (tcp-connect host port)
+      (make-tcp-socket host port)
     (core:abort-protect
         (make-instance 'tcp-client :fd socket
                                    :address address
@@ -63,14 +63,11 @@
       (when socket
         (close-fd socket)))))
 
-(defun tcp-connect (host port)
+(defun make-tcp-socket (host port)
   "Establish a TCP connection to HOST and PORT. If HOST is an IP address, use it
 as it is. If HOST is a hostname, resolve it and try to connect to each
 resulting address until a connection succeeds. Return both the socket
-associated with the connection and the socket address used.
-
-If HOST is a hostname, unsuccessful connection attempts are logged to
-*ERROR-OUTPUT*."
+associated with the connection and the socket address used."
   (declare (type host host)
            (type port-number port))
   (etypecase host
@@ -79,7 +76,7 @@ If HOST is a hostname, unsuccessful connection attempts are logged to
            (errors nil))
        (dolist (address (core:nshuffle addresses))
          (handler-case
-             (return-from tcp-connect
+             (return-from make-tcp-socket
                (values (tcp-connect-to-address address) address))
            (error (condition)
              (push (cons address condition) errors))))
@@ -90,8 +87,6 @@ If HOST is a hostname, unsuccessful connection attempts are logged to
        (values (tcp-connect-to-address address) address)))))
 
 (defun tcp-connect-to-address (address)
-  "Establish a TCP connection to ADDRESS and return the socket associated to
-it."
   (declare (type socket-address address))
   (let* ((sockaddr-type
            (etypecase address
