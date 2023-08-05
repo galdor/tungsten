@@ -73,8 +73,19 @@
        ,result)))
 
 ;;;
-;;; Session options
+;;; Sessions
 ;;;
+
+(defun ssh-connect (%session)
+  (libssh-funcall ("ssh_connect" ((:pointer) ssh-error) %session)
+                  :error-source %session))
+
+(defun ssh-free (%session)
+  (libssh-funcall ("ssh_free" ((:pointer) :void) %session)))
+
+(defun ssh-disconnect (%session)
+  (libssh-funcall ("ssh_disconnect" ((:pointer) :void) %session)
+                  :error-source %session))
 
 (defun ssh-options-set (%session option %value)
   (declare (type ffi:pointer %session %value)
