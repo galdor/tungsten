@@ -111,7 +111,7 @@
              (error 'unknown-host-key :host-key host-key)
            (accept-host-key ()
              :report "Accept the host key as valid."
-             nil)))
+             (ssh-session-update-known-hosts %session))))
         (:ssh-known-hosts-changed
          (error 'host-key-mismatch :host-key host-key))
         (:ssh-known-hosts-other

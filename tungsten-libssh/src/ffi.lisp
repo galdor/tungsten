@@ -136,6 +136,11 @@
                    ((:pointer) ssh-known-hosts-status) %session)
                   :error-source %session))
 
+(defun ssh-session-update-known-hosts (%session)
+  (declare (type ffi:pointer %session))
+  (libssh-funcall ("ssh_session_update_known_hosts" ((:pointer) :int) %session)
+                  :error-source %session))
+
 ;;;
 ;;; Keys
 ;;;
