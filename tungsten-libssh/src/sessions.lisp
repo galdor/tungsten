@@ -38,7 +38,8 @@
     :initarg :%session
     :reader session-%session)))
 
-(defun open-session (host &key (port 22))
+(defun open-session (host &key (port 22)
+                               accept-unknown-host-key)
   (declare (type system:host host)
            (type system:port-number port))
   ;; Note that the session owns the socket so we must not try to close it
@@ -57,7 +58,13 @@
              (ssh-free %session))))
     (core:abort-protect
         (progn
-          (authenticate-server session)
+          (handler-bind
+              ((unknown-host-key
+                 (lambda (condition)
+                   (declare (ignore condition))
+                   (when accept-unknown-host-key
+                     (invoke-restart 'accept-host-key)))))
+            (authenticate-server session))
           session)
       (close-session session))))
 
@@ -100,7 +107,11 @@
          ;; SSH_KNOWN_HOSTS_NOT_FOUND means that the host key is unknown, the
          ;; same way as SSH_KNOWN_HOSTS_UNKNOWN, but that in addition there is
          ;; no known_host file found. We only care about the host key though.
-         (error 'unknown-host-key :host-key host-key))
+         (restart-case
+             (error 'unknown-host-key :host-key host-key)
+           (accept-host-key ()
+             :report "Accept the host key as valid."
+             nil)))
         (:ssh-known-hosts-changed
          (error 'host-key-mismatch :host-key host-key))
         (:ssh-known-hosts-other
