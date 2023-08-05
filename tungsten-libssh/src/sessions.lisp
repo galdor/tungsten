@@ -1,5 +1,37 @@
 (in-package :libssh)
 
+(define-condition server-authentication-error (error)
+  ((host-key
+    :type core:octet-vector
+    :initarg :host-key
+    :reader server-authentication-error-host-key)))
+
+(define-condition unknown-host-key (server-authentication-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (with-slots (host-key) condition
+       (format stream "Unknown SSH server host key SHA256:~A."
+               (text:encode-base64 host-key))))))
+
+(define-condition host-key-mismatch (server-authentication-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (with-slots (host-key) condition
+       (format stream "SSH server host key SHA256:~A does not match ~
+                       known host key."
+               (text:encode-base64 host-key))))))
+
+(define-condition host-key-type-mismatch (server-authentication-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (with-slots (host-key) condition
+       (format stream "SSH server host key SHA256:~A does not match ~
+                  the type of the known host key."
+               (text:encode-base64 host-key))))))
+
 (defclass session ()
   ((%session
     :type ffi:pointer
@@ -14,14 +46,20 @@
   (let* ((socket (system:make-tcp-socket host port))
          (%session (core:abort-protect
                        (ssh-new)
-                     (system:close-fd socket))))
+                     (system:close-fd socket)))
+         (session
+           (core:abort-protect
+               (progn
+                 (ssh-options-set/string %session :ssh-options-host host)
+                 (ssh-options-set/int %session :ssh-options-fd socket)
+                 (ssh-connect %session)
+                 (make-instance 'session :%session %session))
+             (ssh-free %session))))
     (core:abort-protect
         (progn
-          (ssh-options-set/string %session :ssh-options-host host)
-          (ssh-options-set/int %session :ssh-options-fd socket)
-          (ssh-connect %session)
-          (make-instance 'session :%session %session))
-      (ssh-free %session))))
+          (authenticate-server session)
+          session)
+      (close-session session))))
 
 (defun close-session (session)
   (declare (type session session))
@@ -49,3 +87,21 @@
       (unwind-protect
            (ssh-get-publickey-hash %key hash-type)
         (ssh-key-free %key)))))
+
+(defun authenticate-server (session)
+  (declare (type session session))
+  (with-slots (%session) session
+    (let ((host-key (session-host-key session :sha256)))
+      (ecase (ssh-session-is-known-server %session)
+        (:ssh-known-hosts-ok
+         nil)
+        ((:ssh-known-hosts-not-found
+          :ssh-known-hosts-unknown)
+         ;; SSH_KNOWN_HOSTS_NOT_FOUND means that the host key is unknown, the
+         ;; same way as SSH_KNOWN_HOSTS_UNKNOWN, but that in addition there is
+         ;; no known_host file found. We only care about the host key though.
+         (error 'unknown-host-key :host-key host-key))
+        (:ssh-known-hosts-changed
+         (error 'host-key-mismatch :host-key host-key))
+        (:ssh-known-hosts-other
+         (error 'host-key-type-mismatch :host-key host-key))))))

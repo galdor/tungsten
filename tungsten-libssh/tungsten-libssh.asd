@@ -5,7 +5,8 @@
   ("tungsten-ffi")
   :depends-on
   ("tungsten-core"
-   "tungsten-system")
+   "tungsten-system"
+   "tungsten-text")
   :pathname "src"
   :serial t
   :components

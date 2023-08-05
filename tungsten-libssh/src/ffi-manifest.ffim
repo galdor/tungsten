@@ -62,6 +62,15 @@
   (:ssh-options-rsa-min-size "SSH_OPTIONS_RSA_MIN_SIZE")
   (:ssh-options-identity-agent "SSH_OPTIONS_IDENTITY_AGENT")))
 
+(enum
+ (ssh-known-hosts-status :int)
+ ((:ssh-known-hosts-error "SSH_KNOWN_HOSTS_ERROR")
+  (:ssh-known-hosts-not-found "SSH_KNOWN_HOSTS_NOT_FOUND")
+  (:ssh-known-hosts-unknown "SSH_KNOWN_HOSTS_UNKNOWN")
+  (:ssh-known-hosts-ok "SSH_KNOWN_HOSTS_OK")
+  (:ssh-known-hosts-changed "SSH_KNOWN_HOSTS_CHANGED")
+  (:ssh-known-hosts-other "SSH_KNOWN_HOSTS_OTHER")))
+
 ;;;
 ;;; Keys
 ;;;

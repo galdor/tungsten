@@ -68,7 +68,9 @@
                 (:int
                  `(< ,result 0))
                 (ssh-error
-                 `(not (eql ,result :ssh-ok))))
+                 `(not (eql ,result :ssh-ok)))
+                (ssh-known-hosts-status
+                 `(eql ,result :ssh-known-hosts-error)))
          (libssh-error ,function-name ,error-source))
        ,result)))
 
@@ -127,6 +129,12 @@
                                                 %session %key)
                     :error-source %session)
     (ffi:foreign-value %key :pointer)))
+
+(defun ssh-session-is-known-server (%session)
+  (declare (type ffi:pointer %session))
+  (libssh-funcall ("ssh_session_is_known_server"
+                   ((:pointer) ssh-known-hosts-status) %session)
+                  :error-source %session))
 
 ;;;
 ;;; Keys
