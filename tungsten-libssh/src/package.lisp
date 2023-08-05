@@ -6,4 +6,9 @@
    #:libssh-error
    #:libssh-error-function
    #:libssh-error-code
-   #:libssh-error-description))
+   #:libssh-error-description
+
+   #:open-session
+   #:close-session
+   #:with-session
+   #:session-host-key))

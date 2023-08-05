@@ -6,7 +6,7 @@
     :initarg :%session
     :reader session-%session)))
 
-(defun connect-session (host &key (port 22))
+(defun open-session (host &key (port 22))
   (declare (type system:host host)
            (type system:port-number port))
   ;; Note that the session owns the socket so we must not try to close it
@@ -23,7 +23,7 @@
           (make-instance 'session :%session %session))
       (ssh-free %session))))
 
-(defun disconnect-session (session)
+(defun close-session (session)
   (declare (type session session))
   (with-slots (%session) session
     (unwind-protect
@@ -31,13 +31,13 @@
       (ssh-free %session))))
 
 (defmacro with-session ((session &rest args) &body body)
-  `(let ((,session (connect-session ,@args)))
+  `(let ((,session (open-session ,@args)))
      (unwind-protect
           (progn
             ,@body)
-       (disconnect-session session))))
+       (close-session session))))
 
-(defun session-public-key-hash (session hash)
+(defun session-host-key (session hash)
   (declare (type session session)
            (type (member :md5 :sha1 :sha256) hash))
   (with-slots (%session) session
