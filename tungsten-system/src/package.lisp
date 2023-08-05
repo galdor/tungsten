@@ -12,6 +12,8 @@
    #:intptr-t
    #:uintptr-t
 
+   #:close-fd
+
    #:mutex
    #:make-mutex
    #:acquire-mutex
