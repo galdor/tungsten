@@ -80,3 +80,16 @@
  ((:ssh-publickey-hash-sha1 "SSH_PUBLICKEY_HASH_SHA1")
   (:ssh-publickey-hash-md5 "SSH_PUBLICKEY_HASH_MD5")
   (:ssh-publickey-hash-sha256 "SSH_PUBLICKEY_HASH_SHA256")))
+
+;;;
+;;; Authentication
+;;;
+
+(enum
+ (ssh-auth-status :int)
+ ((:ssh-auth-success "SSH_AUTH_SUCCESS")
+  (:ssh-auth-denied "SSH_AUTH_DENIED")
+  (:ssh-auth-partial "SSH_AUTH_PARTIAL")
+  (:ssh-auth-info "SSH_AUTH_INFO")
+  (:ssh-auth-again "SSH_AUTH_AGAIN")
+  (:ssh-auth-error "SSH_AUTH_ERROR")))

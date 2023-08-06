@@ -70,7 +70,9 @@
                 (ssh-error
                  `(not (eql ,result :ssh-ok)))
                 (ssh-known-hosts-status
-                 `(eql ,result :ssh-known-hosts-error)))
+                 `(eql ,result :ssh-known-hosts-error))
+                (ssh-auth-status
+                 `(eql ,result :ssh-auth-error)))
          (libssh-error ,function-name ,error-source))
        ,result)))
 
@@ -140,6 +142,13 @@
   (declare (type ffi:pointer %session))
   (libssh-funcall ("ssh_session_update_known_hosts" ((:pointer) :int) %session)
                   :error-source %session))
+
+(defun ssh-userauth-publickey-auto (%session password)
+  (ffi:with-foreign-string (%password password)
+    (libssh-funcall ("ssh_userauth_publickey_auto"
+                     ((:pointer :pointer :pointer) ssh-auth-status)
+                     %session (ffi:null-pointer) %password)
+                    :error-source %session)))
 
 ;;;
 ;;; Keys

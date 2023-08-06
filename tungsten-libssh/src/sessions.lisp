@@ -32,6 +32,17 @@
                   the type of the known host key."
                (text:encode-base64 host-key))))))
 
+(define-condition client-authentication-error (error)
+  ())
+
+(define-condition public-key-authentication-failure
+    (client-authentication-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (with-slots (host-key) condition
+       (format stream "SSH public key authentication failed.")))))
+
 (defclass session ()
   ((%session
     :type ffi:pointer
@@ -39,9 +50,13 @@
     :reader session-%session)))
 
 (defun open-session (host &key (port 22)
-                               accept-unknown-host-key)
+                               accept-unknown-host-key
+                               username
+                               public-key-password)
   (declare (type system:host host)
-           (type system:port-number port))
+           (type system:port-number port)
+           (type boolean accept-unknown-host-key)
+           (type (or string null) username public-key-password))
   ;; Note that the session owns the socket so we must not try to close it
   ;; once it has been assigned to the session.
   (let* ((socket (system:make-tcp-socket host port))
@@ -51,6 +66,9 @@
          (session
            (core:abort-protect
                (progn
+                 (when username
+                   (ssh-options-set/string %session :ssh-options-user
+                                           username))
                  (ssh-options-set/string %session :ssh-options-host host)
                  (ssh-options-set/int %session :ssh-options-fd socket)
                  (ssh-connect %session)
@@ -65,6 +83,10 @@
                    (when accept-unknown-host-key
                      (invoke-restart 'accept-host-key)))))
             (authenticate-server session))
+          (handler-bind
+              ()
+            (authenticate-client session
+                                 :public-key-password public-key-password))
           session)
       (close-session session))))
 
@@ -116,3 +138,16 @@
          (error 'host-key-mismatch :host-key host-key))
         (:ssh-known-hosts-other
          (error 'host-key-type-mismatch :host-key host-key))))))
+
+(defun authenticate-client (session &key public-key-password)
+  (declare (type session session)
+           (type (or string null) public-key-password))
+  (with-slots (%session) session
+    (ecase (ssh-userauth-publickey-auto %session public-key-password)
+      (:ssh-auth-success
+       nil)
+      (:ssh-auth-denied
+       (error 'public-key-authentication-failure))
+      (:ssh-auth-partial
+       ;; XXX What does it mean exactly?
+       (error 'public-key-authentication-failure)))))
