@@ -93,3 +93,10 @@
   (:ssh-auth-info "SSH_AUTH_INFO")
   (:ssh-auth-again "SSH_AUTH_AGAIN")
   (:ssh-auth-error "SSH_AUTH_ERROR")))
+
+(bitset
+ (ssh-auth-method :int)
+ ((:ssh-auth-method-password "SSH_AUTH_METHOD_PASSWORD")
+  (:ssh-auth-method-publickey "SSH_AUTH_METHOD_PUBLICKEY")
+  (:ssh-auth-method-hostbased "SSH_AUTH_METHOD_HOSTBASED")
+  (:ssh-auth-method-interactive "SSH_AUTH_METHOD_INTERACTIVE")))

@@ -143,12 +143,36 @@
   (libssh-funcall ("ssh_session_update_known_hosts" ((:pointer) :int) %session)
                   :error-source %session))
 
+(defun ssh-userauth-none (%session)
+  (libssh-funcall ("ssh_userauth_none" ((:pointer :pointer) :int)
+                                       %session (ffi:null-pointer))
+                  :error-source %session))
+
+(defun ssh-userauth-list (%session)
+  (libssh-funcall ("ssh_userauth_list" ((:pointer :pointer) ssh-auth-method)
+                                       %session (ffi:null-pointer))
+                  :error-source %session))
+
 (defun ssh-userauth-publickey-auto (%session password)
   (ffi:with-foreign-string (%password password)
     (libssh-funcall ("ssh_userauth_publickey_auto"
                      ((:pointer :pointer :pointer) ssh-auth-status)
                      %session (ffi:null-pointer) %password)
                     :error-source %session)))
+
+(defun ssh-userauth-try-publickey (%session %key)
+  (declare (type ffi:pointer %session %key))
+  (libssh-funcall ("ssh_userauth_try_publickey"
+                   ((:pointer :pointer :pointer) ssh-auth-status)
+                   %session (ffi:null-pointer) %key)
+                  :error-source %session))
+
+(defun ssh-userauth-publickey (%session %key)
+  (declare (type ffi:pointer %session %key))
+  (libssh-funcall ("ssh_userauth_publickey"
+                   ((:pointer :pointer :pointer) ssh-auth-status)
+                   %session (ffi:null-pointer) %key)
+                  :error-source %session))
 
 ;;;
 ;;; Keys
@@ -164,10 +188,32 @@
   (ffi:with-foreign-values ((%hash :pointer)
                             (%hash-size 'system:size-t))
     (libssh-funcall ("ssh_get_publickey_hash"
-                     ((:pointer ssh-publickey-hash :pointer :pointer) :int)
+                     ((:pointer ssh-publickey-hash :pointer :pointer)
+                      ssh-error)
                      %key hash-type %hash %hash-size))
     (unwind-protect
          (let ((hash-size (ffi:foreign-value %hash-size 'system:size-t)))
            (ffi:read-foreign-memory (ffi:foreign-value %hash :pointer)
                                     hash-size))
       (libssh-funcall ("ssh_clean_pubkey_hash" ((:pointer) :void) %hash)))))
+
+(defun ssh-pki-import-privkey-base64 (data passphrase)
+  (declare (type string data)
+           (type (or string null) passphrase))
+  (ffi:with-foreign-value (%key :pointer)
+    (ffi:with-foreign-strings ((%data data)
+                               (%passphrase passphrase))
+      (libssh-funcall ("ssh_pki_import_privkey_base64"
+                       ((:pointer :pointer :pointer :pointer :pointer)
+                        ssh-error)
+                       %data %passphrase (ffi:null-pointer) (ffi:null-pointer)
+                       %key)))
+    (ffi:foreign-value %key :pointer)))
+
+(defun ssh-pki-export-privkey-to-pubkey (%private-key)
+  (declare (type ffi:pointer %private-key))
+  (ffi:with-foreign-value (%public-key :pointer)
+    (libssh-funcall
+     ("ssh_pki_export_privkey_to_pubkey" ((:pointer :pointer) ssh-error)
+                                         %private-key %public-key))
+    (ffi:foreign-value %public-key :pointer)))

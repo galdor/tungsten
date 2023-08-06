@@ -35,6 +35,14 @@
 (define-condition client-authentication-error (error)
   ())
 
+(define-condition public-key-authentication-not-supported
+    (client-authentication-error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (with-slots (host-key) condition
+       (format stream "SSH public key authentication not supported.")))))
+
 (define-condition public-key-authentication-failure
     (client-authentication-error)
   ()
@@ -52,11 +60,12 @@
 (defun open-session (host &key (port 22)
                                accept-unknown-host-key
                                username
-                               public-key-password)
+                               identity-path private-key-passphrase)
   (declare (type system:host host)
            (type system:port-number port)
            (type boolean accept-unknown-host-key)
-           (type (or string null) username public-key-password))
+           (type (or string null) username private-key-passphrase)
+           (type (or pathname string null) identity-path))
   ;; Note that the session owns the socket so we must not try to close it
   ;; once it has been assigned to the session.
   (let* ((socket (system:make-tcp-socket host port))
@@ -85,8 +94,10 @@
             (authenticate-server session))
           (handler-bind
               ()
-            (authenticate-client session
-                                 :public-key-password public-key-password))
+            (authenticate-client
+             session
+             :identity-path identity-path
+             :private-key-passphrase private-key-passphrase))
           session)
       (close-session session))))
 
@@ -139,15 +150,72 @@
         (:ssh-known-hosts-other
          (error 'host-key-type-mismatch :host-key host-key))))))
 
-(defun authenticate-client (session &key public-key-password)
+(defmacro with-identity-keys ((%public-key %private-key identity-path
+                               &key private-key-passphrase)
+                              &body body)
+  `(multiple-value-bind (,%public-key ,%private-key)
+       (load-identity ,identity-path
+                      :private-key-passphrase ,private-key-passphrase)
+     (unwind-protect
+          (progn
+            ,@body)
+       (ssh-key-free ,%public-key)
+       (ssh-key-free ,%private-key))))
+
+(defun authenticate-client (session &key identity-path private-key-passphrase)
   (declare (type session session)
-           (type (or string null) public-key-password))
+           (type (or pathname string null) identity-path)
+           (type (or string null) private-key-passphrase))
+  ;; XXX Should we handle SSH-AUTH-PARTIAL differently?
   (with-slots (%session) session
-    (ecase (ssh-userauth-publickey-auto %session public-key-password)
-      (:ssh-auth-success
-       nil)
-      (:ssh-auth-denied
-       (error 'public-key-authentication-failure))
-      (:ssh-auth-partial
-       ;; XXX What does it mean exactly?
-       (error 'public-key-authentication-failure)))))
+    ;; ssh_userauth_none() must always be called before calling
+    ;; ssh_userauth_list().
+    (when (eq (ignore-errors (ssh-userauth-none %session))
+              :ssh-auth-sucess)
+      (return-from authenticate-client t))
+    (unless (member :ssh-auth-method-publickey
+                    (ssh-userauth-list %session))
+      (error 'public-key-authentication-not-supported))
+    (cond
+      ;; If we are using a specific identity file, load and use it
+      (identity-path
+       (with-identity-keys
+           (%public-key %private-key identity-path
+                        :private-key-passphrase private-key-passphrase)
+         (ecase (ssh-userauth-try-publickey %session %public-key)
+           (:ssh-auth-success
+            nil)
+           ((:ssh-auth-denied :ssh-auth-partial)
+            (error 'public-key-authentication-failure)))
+         (ecase (ssh-userauth-try-publickey %session %private-key)
+           (:ssh-auth-success
+            nil)
+           ((:ssh-auth-denied :ssh-auth-partial)
+            (error 'public-key-authentication-failure)))))
+      (t
+       ;; If not, fallback to the automatic function which sends known public
+       ;; keys to the server until one matches then load and use the
+       ;; associated private key.
+       (ecase (ssh-userauth-publickey-auto %session
+                                           private-key-passphrase)
+         (:ssh-auth-success
+          nil)
+         ((:ssh-auth-denied :ssh-auth-partial)
+          (error 'public-key-authentication-failure)))))))
+
+(defun load-identity (path &key private-key-passphrase)
+  (declare (type (or pathname string) path)
+           (type (or string null) private-key-passphrase))
+  (let (%public-key %private-key)
+    (core:abort-protect
+        (let ((private-key-data
+                (system:read-file path :external-format :ascii)))
+          (setf %private-key
+                (ssh-pki-import-privkey-base64 private-key-data
+                                               private-key-passphrase))
+          (setf %public-key (ssh-pki-export-privkey-to-pubkey %private-key))
+          (values %public-key %private-key))
+      (when %public-key
+        (ssh-key-free %public-key))
+      (when %private-key
+        (ssh-key-free %private-key)))))
