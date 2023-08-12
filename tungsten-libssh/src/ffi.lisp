@@ -207,6 +207,34 @@
   (libssh-funcall ("ssh_channel_close" ((:pointer) ssh-error) %channel)
                   :error-source %session))
 
+(defun ssh-channel-request-exec (%channel %session command)
+  (declare (type ffi:pointer %channel %session)
+           (type string command))
+  (ffi:with-foreign-string (%command command)
+    (libssh-funcall ("ssh_channel_request_exec"
+                     ((:pointer :pointer) ssh-error) %channel %command)
+                    :error-source %session)))
+
+(defun ssh-channel-read (%channel %session %buffer size stderr)
+  (declare (type ffi:pointer %channel %session %buffer)
+           (type integer size)
+           (type boolean stderr))
+  (let ((value (libssh-funcall ("ssh_channel_read"
+                                ((:pointer :pointer :uint32 :int) :int)
+                                %channel %buffer size (if stderr 1 0)))))
+    (unless (>= value 0)
+      (libssh-error "ssh_channel_read" %session))
+    value))
+
+(defun ssh-channel-get-exit-status (%channel %session)
+  (declare (type ffi:pointer %channel %session))
+  (let ((value (libssh-funcall ("ssh_channel_get_exit_status"
+                                ((:pointer) :int) %channel)
+                               :error-source %session)))
+    (unless (>= value 0)
+      (libssh-error "ssh_channel_get_exit_status" %session))
+    value))
+
 ;;;
 ;;; Keys
 ;;;
