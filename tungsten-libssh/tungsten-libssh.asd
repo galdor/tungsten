@@ -16,7 +16,8 @@
     :package :libssh
     :cflags (#+freebsd "-I/usr/local/include"))
    (:file "ffi")
-   (:file "sessions"))
+   (:file "sessions")
+   (:file "channels"))
   :in-order-to ((test-op (test-op "tungsten-libssh/test"))))
 
 (defsystem "tungsten-libssh/test"

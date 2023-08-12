@@ -175,6 +175,39 @@
                   :error-source %session))
 
 ;;;
+;;; Channels
+;;;
+
+(defun ssh-channel-new (%session)
+  (declare (type ffi:pointer %session))
+  (libssh-funcall ("ssh_channel_new" ((:pointer) :pointer) %session)))
+
+(defun ssh-channel-free (%channel)
+  (declare (type ffi:pointer %channel))
+  (libssh-funcall ("ssh_channel_free" ((:pointer) :void) %channel)))
+
+(defun ssh-channel-open-session (%channel %session)
+  (declare (type ffi:pointer %channel %session))
+  (libssh-funcall ("ssh_channel_open_session"
+                   ((:pointer) ssh-error) %channel)
+                  :error-source %session))
+
+(defun ssh-channel-send-eof (%channel %session)
+  (declare (type ffi:pointer %channel %session))
+  (libssh-funcall ("ssh_channel_send_eof" ((:pointer) ssh-error) %channel)
+                  :error-source %session))
+
+(defun ssh-channel-is-eof (%channel %session)
+  (declare (type ffi:pointer %channel %session))
+  (libssh-funcall ("ssh_channel_is_eof" ((:pointer) ssh-error) %channel)
+                  :error-source %session))
+
+(defun ssh-channel-close (%channel %session)
+  (declare (type ffi:pointer %channel %session))
+  (libssh-funcall ("ssh_channel_close" ((:pointer) ssh-error) %channel)
+                  :error-source %session))
+
+;;;
 ;;; Keys
 ;;;
 
