@@ -13,7 +13,13 @@
    #:unknown-host-key
    #:host-key-mismatch
    #:host-key-type-mismatch
-   #:open-session
-   #:close-session
-   #:with-session
-   #:session-host-key))
+   #:client-authentication-error
+   #:public-key-authentication-not-supported
+   #:public-key-authentication-failure
+
+   #:*client-read-block-size*
+   #:client
+   #:make-client
+   #:disconnect-client
+   #:with-client
+   #:execute))
