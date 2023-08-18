@@ -242,10 +242,10 @@
 (defun server-process-request (server request connection)
   (declare (type server server)
            (type request request)
-           (type connection connection)
-           (ignore server))
-  ;; TODO request handler
-  (send-response (make-response 200) connection)
+           (type connection connection))
+  (let* ((handler (server-request-handler server))
+         (response (funcall handler request connection)))
+    (send-response response connection))
   (cond
     ((request-keep-connection-alive-p request)
      (setf (connection-request-reader connection) (make-request-reader)))
