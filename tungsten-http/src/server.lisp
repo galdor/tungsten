@@ -19,13 +19,19 @@
    (tcp-server
     :type (or system:tcp-server null)
     :initform nil)
-   (connections
-    :type list
-    :initform nil)
    (request-handler
     :type (or symbol function)
     :initarg :request-handler
-    :reader server-request-handler)))
+    :reader server-request-handler)
+   (request-processors
+    :type list
+    :initform nil)
+   (requests
+    :type list
+    :initform nil)
+   (requests-condition-variable
+    :type system:condition-variable
+    :initform (system:make-condition-variable :name "http-server-requests"))))
 
 (defclass connection ()
   ((server
@@ -59,31 +65,51 @@
     (with-slots (host port) server
       (system:format-address host port stream))))
 
-(defun start-server (host port request-handler)
+(defun start-server (host port request-handler &key (nb-request-processors 1))
   (declare (type system:host host)
            (type system:port-number port)
-           (type (or symbol function) request-handler))
+           (type (or symbol function) request-handler)
+           (type (integer 1) nb-request-processors))
   (let ((server (make-instance 'server :host host :port port
                                        :request-handler request-handler)))
-    (flet ((handle-connection (stream)
-             (let ((connection (make-instance 'connection
-                                              :server server :stream stream)))
-               (funcall 'server-handle-new-connection server connection))))
-      (setf (slot-value server 'tcp-server)
-            (system:start-tcp-server host port #'handle-connection))
-      server)))
+    (core:abort-protect
+        (progn
+          (flet ((handle-connection (stream)
+                   (let ((connection
+                           (make-instance 'connection
+                                          :server server :stream stream)))
+                     (funcall 'server-handle-new-connection
+                              server connection))))
+            (setf (slot-value server 'tcp-server)
+                  (system:start-tcp-server host port #'handle-connection)))
+          (dotimes (i nb-request-processors)
+            (push (system:make-thread "http-request-processor"
+                                      (lambda ()
+                                        (server-process-requests server)))
+                  (slot-value server 'request-processors)))
+          server)
+      (stop-server server))))
 
 (defun stop-server (server)
   (declare (type server server))
-  (with-slots (mutex closingp tcp-server connections)
+  (with-slots (mutex closingp tcp-server request-processors requests)
       server
-    (system:with-mutex (mutex)
-      (setf closingp t))
-    (mapc 'close-connection connections)
+    ;; First stop accepting any new connection and stop the TCP server
     (when tcp-server
       (system:stop-tcp-server tcp-server)
       (setf tcp-server nil)
-      t)))
+      t)
+    ;; Then stop processing requests
+    (system:with-mutex (mutex)
+      (setf closingp t))
+    (mapc 'system:join-thread request-processors)
+    (setf request-processors nil)
+    ;; Finally close connections associated with pending requests
+    (dolist (request-entry requests)
+      (destructuring-bind (request . connection) request-entry
+        ;; TODO send a nice error about the server shutting down
+        (declare (ignore request))
+        (ignore-errors (close-connection connection))))))
 
 (defun server-handle-new-connection (server connection)
   (declare (type server server)
@@ -175,6 +201,41 @@
                   (connection-stream connection))))
 
 (defun server-handle-request (server request connection)
+  (declare (type server server)
+           (type request request)
+           (type connection connection))
+  (with-slots (mutex requests requests-condition-variable) server
+    (system:with-mutex (mutex)
+      (push (cons request connection) requests)
+      (when (null (cdr requests))
+        (system:signal-condition-variable requests-condition-variable)))))
+
+(defun server-pop-request (server)
+  (declare (type server server))
+  (with-slots (mutex requests requests-condition-variable) server
+    (system:with-mutex (mutex)
+      (unless requests
+        (system:wait-condition-variable requests-condition-variable mutex
+                                        :timeout 1.0))
+      (when requests
+        (destructuring-bind (request . connection)
+            (pop requests)
+          (values request connection))))))
+
+(defun server-process-requests (server)
+  (declare (type server server))
+  (do ((mutex (server-mutex server)))
+      ((system:with-mutex (mutex) (slot-value server 'closingp)))
+    (multiple-value-bind (request connection)
+        (server-pop-request server)
+      (when request
+        (restart-case
+            (server-process-request server request connection)
+          (close-connection ()
+            :report "Close the HTTP connection."
+            (close-connection connection)))))))
+
+(defun server-process-request (server request connection)
   (declare (type server server)
            (type request request)
            (type connection connection)
