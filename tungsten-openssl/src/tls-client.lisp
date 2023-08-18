@@ -69,7 +69,7 @@
   (let ((%context nil)
         (%ssl nil))
     (multiple-value-bind (socket address)
-        (system::tcp-connect host port)
+        (system:make-tcp-socket host port)
       (core:abort-protect
           (progn
             (setf %context (ssl-ctx-new (tls-client-method)))
