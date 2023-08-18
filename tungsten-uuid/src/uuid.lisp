@@ -74,7 +74,7 @@
           (replace octets (decode 19 23) :start1 8 :end1 10)
           (replace octets (decode 24 36) :start1 10 :end1 16))
         (uuid octets))
-    (error ()
+    ((or text:invalid-hex-string text:invalid-hex-digit) ()
       (error 'invalid-format :string (subseq string start end)))))
 
 (defun serialize (id)
