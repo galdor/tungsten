@@ -124,47 +124,54 @@
           (watch-connection connection '(:read)))
       (close-connection connection))))
 
+(defmacro with-connection-restarts ((connection) &body body)
+  (let ((connection-var (gensym "CONNECTION-VAR-")))
+    `(let ((,connection-var ,connection))
+       (restart-case
+           (progn
+             ,@body)
+         (close-connection ()
+           :report "Close the HTTP connection."
+           (close-connection ,connection-var))
+         (send-error (message)
+           :report "Send an HTTP error response and close the connection."
+           :test (lambda (condition)
+                   (declare (ignore condition))
+                   (not (connection-finishing-p ,connection-var)))
+           :interactive (lambda () (core:prompt-eval "Error message: "))
+           (send-response (make-error-response 500 message) ,connection-var)
+           (setf (connection-finishing-p ,connection-var) t)
+           (watch-connection ,connection-var '(:write)))))))
+
 (defun server-handle-connection-event (server connection events)
   (declare (type server server)
            (type connection connection)
            (type list events))
-  (restart-case
-      (handler-bind
-          (((or end-of-file connection-closed)
-             (lambda (condition)
-               (declare (ignore condition))
-               (invoke-restart 'close-connection)))
-           ((or system:read-event-required system:write-event-required)
-             (lambda (condition)
-               (declare (ignore condition))
-               (return-from server-handle-connection-event)))
-           (error
-             (lambda (condition)
-               (unless core:*interactive*
-                 (invoke-restart 'send-error (princ-to-string condition))))))
-        (when (member :read events)
-          (let ((request (server-read-request server connection)))
-            (server-handle-request server request connection)))
-        (when (member :write events)
-          (let* ((stream (connection-stream connection))
-                 (buffer (system:io-stream-write-buffer stream)))
-            (force-output stream)
-            (when (core:buffer-empty-p buffer)
-              (if (connection-finishing-p connection)
+  (with-connection-restarts (connection)
+    (handler-bind
+        (((or end-of-file connection-closed)
+           (lambda (condition)
+             (declare (ignore condition))
+             (invoke-restart 'close-connection)))
+         ((or system:read-event-required system:write-event-required)
+           (lambda (condition)
+             (declare (ignore condition))
+             (return-from server-handle-connection-event)))
+         (error
+           (lambda (condition)
+             (unless core:*interactive*
+               (invoke-restart 'send-error (princ-to-string condition))))))
+      (when (member :read events)
+        (let ((request (server-read-request server connection)))
+          (server-handle-request server request connection)))
+      (when (member :write events)
+        (let* ((stream (connection-stream connection))
+               (buffer (system:io-stream-write-buffer stream)))
+          (force-output stream)
+          (when (core:buffer-empty-p buffer)
+            (if (connection-finishing-p connection)
                 (close-connection connection)
-                (watch-connection connection '(:read)))))))
-    (close-connection ()
-      :report "Close the HTTP connection."
-      (close-connection connection))
-    (send-error (message)
-      :report "Send an HTTP error response and close the connection."
-      :test (lambda (condition)
-              (declare (ignore condition))
-              (not (connection-finishing-p connection)))
-      :interactive (lambda () (core:prompt-eval "Error message: "))
-      (send-response (make-error-response 500 message) connection)
-      (setf (connection-finishing-p connection) t)
-      (watch-connection connection '(:write)))))
+                (watch-connection connection '(:read)))))))))
 
 (defun watch-connection (connection events)
   (declare (type connection connection)
@@ -229,11 +236,8 @@
     (multiple-value-bind (request connection)
         (server-pop-request server)
       (when request
-        (restart-case
-            (server-process-request server request connection)
-          (close-connection ()
-            :report "Close the HTTP connection."
-            (close-connection connection)))))))
+        (with-connection-restarts (connection)
+          (server-process-request server request connection))))))
 
 (defun server-process-request (server request connection)
   (declare (type server server)
