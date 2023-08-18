@@ -5,7 +5,7 @@
 
 (defstruct (uuid
             (:constructor nil))
-  (octets (core:octet-vector* 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+  (octets #.(core:octet-vector* 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
    :type (core:octet-vector 16)))
 
 (defmethod print-object ((id uuid) stream)
