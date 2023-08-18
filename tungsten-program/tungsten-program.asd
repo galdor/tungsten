@@ -6,7 +6,9 @@
   ("tungsten-core")
   :serial t
   :components
-  ((:file "package"))
+  ((:file "package")
+   (:file "command-line")
+   (:file "program"))
   :in-order-to ((test-op (test-op "tungsten-program/test"))))
 
 (defsystem "tungsten-program/test"
