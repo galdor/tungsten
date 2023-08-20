@@ -1,5 +1,18 @@
 (in-package :program)
 
+(defvar *programs* (make-hash-table))
+
+(defvar *program* nil)
+
+(defclass program ()
+  ((name
+    :type symbol
+    :initarg :name
+    :reader program-name)
+   (function
+    :type function
+    :reader program-function)))
+
 (define-condition unknown-program (error)
   ((name
     :type symbol
@@ -10,33 +23,37 @@
      (with-slots (name) condition
        (format stream "Unknown program ~A." name)))))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun program-main-function (name)
-    (declare (type symbol name))
-    (intern (concatenate 'string "MAIN-" (symbol-name name)))))
+(defmacro defprogram ((name) &body body)
+  (let ((function (gensym "FUNCTION-"))
+        (program (gensym "PROGRAM-")))
+    `(let* ((,program (make-instance 'program :name ',name))
+            (,function
+              (lambda ()
+                (let ((core:*interactive* nil)
+                      (*program* ,program))
+                  ,@body))))
+       (setf (slot-value ,program 'function) ,function)
+       (setf (gethash ',name *programs*) ,program))))
 
-(defmacro define-program ((name) &body body)
-  `(defun ,(program-main-function name) ()
-     (let ((core:*interactive* nil))
-       ,@body)))
+(defun program (name)
+  (or (gethash name *programs*)
+      (error 'unknown-program :name 'name)))
 
 (defun build-executable (program-name &key path)
   (declare (type symbol program-name)
            (type (or pathname string null) path))
   (let ((path (or path (string-downcase (symbol-name program-name))))
-        (main (program-main-function program-name)))
-    (unless (fboundp main)
-      (error 'unknown-program :name program-name))
+        (program (program program-name)))
     #+sbcl
     (let ((args (append
                  (list :executable t)
-                 (list :toplevel main)
+                 (list :toplevel (program-function program))
                  (when (member :sb-core-compression *features*)
                    (list :compression t)))))
       (apply 'sb-ext:save-lisp-and-die path args))
     #+ccl
     (ccl:save-application path :prepend-kernel t
                                :purify t
-                               :toplevel-function main)
+                               :toplevel-function (program-function program))
     #-(or sbcl ccl)
     (core:unsupported-feature "executable creation")))
