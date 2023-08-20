@@ -1,21 +1,15 @@
 (in-package :program)
 
-(defun argv ()
-  #+sbcl
-  sb-ext:*posix-argv*
-  #+ccl
-  ccl:*command-line-argument-list*
+(eval-when (:compile-toplevel :load-toplevel :execute)
   #-(or sbcl ccl)
   (core:unsupported-feature "command line handling"))
+
+(defun argv ()
+  #+sbcl sb-ext:*posix-argv*
+  #+ccl  ccl:*command-line-argument-list*)
 
 (defun command-line-program-name ()
-  #+(or sbcl ccl)
-  (car (argv))
-  #-(or sbcl ccl)
-  (core:unsupported-feature "command line handling"))
+  (car (argv)))
 
 (defun command-line-arguments ()
-  #+(or sbcl ccl)
-  (cdr (argv))
-  #-(or sbcl ccl)
-  (core:unsupported-feature "command line handling"))
+  (cdr (argv)))
