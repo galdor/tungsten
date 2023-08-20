@@ -1,0 +1,76 @@
+#!/bin/sh
+
+set -eu
+set -o pipefail
+
+__die() {
+    printf "$*\n" >&2
+    exit 1
+}
+
+__usage() {
+    exit_code=$1
+
+    cat >&2 <<EOF
+Usage: $0 [-h] <system> <program>
+
+ARGUMENTS
+
+system               the name of the ASDF system containing the program
+program              the name of the program as an unquoted Common Lisp symbol
+
+OPTIONS
+
+-a                   the directory containing ASDF systems (default: $asdf_path)
+-h                   print help and exit
+-i <implementation>  the implementation to use (default: $implementation)
+EOF
+
+    exit $exit_code
+}
+
+root=$(realpath $(dirname $0)/..)
+
+asdf_path="."
+implementation="sbcl"
+
+OPTIND=1
+while getopts "a:hi:" arg; do
+    case "$arg" in
+        a) asdf_path=$OPTARG ;;
+        h) __usage 0 ;;
+        i) implementation=$OPTARG ;;
+        ?) __die "Unknown option '-$arg'" ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+if [ $# -lt 2 ]; then
+    __die "missing argument(s)"
+fi
+
+system=$1
+program=$2
+
+script=$(mktemp)
+trap "rm $script" EXIT
+
+cat >$script <<EOF
+(setf *compile-verbose* nil)
+(setf *load-verbose* nil)
+
+(let* ((current-directory #+ccl (ccl:current-directory)
+                          #-ccl *default-pathname-defaults*)
+       (path (merge-pathnames #p"$asdf_path" current-directory)))
+  (asdf:clear-source-registry)
+  (asdf:initialize-source-registry
+   (list :source-registry
+         :ignore-inherited-configuration
+         (list :tree path))))
+
+(asdf:load-system "$system")
+
+(program:build-executable '$program)
+EOF
+
+$root/utils/run -i $implementation $script
