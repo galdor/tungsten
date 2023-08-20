@@ -1,3 +1,4 @@
 *.patch
 /dev/
+/examples/httpc/httpc
 /tests/
