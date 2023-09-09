@@ -35,6 +35,9 @@
    #:overlong-utf8-sequence
    #:invalid-utf8-sequence
 
+   #:truncated-utf16-character
+   #:truncated-utf16-surrogate-pair
+
    #:invalid-hex-digit
    #:invalid-hex-digit-character
    #:invalid-hex-string
