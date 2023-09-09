@@ -82,6 +82,11 @@
     :initarg :character-decoding-function
     :reader encoding-character-decoding-function)))
 
+(defmethod print-object ((encoding encoding) stream)
+  (print-unreadable-object (encoding stream :type t)
+    (with-slots (name) encoding
+      (format stream "~A" name))))
+
 (defun encoding (id-or-encoding)
   (declare (type (or symbol encoding) id-or-encoding))
   (typecase id-or-encoding
