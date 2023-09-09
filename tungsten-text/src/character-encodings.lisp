@@ -102,3 +102,6 @@
 
 (defmacro define-encoding (id () &rest args)
   `(register-encoding ,id (make-instance 'encoding ,@args)))
+
+(defun encodings ()
+  (core:hash-table-keys *encodings*))

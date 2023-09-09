@@ -12,6 +12,7 @@
    #:register-encoding
    #:unregister-encoding
    #:define-encoding
+   #:encodings
 
    #:encoded-character-length
    #:encoded-string-length
