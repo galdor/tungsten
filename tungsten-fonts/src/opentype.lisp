@@ -77,8 +77,49 @@
     :type list
     :accessor name-table-name-records)))
 
-(defclass head-table (table)
-  ())
+(defclass hhea-table (table)
+  ((major-version
+    :type uint16
+    :accessor hhea-table-major-version)
+   (minor-version
+    :type uint16
+    :accessor hhea-table-minor-version)
+   (ascender
+    :type fword
+    :accessor hhea-table-ascender)
+   (descender
+    :type fword
+    :accessor hhea-table-descender)
+   (line-gap
+    :type fword
+    :accessor hhea-table-line-gap)
+   (advance-width-max
+    :type ufword
+    :accessor hhea-table-advance-width-max)
+   (min-left-side-bearing
+    :type fword
+    :accessor hhea-table-min-left-side-bearing)
+   (min-right-side-bearing
+    :type fword
+    :accessor hhea-table-min-right-side-bearing)
+   (x-max-extent
+    :type fword
+    :accessor hhea-table-x-max-extent)
+   (caret-slope-rise
+    :type int16
+    :accessor hhea-table-caret-slope-rise)
+   (caret-slope-run
+    :type int16
+    :accessor hhea-table-caret-slope-run)
+   (caret-offset
+    :type int16
+    :accessor hhea-table-caret-offset)
+   (metric-data-format
+    :type int16
+    :accessor hhea-table-metric-data-format)
+   (number-of-hmetrics
+    :type uint16
+    :accessor hhea-table-number-of-hmetrics)))
 
 (defclass name-record ()
   ((platform-id

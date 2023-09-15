@@ -10,6 +10,7 @@
   ((:file "package")
    (:file "opentype")
    (:file "parser")
+   (:file "parser-hhea")
    (:file "parser-name"))
   :in-order-to ((test-op (test-op "tungsten-fonts/test"))))
 

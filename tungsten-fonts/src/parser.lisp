@@ -81,6 +81,7 @@
                                                  :end (+ offset length)
                                                  :table tag)))
               (table-class (core:string-case tag
+                             ("hhea" 'hhea-table)
                              ("name" 'name-table))))
           (when table-class
             (let ((table (make-instance table-class :tag tag
@@ -204,11 +205,23 @@
   (declare (type string name))
   (parse-integer-field name :uint16be))
 
+(defun parse-int16 (name)
+  (declare (type string name))
+  (parse-integer-field name :int16be))
+
 (defun parse-uint32 (name)
   (declare (type string name))
   (parse-integer-field name :uint32be))
 
 (defun parse-offset16 (name)
+  (declare (type string name))
+  (parse-integer-field name :uint16be))
+
+(defun parse-fword (name)
+  (declare (type string name))
+  (parse-integer-field name :int16be))
+
+(defun parse-ufword (name)
   (declare (type string name))
   (parse-integer-field name :uint16be))
 
