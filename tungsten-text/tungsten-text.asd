@@ -16,6 +16,7 @@
    (:file "utf-8")
    (:file "utf-16")
    (:file "iso-8859-1")
+   (:file "macintosh")
    (:file "hex-encoding")
    (:file "base64")
    (:file "buffers"))
