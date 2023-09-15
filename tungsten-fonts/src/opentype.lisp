@@ -169,3 +169,20 @@
     :type table-directory
     :initarg :table-directory
     :accessor font-table-directory)))
+
+(defun font-table (font name)
+  (declare (type font font)
+           (type tag name))
+  (table-directory-table (font-table-directory font) name))
+
+(defun font-ascender (font)
+  (declare (type font font))
+  (hhea-table-ascender (font-table font "hhea")))
+
+(defun font-descender (font)
+  (declare (type font font))
+  (hhea-table-descender (font-table font "hhea")))
+
+(defun font-line-gap (font)
+  (declare (type font font))
+  (hhea-table-line-gap (font-table font "hhea")))
