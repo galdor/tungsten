@@ -7,6 +7,8 @@
    #:*endianness*
    #:*interactive*
 
+   #:halt
+
    #:float-parse-error
    #:float-parse-error-string
    #:float-parse-error-description

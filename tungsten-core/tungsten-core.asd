@@ -6,6 +6,7 @@
   :components
   ((:file "package")
    (:file "environment")
+   (:file "halt")
    (:file "floats")
    (:file "maths")
    (:file "sequences")
