@@ -55,6 +55,7 @@
    #:buffer-skip-to
    #:buffer-starts-with-octet
    #:buffer-starts-with-octets
+   #:buffer-append-string
 
    #:unavailable-random-data
    #:random-octets

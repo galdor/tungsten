@@ -238,7 +238,7 @@ written."))
   (declare (type character character))
   (with-slots (write-buffer external-format) stream
     (let ((encoding (text:external-format-encoding external-format)))
-      (core:buffer-append-string write-buffer (string character)
+      (text:buffer-append-string write-buffer (string character)
                                  :encoding encoding)))
   character)
 
@@ -256,7 +256,7 @@ written."))
            (type (or (integer 0) null) end))
   (with-slots (write-buffer external-format) stream
     (let ((encoding (text:external-format-encoding external-format)))
-      (core:buffer-append-string write-buffer string
+      (text:buffer-append-string write-buffer string
                                  :encoding encoding
                                  :start start :end end)))
   string)

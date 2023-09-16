@@ -49,4 +49,6 @@
    #:invalid-base64-character
    #:invalid-base64-character-character
    #:encode-base64
-   #:decode-base64))
+   #:decode-base64
+
+   #:buffer-append-string))

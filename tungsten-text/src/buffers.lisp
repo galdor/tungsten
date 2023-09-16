@@ -1,9 +1,9 @@
-(in-package :core)
+(in-package :text)
 
 (defun buffer-append-string (buffer string
                              &key (start 0) (end nil)
                                   (encoding text:*default-encoding*))
-  (declare (type buffer buffer)
+  (declare (type core:buffer buffer)
            (type string string))
   (when (> (length string) 0)
     (let* ((end (or end (length string)))
@@ -13,11 +13,9 @@
            (offset (core:buffer-reserve buffer nb-octets)))
       (text:encode-string string :encoding encoding
                                  :start start :end end
-                                 :octets (buffer-data buffer)
+                                 :octets (core:buffer-data buffer)
                                  :offset offset)
-      (incf (buffer-end buffer) nb-octets))))
-
-(export 'buffer-append-string :core)
+      (incf (core:buffer-end buffer) nb-octets))))
 
 ;; Directly writing ASCII data to IO stream buffers is used in network servers
 ;; (e.g. the HTTP server) to bypass Gray streams. It makes sense to optimize
