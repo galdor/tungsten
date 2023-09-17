@@ -9,10 +9,10 @@
   :components
   ((:file "package")
    (:file "opentype")
-   (:file "parser")
-   (:file "parser-hhea")
-   (:file "parser-name")
-   (:file "parser-cmap"))
+   (:file "opentype-hhea")
+   (:file "opentype-name")
+   (:file "opentype-cmap")
+   (:file "font"))
   :in-order-to ((test-op (test-op "tungsten-fonts/test"))))
 
 (defsystem "tungsten-fonts/test"

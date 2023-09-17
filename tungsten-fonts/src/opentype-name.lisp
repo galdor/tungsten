@@ -1,5 +1,40 @@
 (in-package :fonts)
 
+(defclass name-table (table)
+  ((version
+    :type uint16
+    :accessor name-table-version)
+   (name-records
+    :type list
+    :accessor name-table-name-records)))
+
+(defclass name-record ()
+  ((platform-id
+    :type (or symbol uint16)
+    :initarg :platform-id
+    :accessor name-record-platform-id)
+   (encoding-id
+    :type (or symbol uint16)
+    :initarg :encoding-id
+    :accessor name-record-encoding-id)
+   (language-id
+    :type (or symbol uint16)
+    :initarg :language-id
+    :accessor name-record-language-id)
+   (name-id
+    :type (or symbol uint16)
+    :initarg :name-id
+    :accessor name-record-name-id)
+   (value
+    :type (or string core:octet-vector)
+    :initarg :value
+    :accessor name-record-value)))
+
+(defmethod print-object ((record name-record) stream)
+  (print-unreadable-object (record stream :type t)
+    (with-slots (name-id value) record
+      (format stream "~A ~S" name-id value))))
+
 (defmethod parse-table ((table name-table))
   (with-slots (version (table-offset offset)) table
     (setf version (parse-uint16 "version"))
