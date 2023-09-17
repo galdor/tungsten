@@ -11,7 +11,8 @@
    (:file "opentype")
    (:file "parser")
    (:file "parser-hhea")
-   (:file "parser-name"))
+   (:file "parser-name")
+   (:file "parser-cmap"))
   :in-order-to ((test-op (test-op "tungsten-fonts/test"))))
 
 (defsystem "tungsten-fonts/test"

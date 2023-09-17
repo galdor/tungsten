@@ -81,6 +81,7 @@
                                                  :end (+ offset length)
                                                  :table tag)))
               (table-class (core:string-case tag
+                             ("cmap" 'cmap-table)
                              ("hhea" 'hhea-table)
                              ("name" 'name-table))))
           (when table-class

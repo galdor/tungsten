@@ -143,6 +143,29 @@
     :initarg :value
     :accessor name-record-value)))
 
+(defclass cmap-table (table)
+  ((version
+     :type uint16
+     :initarg :version
+     :accessor cmap-table-version)
+   (encoding-records
+    :type list
+    :accessor cmap-table-encoding-records)))
+
+(defclass encoding-record ()
+  ((platform-id
+    :type (or symbol uint16)
+    :initarg :platform-id
+    :accessor encoding-record-platform-id)
+   (encoding-id
+    :type (or symbol uint16)
+    :initarg :encoding-id
+    :accessor encoding-record-encoding-id)
+   (subtable-offset
+    :type offset32
+    :initarg :subtable-offset
+    :accessor encoding-record-subtable-offset)))
+
 (defmethod print-object ((record name-record) stream)
   (print-unreadable-object (record stream :type t)
     (with-slots (name-id value) record
