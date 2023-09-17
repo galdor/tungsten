@@ -9,6 +9,21 @@
     :type list
     :accessor cmap-table-encoding-records)))
 
+(defun cmap-table-glyph-id (table code)
+  (declare (type cmap-table table)
+           (type (signed-byte 32) code))
+  ;; At least for the time being we only support Unicode encoding records
+  ;; since we only represent characters as Unicode codepoints.
+  (let ((record (find-if (lambda (record)
+                           (with-slots (platform-id encoding-id) record
+                             (or (eq platform-id :unicode)
+                                 (and (eq platform-id :windows)
+                                      (eq encoding-id :unicode-bmp)))))
+                         (cmap-table-encoding-records table))))
+    (unless record
+      (error "No supported encoding record found."))
+    (cmap-subtable-glyph-id (encoding-record-subtable record) code)))
+
 (defclass encoding-record ()
   ((platform-id
     :type (or symbol uint16)
