@@ -23,6 +23,11 @@
     :initarg :subtable-offset
     :accessor encoding-record-subtable-offset)))
 
+(defmethod print-object ((record encoding-record) stream)
+  (print-unreadable-object (record stream :type t)
+    (with-slots (platform-id encoding-id) record
+      (format stream "~A ~A" platform-id encoding-id))))
+
 (defmethod parse-table ((table cmap-table))
   (setf (cmap-table-version table) (parse-uint16 "version"))
   (let* ((nb-encoding-records (parse-uint16 "numTables"))
