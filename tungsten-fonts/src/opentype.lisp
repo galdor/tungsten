@@ -126,13 +126,13 @@
    (start
     :type (integer 0)
     :initarg :start
-    :reader parser-start)
+    :accessor parser-start)
    (end
     :type (integer 0)
     :initarg :end
-    :reader parser-end)
+    :accessor parser-end)
    (table
-    :type (or tag null)
+    :type (or tag list)
     :initarg :table
     :accessor parser-table)))
 
