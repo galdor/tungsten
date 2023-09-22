@@ -26,7 +26,7 @@
    #:random-octets
 
    #:unsupported-digest-algorithm
-   #:unsupported-digest-algorithm-algorithm
+   #:unsupported-digest-algorithm-name
    #:with-digest
    #:update-digest
    #:compute-digest

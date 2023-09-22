@@ -7,14 +7,14 @@
 ;;; have to manipulate digests.
 
 (define-condition unsupported-digest-algorithm (error)
-  ((algorith
+  ((name
     :type symbol
-    :initarg :algorithm
-    :reader unsupported-digest-algorithm-algorithm))
+    :initarg :name
+    :reader unsupported-digest-algorithm-name))
   (:report
    (lambda (condition stream)
-     (with-slots (algorithm) condition
-       (format stream "Unsupported digest algorithm ~S." algorithm)))))
+     (with-slots (name) condition
+       (format stream "Unsupported digest algorithm ~A." name)))))
 
 (defun digest-algorithm-name (algorithm)
   (cond
