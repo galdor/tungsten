@@ -72,21 +72,29 @@
    (max
     :type (or number null)
     :initarg :max
+    :initform nil)
+   (float-type
+    :type (or (member single-float double-float) null)
+    :initarg :float-type
     :initform nil))
   (:default-initargs
    :base-types '(:number :integer)))
 
 (defmethod validate-value (value (mapping number-mapping))
-  (with-slots (min max) mapping
+  (with-slots (min max float-type) mapping
     (when (and min (< value min))
       (add-mapping-error value "number must be greater than ~F" min))
     (when (and max (> value max))
       (add-mapping-error value "number must be lower than ~F" max))
-    value))
+    (if float-type
+        (coerce value float-type)
+        value)))
 
 (defmethod generate-value (value (mapping number-mapping))
-  (declare (ignore mapping))
-  value)
+  (with-slots (float-type) mapping
+    (if float-type
+        (coerce value float-type)
+        value)))
 
 (defclass integer-mapping (mapping)
   ((min
