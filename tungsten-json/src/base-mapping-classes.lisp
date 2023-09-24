@@ -209,11 +209,13 @@
      (coerce value 'list))))
 
 (defmethod generate-value (value (mapping array-mapping))
-  (let ((nb-elements (length value)))
-    (with-slots (element) mapping
-      (when element
-        (dotimes (i nb-elements)
-          (setf (aref value i) (generate-child i (aref value i) element))))))
+  (with-slots (element) mapping
+    (when element
+      (setf value
+            (map 'vector (lambda (i element-value)
+                           (generate-child i element-value element))
+                 (core:iota (length value))
+                 value))))
   value)
 
 (defclass object-mapping (mapping)
