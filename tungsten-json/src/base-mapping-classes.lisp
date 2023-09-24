@@ -272,14 +272,15 @@
                     (setf (slot-value output-value slot) decoded-value)
                     (push (cons slot decoded-value) output-value)))))))
       ;; Other members
-      (dolist (member-value value)
-        (unless (member (car member-value) names :test #'string=)
-          (let ((decoded-value
-                  (if value-mapping
-                      (validate-child (car member-value) (cdr member-value)
-                                      value-mapping)
-                      (cdr member-value))))
-            (push (cons (car member-value) decoded-value) output-value))))
+      (unless class
+        (dolist (member-value value)
+          (unless (member (car member-value) names :test #'string=)
+            (let ((decoded-value
+                    (if value-mapping
+                        (validate-child (car member-value) (cdr member-value)
+                                        value-mapping)
+                        (cdr member-value))))
+              (push (cons (car member-value) decoded-value) output-value)))))
       ;; Member names
       (when name-mapping
         (dolist (member-value output-value)
