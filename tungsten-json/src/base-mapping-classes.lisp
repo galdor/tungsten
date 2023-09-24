@@ -181,7 +181,12 @@
    (element
     :type (or symbol list)
     :initarg :element
-    :initform nil))
+    :initform nil)
+   (sequence-type
+    :type (member nil vector array list)
+    :initarg :sequence-type
+    :initform nil
+    :reader array-mapping-sequence-type))
   (:default-initargs
    :base-types '(:array)))
 
@@ -197,7 +202,11 @@
       (when element
         (dotimes (i nb-elements)
           (setf (aref value i) (validate-child i (aref value i) element))))))
-  value)
+  (ecase (array-mapping-sequence-type mapping)
+    ((nil vector array)
+     value)
+    (list
+     (coerce value 'list))))
 
 (defmethod generate-value (value (mapping array-mapping))
   (let ((nb-elements (length value)))
