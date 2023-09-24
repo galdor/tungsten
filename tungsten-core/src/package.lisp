@@ -74,4 +74,11 @@
    #:format-backtrace
    #:backtrace
 
+   #:variable-binding
+   #:function-binding
+   #:variable-information
+   #:function-information
+   #:variable-type
+   #:function-type
+
    #:macroexpand-all))
