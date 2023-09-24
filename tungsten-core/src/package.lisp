@@ -20,6 +20,7 @@
    #:shuffle
    #:nshuffle
 
+   #:list-to-hash-table
    #:alist-to-hash-table
    #:hash-table-keys
    #:hash-table-values
