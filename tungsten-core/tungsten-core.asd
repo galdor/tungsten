@@ -5,7 +5,7 @@
   :serial t
   :components
   ((:file "package")
-   (:file "environment")
+   (:file "features")
    (:file "halt")
    (:file "floats")
    (:file "maths")
