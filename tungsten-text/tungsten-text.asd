@@ -49,7 +49,8 @@
   :serial t
   :components
   ((:file "package")
-   (:file "ucd")
+   (:file "files")
+   (:file "data")
    (:file "generation")))
 
 (defsystem "tungsten-text/test"

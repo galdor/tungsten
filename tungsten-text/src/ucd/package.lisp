@@ -1,3 +1,4 @@
 (defpackage :ucd
   (:use :cl)
-  (:export))
+  (:export
+   #:generate-cl-source))
