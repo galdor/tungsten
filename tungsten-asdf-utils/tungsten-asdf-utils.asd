@@ -6,4 +6,5 @@
   :components
   ((:file "package")
    (:file "systems")
+   (:file "generated-cl-source")
    (:file "shared-library")))
