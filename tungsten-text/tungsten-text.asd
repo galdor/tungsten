@@ -1,3 +1,12 @@
+(defsystem "tungsten-text/unicode-base"
+  :description "Unicode utilities that must be available in the UCD package."
+  :author "Nicolas Martyanoff <nicolas@n16f.net>"
+  :pathname "src/unicode"
+  :serial t
+  :components
+  ((:file "package")
+   (:file "unicode-base")))
+
 (defsystem "tungsten-text"
   :description "Textual data manipulation."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
@@ -6,6 +15,7 @@
   ("tungsten-asdf-utils")
   :depends-on
   ("tungsten-core"
+   "tungsten-text/unicode-base"
    "tungsten-text/ucd")
   :serial t
   :components
@@ -14,10 +24,10 @@
     :pathname "unicode"
     :serial t
     :components
-    ((:file "package")
+    ((:file "unicode")
      ("asdf-utils:generated-cl-source"
       "ucd"
-      :generation (:ucd :generate-cl-source :unicode)
+      :generation (:ucd :generate :unicode)
       :dependencies ("../ucd/" "../../data/ucd/"))))
    (:module
     "text"
@@ -44,7 +54,8 @@
   :description "Unicode character database utilities."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
   :depends-on
-  ("tungsten-core")
+  ("tungsten-core"
+   "tungsten-text/unicode-base")
   :pathname "src/ucd"
   :serial t
   :components

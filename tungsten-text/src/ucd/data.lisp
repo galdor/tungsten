@@ -4,7 +4,7 @@
 
 (defclass character-data ()
   ((code-point
-    :type code-point
+    :type unicode:code-point
     :initarg :code-point
     :reader character-data-code-point)
    (name
@@ -22,10 +22,10 @@
     (with-slots (code-point name) c
       (format stream "U+~4,'0X~@[ ~A~]" code-point name))))
 
-(defun character-data (code-point)
-  (declare (type code-point code-point))
-  (when (<= 0 code-point (length *characters*))
-    (aref *characters* code-point)))
+(defun find-character-data (code)
+  (declare (type unicode:code-point code))
+  (when (<= 0 code (length *characters*))
+    (aref *characters* code)))
 
 (defun load-character-data ()
   (let ((characters (make-array 0 :element-type '(or character-data null)
@@ -58,11 +58,11 @@
                         simple-uppercase-mapping
                         simple-lowercase-mapping
                         simple-titlecase-mapping))
-       (let ((character-data
-               (make-instance 'character-data
-                              :code-point code-point
-                              :name name
-                              :general-category general-category)))
+       (let* ((character-data
+                (make-instance 'character-data
+                               :code-point code-point
+                               :name name
+                               :general-category general-category)))
          (do ((i (length characters) (1+ i)))
              ((>= i code-point)
               nil)
@@ -70,3 +70,9 @@
          (vector-push-extend character-data characters))))
     (setf *characters* characters)
     t))
+
+(defmacro do-characters ((code-point character-data &optional result) &body body)
+  `(dotimes (,code-point (length *characters*) ,result)
+     (let ((,character-data (aref *characters* ,code-point)))
+       (when ,character-data
+         ,@body))))

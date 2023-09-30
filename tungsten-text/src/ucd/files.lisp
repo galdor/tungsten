@@ -4,13 +4,8 @@
 ;;; (https://www.unicode.org/reports/tr44/#Format_Conventions) for a
 ;;; description of the file format used in the Unicode Character Database.
 
-(defconstant highest-code-point #x10ffff)
-
-(deftype code-point ()
-  `(integer 0 ,highest-code-point))
-
 (deftype code-point-or-range ()
-  '(or code-point (cons code-point code-point)))
+  '(or unicode:code-point (cons unicode:code-point unicode:code-point)))
 
 (defparameter *ucd-path*
   (asdf:system-relative-pathname "tungsten-text" #p"data/ucd/"))
@@ -156,7 +151,7 @@
   (declare (type string string)
            (type (integer 0) start end))
   (let ((code-point (parse-integer string :start start :end end :radix 16)))
-    (unless (<= 0 code-point highest-code-point)
+    (unless (<= 0 code-point unicode:highest-code-point)
       (error "Invalid code point ~D." code-point))
     code-point))
 
