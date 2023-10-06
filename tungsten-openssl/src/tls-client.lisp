@@ -8,6 +8,8 @@
     "ECDHE-ECDSA-AES128-GCM-SHA256"
     "ECDHE-RSA-AES128-GCM-SHA256"))
 
+(defparameter *default-peer-verification-depth* 20)
+
 (defparameter *default-ca-certificate-directory-paths*
   (let ((paths nil))
     (flet ((try (path)
@@ -49,7 +51,8 @@
                               system:*default-tcp-client-write-timeout*)
                              (ciphers *default-tls-client-ciphers*)
                              (peer-verification t)
-                             (peer-verification-depth 20)
+                             (peer-verification-depth
+                              *default-peer-verification-depth*)
                              ca-certificate-paths
                              (ca-certificate-directory-paths
                               *default-ca-certificate-directory-paths*)
@@ -66,47 +69,91 @@
            (type list ca-certificate-paths ca-certificate-directory-paths)
            (type (or pathname string null) certificate-path private-key-path)
            (type (or string null) server-name))
+  (let ((tcp-client nil))
+    (core:abort-protect
+        (progn
+          (setf tcp-client (system:make-tcp-client host port))
+          (init-tls-client tcp-client
+                           :external-format external-format
+                           :read-timeout read-timeout
+                           :write-timeout write-timeout
+                           :ciphers ciphers
+                           :peer-verification peer-verification
+                           :peer-verification-depth peer-verification-depth
+                           :ca-certificate-paths ca-certificate-paths
+                           :ca-certificate-directory-paths
+                           ca-certificate-directory-paths
+                           :certificate-path certificate-path
+                           :private-key-path private-key-path
+                           :server-name server-name))
+      (close tcp-client))))
+
+(defun init-tls-client (tcp-client
+                        &key (external-format text:*default-external-format*)
+                             (read-timeout
+                              system:*default-tcp-client-read-timeout*)
+                             (write-timeout
+                              system:*default-tcp-client-write-timeout*)
+                             (ciphers *default-tls-client-ciphers*)
+                             (peer-verification t)
+                             (peer-verification-depth
+                              *default-peer-verification-depth*)
+                             ca-certificate-paths
+                             (ca-certificate-directory-paths
+                              *default-ca-certificate-directory-paths*)
+                             certificate-path
+                             private-key-path
+                             server-name)
+  (declare (type system:tcp-client tcp-client)
+           (type (or (real 0) null) read-timeout write-timeout)
+           (type list ciphers)
+           (type boolean peer-verification)
+           (type (integer 0) peer-verification-depth)
+           (type list ca-certificate-paths ca-certificate-directory-paths)
+           (type (or pathname string null) certificate-path private-key-path)
+           (type (or string null) server-name))
   (let ((%context nil)
-        (%ssl nil))
-    (multiple-value-bind (socket address)
-        (system:make-tcp-socket host port)
-      (core:abort-protect
-          (progn
-            (setf %context (ssl-ctx-new (tls-client-method)))
-            (ssl-ctx-set-options %context '(:ssl-op-all))
-            (ssl-ctx-set-min-proto-version %context :tls1-2-version)
-            (ssl-ctx-set-cipher-list %context ciphers)
-            (when peer-verification
-              (ssl-ctx-set-verify %context '(:ssl-verify-peer) nil))
-            (when peer-verification-depth
-              (ssl-ctx-set-verify-depth %context peer-verification-depth))
-            (dolist (path ca-certificate-paths)
-              (ssl-ctx-load-verify-file %context path))
-            (dolist (path ca-certificate-directory-paths)
-              (ssl-ctx-load-verify-dir %context path))
-            (when certificate-path
-              (ssl-ctx-use-certificate-file %context certificate-path
-                                            :ssl-filetype-pem))
-            (when private-key-path
-              (ssl-ctx-use-private-key-file %context private-key-path
-                                            :ssl-filetype-pem))
-            (setf %ssl (ssl-new %context))
-            (cond
-              (server-name
-               (ssl-set-tlsext-host-name %ssl server-name))
-              ((stringp host)
-               (ssl-set-tlsext-host-name %ssl host)))
-            (ssl-set-fd %ssl socket)
-            (ssl-connect %ssl)
-            (make-instance 'tls-client :fd socket
-                                       :address address
-                                       :external-format external-format
-                                       :host host :port port
-                                       :read-timeout read-timeout
-                                       :write-timeout write-timeout
-                                       :%context %context :%ssl %ssl))
-        (when %ssl
-          (ssl-free %ssl))
-        (when %context
-          (ssl-ctx-free %context))
-        (system:close-fd socket)))))
+        (%ssl nil)
+        (fd (system:io-stream-fd tcp-client))
+        (address (system:network-stream-address tcp-client))
+        (host (system:tcp-client-host tcp-client))
+        (port (system:tcp-client-port tcp-client)))
+    (core:abort-protect
+        (progn
+          (setf %context (ssl-ctx-new (tls-client-method)))
+          (ssl-ctx-set-options %context '(:ssl-op-all))
+          (ssl-ctx-set-min-proto-version %context :tls1-2-version)
+          (ssl-ctx-set-cipher-list %context ciphers)
+          (when peer-verification
+            (ssl-ctx-set-verify %context '(:ssl-verify-peer) nil))
+          (when peer-verification-depth
+            (ssl-ctx-set-verify-depth %context peer-verification-depth))
+          (dolist (path ca-certificate-paths)
+            (ssl-ctx-load-verify-file %context path))
+          (dolist (path ca-certificate-directory-paths)
+            (ssl-ctx-load-verify-dir %context path))
+          (when certificate-path
+            (ssl-ctx-use-certificate-file %context certificate-path
+                                          :ssl-filetype-pem))
+          (when private-key-path
+            (ssl-ctx-use-private-key-file %context private-key-path
+                                          :ssl-filetype-pem))
+          (setf %ssl (ssl-new %context))
+          (cond
+            (server-name
+             (ssl-set-tlsext-host-name %ssl server-name))
+            ((stringp host)
+             (ssl-set-tlsext-host-name %ssl host)))
+          (ssl-set-fd %ssl fd)
+          (ssl-connect %ssl)
+          (make-instance 'tls-client :fd fd
+                                     :address address
+                                     :external-format external-format
+                                     :host host :port port
+                                     :read-timeout read-timeout
+                                     :write-timeout write-timeout
+                                     :%context %context :%ssl %ssl))
+      (when %ssl
+        (ssl-free %ssl))
+      (when %context
+        (ssl-ctx-free %context)))))
