@@ -13,7 +13,7 @@
    (sink
     :type sink
     :initarg :sink
-    :initform (make-default-sink)
+    :initform (make-terminal-sink)
     :accessor logger-sink)))
 
 (defmethod print-object ((logger logger) stream)
@@ -34,7 +34,7 @@
     (make-instance 'logger
                    :domain (append (inherit 'domain) (when name (list name)))
                    :data (append data (inherit 'data))
-                   :sink (or sink (inherit 'sink (make-default-sink))))))
+                   :sink (or sink (inherit 'sink (make-terminal-sink))))))
 
 (defvar *logger* (make-logger nil))
 

@@ -14,7 +14,6 @@
 
    #:sink
    #:write-message
-   #:default-sink
 
    #:make-terminal-sink
 
