@@ -9,6 +9,13 @@
   (:default-initargs
    :format-control "Missing password for authentication."))
 
+(define-condition tls-not-supported (error)
+  ()
+  (:report
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "PostgreSQL server does not support TLS connections."))))
+
 (define-condition unsupported-authentication-scheme (error)
   ((name
     :type string
@@ -55,6 +62,31 @@
     :initarg :password
     :initform nil
     :reader client-password)
+   (tls
+    :type boolean
+    :initarg :tls
+    :initform nil
+    :reader client-tls)
+   (tls-ca-certificate-paths
+    :type list
+    :initarg :tls-ca-certificate-paths
+    :initform nil
+    :reader client-tls-ca-certificate-paths)
+   (tls-certificate-path
+    :type (or pathname string null)
+    :initarg :tls-certificate-path
+    :initform nil
+    :reader client-tls-certificate-path)
+   (tls-private-key-path
+    :type (or pathname string null)
+    :initarg :tls-private-key-path
+    :initform nil
+    :reader client-tls-private-key-path)
+   (tls-server-name
+    :type (or string null)
+    :initarg :tls-server-name
+    :initform nil
+    :reader client-tls-server-name)
    (database
     :type (or string null)
     :initarg :database
@@ -117,32 +149,57 @@
                 max-connections)))))
 
 (defun make-client (&key (host "localhost") (port 5432)
-                         user password database application-name
-                         (max-connections 10))
+                         user password
+                         database application-name
+                         (max-connections 10)
+                         tls
+                         tls-ca-certificate-paths
+                         tls-certificate-path tls-private-key-path
+                         tls-server-name)
   (declare (type system:host host)
            (type system:port-number port)
            (type (or string null) user password database application-name)
-           (type (integer 1) max-connections))
+           (type (integer 1) max-connections)
+           (type boolean tls)
+           (type list tls-ca-certificate-paths)
+           (type (or pathname string null)
+                 tls-certificate-path tls-private-key-path)
+           (type (or string null) tls-server-name))
   ;; It may seems strange that the host is not a mandatory parameter, but in
   ;; the future we would like to support UNIX sockets.
   (let ((client
-          (make-instance 'client :host host :port port
-                                 :user user :password password
-                                 :database database
-                                 :application-name application-name
-                                 :max-connections max-connections)))
+          (make-instance 'client
+                         :host host :port port
+                         :user user :password password
+                         :database database
+                         :application-name application-name
+                         :max-connections max-connections
+                         :tls tls
+                         :tls-ca-certificate-paths tls-ca-certificate-paths
+                         :tls-certificate-path tls-certificate-path
+                         :tls-private-key-path tls-private-key-path
+                         :tls-server-name tls-server-name)))
     (push (make-client-connection client)
           (slot-value client 'idle-connections))
     client))
 
 (defun make-client-connection (client)
   (declare (type client client))
-  (make-connection :host (client-host client)
-                   :port (client-port client)
-                   :user (client-user client)
-                   :password (client-password client)
-                   :database (client-database client)
-                   :application-name (client-application-name client)))
+  (with-slots (host port user password database application-name
+               tls tls-ca-certificate-paths
+               tls-certificate-path tls-private-key-path tls-server-name)
+      client
+    (make-connection :host (client-host client)
+                     :port (client-port client)
+                     :user (client-user client)
+                     :password (client-password client)
+                     :database (client-database client)
+                     :application-name (client-application-name client)
+                     :tls tls
+                     :tls-ca-certificate-paths tls-ca-certificate-paths
+                     :tls-certificate-path tls-certificate-path
+                     :tls-private-key-path tls-private-key-path
+                     :tls-server-name tls-server-name)))
 
 (defun close-client-connections (client)
   (declare (type client client))
@@ -217,21 +274,48 @@
 (defun make-connection (&key (host "localhost") (port 5432)
                              user password
                              database
-                             application-name)
+                             application-name
+                             tls
+                             tls-ca-certificate-paths
+                             tls-certificate-path tls-private-key-path
+                             tls-server-name)
   (declare (type system:host host)
            (type system:port-number port)
-           (type (or string null) user password database application-name))
+           (type (or string null) user password database application-name)
+           (type boolean tls)
+           (type list tls-ca-certificate-paths)
+           (type (or pathname string null)
+                 tls-certificate-path tls-private-key-path)
+           (type (or string null) tls-server-name))
   (let ((stream (system:make-tcp-client host port))
         (connection nil))
     (core:abort-protect
-        (let ((parameters nil))
-          (when user
-            (push (cons "user" user) parameters))
-          (when database
-            (push (cons "database" database) parameters))
-          (when application-name
-            (push (cons "application_name" application-name) parameters))
-          (write-startup-message 3 0 parameters stream)
+        (progn
+          (when tls
+            (write-ssl-request-message stream)
+            (let ((response (read-byte stream)))
+              (case response
+                (#.(char-code #\S)
+                 (setf stream (openssl:init-tls-client
+                               stream
+                               :ca-certificate-paths tls-ca-certificate-paths
+                               :certificate-path tls-certificate-path
+                               :private-key-path tls-private-key-path
+                               :server-name tls-server-name)))
+                (#.(char-code #\N)
+                 (error 'tls-not-supported))
+                (t
+                 (protocol-error
+                  "Invalid byte ~S received after SSL request message."
+                  response)))))
+          (let ((parameters nil))
+            (when user
+              (push (cons "user" user) parameters))
+            (when database
+              (push (cons "database" database) parameters))
+            (when application-name
+              (push (cons "application_name" application-name) parameters))
+            (write-startup-message 3 0 parameters stream))
           (setf connection (make-instance 'connection :stream stream))
           (authenticate user password connection)
           (finish-startup connection)

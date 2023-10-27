@@ -6,6 +6,9 @@ services:
       postgres -c "shared_buffers=1GB"
                -c "max_connections=40"
                -c "log_statement=all"
+               -c "ssl=on"
+               -c "ssl_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem"
+               -c "ssl_key_file=/etc/ssl/private/ssl-cert-snakeoil.key"
     container_name: "tungsten-postgresql"
     ports: ["5432:5432"]
     volumes:

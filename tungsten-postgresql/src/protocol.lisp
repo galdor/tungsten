@@ -387,6 +387,9 @@
   (declare (ignore decoder))
   (list :no-data))
 
+(defun write-ssl-request-message (stream)
+  (write-message nil '(int32 80877103) stream))
+
 (defun write-message (message-type value stream)
   (declare (type (or standard-char null) message-type)
            (type stream stream))
