@@ -1,6 +1,7 @@
 (defsystem "tungsten-core"
   :description "Utilities used by various systems."
   :author "Nicolas Martyanoff <nicolas@n16f.net>"
+  :depends-on ((:feature :sbcl (:require :sb-cltl2)))
   :pathname "src"
   :serial t
   :components
