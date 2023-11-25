@@ -36,6 +36,7 @@
   ((:file "package")
    (:file "floats")
    (:file "sequences")
+   (:file "strings")
    (:file "binary"))
   :perform (test-op (op system)
                     (symbol-call :test :run :package :core-test)))

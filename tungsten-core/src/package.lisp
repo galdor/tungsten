@@ -27,6 +27,7 @@
    #:hash-table-entries
 
    #:string-case
+   #:split-string
 
    #:octet
    #:make-octet-vector
