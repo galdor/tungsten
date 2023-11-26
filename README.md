@@ -16,9 +16,6 @@ without any notice.
 
 **You should not use Tungsten in production.**
 
-The stabilization process will occur later and will result in a standard
-system of stable releases.
-
 ## Licensing
 Tungsten is open source software distributed under the
 [ISC](https://opensource.org/licenses/ISC) license.
