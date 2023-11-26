@@ -6,39 +6,43 @@
 (define-condition invalid-token (invalid-data)
   ((token
      :type string
-     :initarg :token))
+     :initarg :token
+     :reader invalid-token-token))
   (:report
    (lambda (condition stream)
-     (with-slots (token) condition
-       (format stream "Invalid netrc token ~S." token)))))
+     (format stream "invalid netrc token ~S"
+             (invalid-token-token condition)))))
 
 (define-condition invalid-port-number (invalid-data)
   ((value
     :type (or string number)
-    :initarg :value))
+    :initarg :value
+    :reader invalid-port-number-value))
   (:report
    (lambda (condition stream)
-     (with-slots (value) condition
-       (format stream "Invalid port number ~S." value)))))
+     (format stream "invalid port number ~S"
+             (invalid-port-number-value condition)))))
 
 (define-condition missing-token (invalid-data)
   ((token
     :type string
-    :initarg :token))
+    :initarg :token
+    :reader missing-token-token))
   (:report
    (lambda (condition stream)
-     (with-slots (token) condition
-       (format stream "Missing netrc token after ~S." token)))))
+     (format stream "missing netrc token after ~S"
+             (missing-token-token condition)))))
 
 (define-condition orphaned-token (invalid-data)
   ((token
      :type string
-     :initarg :token))
+     :initarg :token
+     :reader orphaned-token-token))
   (:report
    (lambda (condition stream)
-     (with-slots (token) condition
-       (format stream "Invalid netrc token ~S out of a \"default\" or ~
-                       \"machine\" block." token)))))
+     (format stream "invalid netrc token ~S out of a \"default\" or ~
+                     \"machine\" block"
+             (orphaned-token-token token)))))
 
 (defun parse-entries (string &key (start 0) (end (length string)))
   (declare (type string string)

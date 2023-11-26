@@ -14,8 +14,8 @@
     :reader invalid-media-range-description))
   (:report
    (lambda (condition stream)
-     (with-slots (description) condition
-       (format stream "Invalid MIME media range: ~A." description)))))
+     (format stream "invalid MIME media range: ~A"
+             (invalid-media-range-description condition)))))
 
 (defclass media-range ()
   ((type

@@ -159,7 +159,7 @@ a keyword, a symbol, or a quoted symbol form such as (QUOTE SYSTEM:SIZE-T)."
           (symbolp (cadr form)))
      (cadr form))
     (t
-     (error "Invalid foreign type form ~S." form))))
+     (error "invalid foreign type form ~S" form))))
 
 (defun integer-printf-string (base-type)
   (ecase base-type

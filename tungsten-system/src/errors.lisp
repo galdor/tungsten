@@ -15,10 +15,11 @@
     :initform nil
     :reader system-error-description))
   (:report
-   (lambda (c stream)
-     (with-slots (function value description) c
-       (format stream "System function ~S failed~@[ with error ~A~]~@[: ~A~]."
-               function value description)))))
+   (lambda (condition stream)
+     (format stream "system function ~S failed~@[ with error ~A~]~@[: ~A~]"
+             (system-error-function condition)
+             (system-error-value condition)
+             (system-error-description condition)))))
 
 (defun errno-value (return-value)
   (declare (ignore return-value))

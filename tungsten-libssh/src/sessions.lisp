@@ -10,27 +10,27 @@
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (host-key) condition
-       (format stream "Unknown SSH server host key SHA256:~A."
-               (text:encode-base64 host-key))))))
+     (format stream "unknown SSH server host key SHA256:~A"
+             (text:encode-base64
+              (server-authentication-error-host-key condition))))))
 
 (define-condition host-key-mismatch (server-authentication-error)
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (host-key) condition
-       (format stream "SSH server host key SHA256:~A does not match ~
-                       known host key."
-               (text:encode-base64 host-key))))))
+     (format stream "SSH server host key SHA256:~A does not match ~
+                     known host key"
+             (text:encode-base64
+              (server-authentication-error-host-key condition))))))
 
 (define-condition host-key-type-mismatch (server-authentication-error)
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (host-key) condition
-       (format stream "SSH server host key SHA256:~A does not match ~
-                  the type of the known host key."
-               (text:encode-base64 host-key))))))
+     (format stream "SSH server host key SHA256:~A does not match ~
+                     the type of the known host key"
+             (text:encode-base64
+              (server-authentication-error-host-key condition))))))
 
 (define-condition client-authentication-error (error)
   ())
@@ -40,16 +40,14 @@
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (host-key) condition
-       (format stream "SSH public key authentication not supported.")))))
+     (format stream "SSH public key authentication not supported"))))
 
 (define-condition public-key-authentication-failure
     (client-authentication-error)
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (host-key) condition
-       (format stream "SSH public key authentication failed.")))))
+     (format stream "SSH public key authentication failed"))))
 
 (defun session-host-key (%session hash)
   (declare (type ffi:pointer %session)
@@ -77,7 +75,7 @@
        (restart-case
            (error 'unknown-host-key :host-key host-key)
          (accept-host-key ()
-           :report "Accept the host key as valid."
+           :report "accept the host key as valid"
            (ssh-session-update-known-hosts %session))))
       (:ssh-known-hosts-changed
        (error 'host-key-mismatch :host-key host-key))

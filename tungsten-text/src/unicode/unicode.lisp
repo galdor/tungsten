@@ -6,9 +6,9 @@
     :initarg :code-point
     :reader unknown-code-point-code-point))
   (:report
-   (lambda (condition stream)
-     (with-slots (code-point) condition
-       (format stream "Unknown code point U+~4,'0X." code-point)))))
+   (lambda (c stream)
+     (format stream "unknown code point U+~4,'0X"
+             (unknown-code-point-code-point c)))))
 
 (defvar *character-general-categories*)
 (defvar *character-general-categories-ascii*)

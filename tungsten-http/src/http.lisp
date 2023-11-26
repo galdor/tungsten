@@ -12,7 +12,7 @@
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "HTTP connection closed."))))
+     (format stream "HTTP connection closed"))))
 
 (define-condition invalid-redirection-location (http-error)
   ((location
@@ -21,23 +21,24 @@
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "Invalid Location header field in HTTP response."))))
+     (format stream "invalid Location header field in HTTP response"))))
 
 (define-condition too-many-redirections (http-error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "Too many HTTP redirections."))))
+     (format stream "too many HTTP redirections"))))
 
 (define-condition http-parse-error (parse-error)
   ((description
      :type string
-     :initarg :description))
+     :initarg :description
+     :reader http-parse-error-description))
   (:report
    (lambda (condition stream)
-     (with-slots (description) condition
-       (format stream "HTTP parse error: ~A." description)))))
+     (format stream "HTTP parse error: ~A"
+             (http-parse-error-description condition)))))
 
 (defun http-parse-error (format &rest args)
   (let ((description (apply #'format nil format args)))
@@ -88,11 +89,12 @@
 (define-condition missing-request-target-host (error)
   ((target
     :type uri:uri
-    :initarg :target))
+    :initarg :target
+    :reader missing-request-target-host-target))
   (:report
-   (lambda (c stream)
-     (with-slots (target) c
-       (format stream "Missing host in HTTP request target ~S." target)))))
+   (lambda (condition stream)
+     (format stream "missing host in HTTP request target ~S"
+             (missing-request-target-host-target condition)))))
 
 (defun request-method-equal (method1 method2)
   (cond

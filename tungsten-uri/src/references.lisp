@@ -10,8 +10,8 @@
   (:report
    (lambda (c stream)
      (declare (ignore c))
-     (format stream "Cannot resolve a reference against a base URI without ~
-                     a scheme."))))
+     (format stream "cannot resolve a reference against a base URI without ~
+                     a scheme"))))
 
 (defun resolve-reference (reference base)
   (declare (type (or uri string) reference base))

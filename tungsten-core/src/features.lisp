@@ -7,9 +7,8 @@
     :reader unsupported-feature-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "~@(~A~) is not available on the current platform."
-               name)))))
+     (format stream "~@(~A~) is not available on the current platform"
+             (unsupported-feature-name condition)))))
 
 (defun unsupported-feature (name)
   (error 'unsupported-feature :name name))
@@ -25,7 +24,7 @@
     ((member :big-endian *features*)
      :big-endian)
     (t
-     (error "Missing either :LITTLE-ENDIAN or :BIG-ENDIAN in *FEATURES*.")))
+     (error "*FEATURES* is missing either :LITTLE-ENDIAN or :BIG-ENDIAN")))
   #+ccl
   (cond
     ((member :little-endian-target *features*)
@@ -33,8 +32,8 @@
     ((member :big-endian-target *features*)
      :big-endian)
     (t
-     (error "Missing either :LITTLE-ENDIAN-TARGET or :BIG-ENDIAN-TARGET ~
-             in *FEATURES*.")))
+     (error "*FEATURES* is missing either :LITTLE-ENDIAN-TARGET or ~
+             :BIG-ENDIAN-TARGET")))
   #-(or sbcl ccl)
   (unsupported-feature "endianness detection"))
 

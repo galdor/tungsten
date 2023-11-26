@@ -23,8 +23,9 @@
     :reader authentication-error-text))
   (:report
    (lambda (condition stream)
-     (with-slots (code text) condition
-       (format stream "SMTP authentication error (code ~D): ~A." code text)))))
+     (format stream "SMTP authentication error (code ~D): ~A"
+             (authentication-error-code condition)
+             (authentication-error-text condition)))))
 
 (defun authenticate-client (client)
   (declare (type client client))

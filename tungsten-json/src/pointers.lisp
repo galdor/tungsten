@@ -17,20 +17,19 @@
     :reader pointer-parse-error-format-arguments))
   (:report
    (lambda (condition stream)
-     (with-slots (format-control format-arguments) condition
-       (format stream "Invalid JSON pointer: ~?."
-               format-control format-arguments)))))
+     (format stream "invalid JSON pointer: ~?"
+             (pointer-parse-error-format-control condition)
+             (pointer-parse-error-format-arguments condition)))))
 
 (define-condition invalid-pointer (error)
   ((pointer
     :type pointer
-    :initarg :pointer))
+    :initarg :pointer
+    :reader invalid-pointer-pointer))
   (:report
    (lambda (condition stream)
-     (with-slots (pointer) condition
-       (format stream "JSON pointer ~S does not match the structure of the ~
-                     data."
-               (serialize-pointer pointer))))))
+     (format stream "JSON pointer ~S does not match the structure of the data"
+             (serialize-pointer (invalid-pointer-pointer condition))))))
 
 (defun pointer-parse-error (format &rest arguments)
   (error 'pointer-parse-error :format-control format

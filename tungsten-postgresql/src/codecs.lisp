@@ -28,10 +28,11 @@ Corresponds to 2000-01-01T00:00:00.")
     :reader unknown-codec-oid))
   (:report
    (lambda (condition stream)
-     (with-slots (type oid) condition
-       (if type
-           (format stream "No codec found for type ~S." type)
-           (format stream "No codec found for type OID ~D." oid))))))
+     (if (unknown-codec-type condition)
+         (format stream "no codec found for type ~S"
+                 (unknown-codec-type condition))
+         (format stream "no codec found for type OID ~D"
+                 (unknown-codec-oid condition))))))
 
 (define-condition unencodable-value (error)
   ((value
@@ -39,9 +40,8 @@ Corresponds to 2000-01-01T00:00:00.")
     :reader unencodable-value-value))
   (:report
    (lambda (condition stream)
-     (with-slots (value) condition
-       (format stream "Value ~S cannot be encoded to a PostgreSQL value."
-               value)))))
+     (format stream "value ~S cannot be encoded to a PostgreSQL value"
+             (unencodable-value-value condition)))))
 
 (define-condition value-decoding-error (simple-error)
   ((octets
@@ -49,7 +49,7 @@ Corresponds to 2000-01-01T00:00:00.")
     :initarg :octets))
   (:report
    (lambda (condition stream)
-     (format stream "Cannot decode value: ~?."
+     (format stream "cannot decode value: ~?"
              (simple-condition-format-control condition)
              (simple-condition-format-arguments condition)))))
 

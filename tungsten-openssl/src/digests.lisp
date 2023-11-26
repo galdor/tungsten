@@ -13,8 +13,8 @@
     :reader unsupported-digest-algorithm-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unsupported digest algorithm ~A." name)))))
+     (format stream "unsupported digest algorithm ~A"
+             (unsupported-digest-algorithm-name condition)))))
 
 (defun digest-algorithm-name (algorithm)
   (cond

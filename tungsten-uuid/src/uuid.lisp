@@ -46,11 +46,11 @@
 (define-condition invalid-format (error)
   ((string
     :type string
-    :initarg :string))
+    :initarg :string
+    :reader invalid-format-string))
   (:report
    (lambda (condition stream)
-     (with-slots (string) condition
-       (format stream "Invalid UUID ~S." string)))))
+     (format stream "invalid UUID ~S" (invalid-format-string condition)))))
 
 (defun parse (string &key (start 0) (end (length string)))
   (declare (type string string)

@@ -3,15 +3,17 @@
 (define-condition datetime-parse-error (parse-error)
   ((format-control
     :type string
-    :initarg :format-control)
+    :initarg :format-control
+    :reader datetime-parse-error-format-control)
    (format-arguments
     :type list
-    :initarg :format-arguments))
+    :initarg :format-arguments
+    :reader datetime-parse-error-format-arguments))
   (:report
-   (lambda (condition stream)
-     (with-slots (format-control format-arguments) condition
-       (format stream "Invalid datetime: ~?."
-               format-control format-arguments)))))
+   (lambda (c stream)
+     (format stream "invalid datetime: ~?"
+             (datetime-parse-error-format-control c)
+             (datetime-parse-error-format-arguments c)))))
 
 (defun datetime-parse-error (format &rest arguments)
   (error 'datetime-parse-error :format-control format

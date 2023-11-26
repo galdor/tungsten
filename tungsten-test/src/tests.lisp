@@ -6,14 +6,17 @@
 (define-condition test-not-found (error)
   ((package
     :type string
-    :initarg :package)
+    :initarg :package
+    :reader test-not-found-package)
    (name
     :type string
-    :initarg :name))
-  (:documentation "A condition signaled when a test cannot be found.")
-  (:report (lambda (condition stream)
-             (with-slots (package name) condition
-               (format stream "Unknown test ~S." (test-key package name))))))
+    :initarg :name
+    :reader test-not-found-name))
+  (:report
+   (lambda (c stream)
+     (format stream "unknown test ~S"
+             (test-key (test-not-found-package c)
+                       (test-not-found-name c))))))
 
 (defun test-key (package name)
   (declare (type string package name))

@@ -101,8 +101,9 @@
     :reader truncated-field-type))
   (:report
    (lambda (condition stream)
-     (with-slots (name type) condition
-       (format stream "Truncated field ~A of type ~A." name type)))))
+     (format stream "truncated field ~A of type ~A"
+             (truncated-field-name condition)
+             (truncated-field-type condition)))))
 
 (define-condition invalid-tag-octet (font-parse-error)
   ((octet
@@ -115,8 +116,9 @@
     :reader invalid-tag-octet-offset))
   (:report
    (lambda (condition stream)
-     (with-slots (octet offset) condition
-       (format stream "Invalid tag octet ~D at offset ~D." octet offset)))))
+     (format stream "invalid tag octet ~D at offset ~D"
+             (invalid-tag-octet-octet condition)
+             (invalid-tag-octet-offset condition)))))
 
 (defclass parser ()
   ((data

@@ -7,15 +7,17 @@
 (define-condition unencodable-character (error)
   ((character
     :type character
-    :initarg :character)
+    :initarg :character
+    :reader unencodable-character-character)
    (encoding
     :type symbol
-    :initarg :encoding))
+    :initarg :encoding
+    :reader unencodable-character-encoding))
   (:report
    (lambda (condition stream)
-     (with-slots (character encoding) condition
-       (format stream "Character ~S cannot be represented in encoding ~S."
-               character encoding)))))
+     (format stream "character ~S cannot be represented in encoding ~S"
+             (unencodable-character-character condition)
+             (unencodable-character-encoding condition)))))
 
 (define-condition decoding-error (error)
   ((octets
@@ -28,15 +30,17 @@
 (define-condition invalid-octet (decoding-error)
   ((octet
     :type core:octet
-    :initarg :octet)
+    :initarg :octet
+    :reader invalid-octet-octet)
    (encoding
     :type symbol
-    :initarg :encoding))
+    :initarg :encoding
+    :reader invalid-octet-encoding))
   (:report
    (lambda (condition stream)
-     (with-slots (octet encoding) condition
-       (format stream "Octet ~S does not represent a character in encoding ~S."
-               octet encoding)))))
+     (format stream "octet ~S does not represent a character in encoding ~S"
+             (invalid-octet-octet condition)
+             (invalid-octet-encoding condition)))))
 
 (deftype encoded-character-length-function ()
   '(function (character) vector-length))
@@ -92,7 +96,7 @@
   (typecase id-or-encoding
     (symbol
      (or (gethash id-or-encoding *encodings*)
-         (error "Unknown encoding ~A." id-or-encoding)))
+         (error "unknown encoding ~A" id-or-encoding)))
     (encoding
      id-or-encoding)))
 

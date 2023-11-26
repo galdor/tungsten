@@ -24,15 +24,17 @@
 (define-condition unknown-foreign-union-member (error)
   ((foreign-union
     :type foreign-union
-    :initarg :foreign-union)
+    :initarg :foreign-union
+    :reader unknown-foreign-union-member-foreign-union)
    (name
     :type symbol
-    :initarg :name))
+    :initarg :name
+    :reader unknown-foreign-union-member-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name foreign-union) condition
-       (format stream "Unknown foreign-union member ~S in ~A."
-               name foreign-union)))))
+     (format stream "unknown foreign-union member ~S in ~A"
+             (unknown-foreign-union-member-name condition)
+             (unknown-foreign-union-member-foreign-union condition)))))
 
 (defmethod print-object ((member foreign-union-member) stream)
   (print-unreadable-object (member stream :type t)

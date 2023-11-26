@@ -60,9 +60,10 @@
     :reader backend-error-routine))
   (:report
    (lambda (condition stream)
-     (with-slots (severity code message) condition
-       (format stream "PostgreSQL backend error: ~A ~A ~A."
-               severity code message)))))
+     (format stream "PostgreSQL backend error: ~A ~A ~A"
+             (backend-error-severity condition)
+             (backend-error-code condition)
+             (backend-error-message condition)))))
 
 (defun backend-error (fields)
   (declare (type list fields))
@@ -118,7 +119,7 @@
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
     (when (>= start end)
-      (protocol-error "Truncated 1 byte integer."))
+      (protocol-error "truncated 1 byte integer"))
     (prog1 (core:binref :int8 data start)
       (incf start))))
 
@@ -126,7 +127,7 @@
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
     (when (> (+ start 2) end)
-      (protocol-error "Truncated 2 byte integer."))
+      (protocol-error "truncated 2 byte integer"))
     (prog1 (core:binref :int16be data start)
       (incf start 2))))
 
@@ -134,7 +135,7 @@
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
     (when (> (+ start 4) end)
-      (protocol-error "Truncated 4 byte integer."))
+      (protocol-error "truncated 4 byte integer"))
     (prog1 (core:binref :int32be data start)
       (incf start 4))))
 
@@ -143,7 +144,7 @@
   (with-slots (data start end) decoder
     (let ((zero (position 0 data :start start :end end)))
       (unless zero
-        (protocol-error "Truncated string."))
+        (protocol-error "truncated string"))
       (prog1 (text:decode-string data :start start :end zero)
         (setf start (1+ zero))))))
 
@@ -151,7 +152,7 @@
   (declare (type decoder decoder))
   (do ((strings nil))
       ((decoder-eof-p decoder)
-       (protocol-error "Truncated string list."))
+       (protocol-error "truncated string list"))
     (when (decoder-starts-with decoder 0)
       (decoder-skip decoder 1)
       (return (nreverse strings)))
@@ -161,7 +162,7 @@
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
     (when (>= start end)
-      (protocol-error "Missing octet."))
+      (protocol-error "missing octet"))
     (prog1 (aref data 0)
       (incf start))))
 
@@ -169,7 +170,7 @@
   (declare (type decoder decoder))
   (with-slots (data start end) decoder
     (when (> (+ start nb-octets) end)
-      (protocol-error "Truncated octet sequence."))
+      (protocol-error "truncated octet sequence"))
     (let ((octets (core:make-octet-vector nb-octets)))
       (replace octets data :start2 start)
       (incf start nb-octets)
@@ -179,7 +180,7 @@
   (declare (type decoder decoder))
   (do ((fields nil))
       ((decoder-eof-p decoder)
-       (protocol-error "Truncated field list."))
+       (protocol-error "truncated field list"))
     (when (decoder-starts-with decoder 0)
       (decoder-skip decoder 1)
       (return (nreverse fields)))
@@ -219,7 +220,7 @@
          (format (case format-code
                    (0 :text)
                    (1 :binary)
-                   (t (protocol-error "Unknown field format code ~D."
+                   (t (protocol-error "unknown field format code ~D"
                                       format-code)))))
     (list (cons :name name)
           (cons :table-oid table-oid)
@@ -232,7 +233,7 @@
 (defun parse-command-tag (string)
   (let ((space (position #\Space string)))
     (unless space
-      (protocol-error "Invalid command tag ~S." string))
+      (protocol-error "invalid command tag ~S" string))
     (let ((name (cond ((string= string "INSERT" :end1 space) :insert)
                       ((string= string "DELETE" :end1 space) :delete)
                       ((string= string "UPDATE" :end1 space) :update)
@@ -246,7 +247,7 @@
                    (handler-case
                        (parse-integer string :start start)
                      (error ()
-                       (protocol-error "Invalid command tag count ~S."
+                       (protocol-error "invalid command tag count ~S"
                                        (subseq string start)))))))
       (cons name value))))
 
@@ -286,7 +287,7 @@
                       (#\Z 'decode-message/ready-for-query)
                       (#\n 'decode-message/no-data)
                       (t
-                       (protocol-error "Unhandled message type ~S."
+                       (protocol-error "unhandled message type ~S"
                                        message-type)))))
         (funcall decode decoder)))))
 
@@ -309,7 +310,7 @@
       (let ((size (decode-int32 decoder)))
         (cond
           ((< size -1)
-           (protocol-error "Invalid data row column size ~D." size))
+           (protocol-error "invalid data row column size ~D" size))
           ((= size -1)
            (setf (aref columns i) nil))
           (t
@@ -359,7 +360,7 @@
          (list :authentication-sasl-final
                (text:decode-string data :encoding :ascii))))
       (t
-       (protocol-error "Unknown authentication type ~D." type)))))
+       (protocol-error "unknown authentication type ~D" type)))))
 
 (defun decode-message/parameter-status (decoder)
   (let* ((name (decode-string decoder))
@@ -380,7 +381,7 @@
                    (#.(char-code #\E) :in-failed-transaction)
                    (t
                     (protocol-error
-                     "Unknown backend transaction status ~S." status-octet)))))
+                     "unknown backend transaction status ~S" status-octet)))))
     (list :ready-for-query status)))
 
 (defun decode-message/no-data (decoder)

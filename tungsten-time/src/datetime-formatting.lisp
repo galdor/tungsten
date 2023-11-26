@@ -3,11 +3,12 @@
 (define-condition unknown-datetime-format (error)
   ((format
     :type symbol
-    :initarg :format))
+    :initarg :format
+    :reader :unknown-datetime-format-format))
   (:report
    (lambda (condition stream)
-     (with-slots (format) condition
-       (format stream "Unknown datetime format ~S." format)))))
+     (format stream "unknown datetime format ~S"
+             (unknown-datetime-format-format condition)))))
 
 (defvar *datetime-formats* (make-hash-table :test #'eq))
 

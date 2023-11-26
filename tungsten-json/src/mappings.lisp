@@ -21,11 +21,12 @@
 (define-condition unknown-mapping (error)
   ((name
     :type symbol
-    :initarg :name))
+    :initarg :name
+    :reader unknown-mapping-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unknown JSON mapping ~S." name)))))
+     (format stream "unknown JSON mapping ~S"
+             (unknown-mapping-name condition)))))
 
 (defun register-mapping (name mapping)
   (setf (gethash name *mappings*) mapping))
@@ -88,14 +89,12 @@
     :reader invalid-value-mapping-errors))
   (:report
    (lambda (condition stream)
-     (format stream "Invalid JSON value:~%")
+     (format stream "invalid JSON value:")
      (dolist (error (invalid-value-mapping-errors condition))
        (with-slots (pointer description) error
-         (terpri stream)
          (if pointer
-             (format stream "Pointer: ~A~%Error:   ~A~%"
-                     (serialize-pointer pointer) description)
-             (format stream "Error:   ~A~%" description)))))))
+             (format stream "~%~A ~A" (serialize-pointer pointer) description)
+             (format stream "~%~A" description)))))))
 
 (defclass mapping ()
   ((base-types

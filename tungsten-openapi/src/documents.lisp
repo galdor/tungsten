@@ -7,8 +7,8 @@
     :reader unsupported-elements-names))
   (:report
    (lambda (condition stream)
-     (with-slots (names) condition
-       (format stream "~@(~A~) are not currently supported." names)))))
+     (format stream "~@(~A~) are not currently supported"
+             (unsupported-elements-names condition)))))
 
 (defun unsupported-elements (names)
   (error 'unsupported-elements :names names))
@@ -16,20 +16,25 @@
 (define-condition invalid-reference (error)
   ((reference
     :type list
-    :initarg :reference)
+    :initarg :reference
+    :reader invalid-reference-reference)
    (format-control
     :type string
-    :initarg :format-control)
+    :initarg :format-control
+    :reader invalid-reference-format-control)
    (format-arguments
     :type string
-    :initarg :format-arguments))
+    :initarg :format-arguments
+    :reader invalid-reference-format-arguments))
   (:report
    (lambda (condition stream)
-     (with-slots (reference format-control format-arguments) condition
-       (let* ((pointer (json:pointer* "components" "schemas" (cadr reference)))
-              (uri (uri:make-uri :fragment (json:serialize-pointer pointer))))
-         (format stream "Invalid reference ~S: ~?."
-                 (uri:serialize uri) format-control format-arguments))))))
+     (let* ((reference (invalid-reference-reference condition))
+            (pointer (json:pointer* "components" "schemas" (cadr reference)))
+            (uri (uri:make-uri :fragment (json:serialize-pointer pointer))))
+       (format stream "invalid reference ~S: ~?"
+               (uri:serialize uri)
+               (invalid-reference-format-control condition)
+               (invalid-reference-format-arguments condition))))))
 
 (defun invalid-reference (reference format &rest arguments)
   (error 'invalid-reference :reference reference
@@ -38,11 +43,12 @@
 
 (define-condition unknown-operation (error)
   ((name
-    :initarg :name))
+    :initarg :name
+    :reader unknown-operation-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unknown OpenAPI operation ~S." name)))))
+     (format stream "unknown OpenAPI operation ~S"
+             (unknown-operation-name condition)))))
 
 (defclass document ()
   ((openapi-version

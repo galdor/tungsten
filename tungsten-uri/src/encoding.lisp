@@ -11,18 +11,19 @@
 (define-condition truncated-percent-sequence (percent-decoding-error)
   ()
   (:report
-   (lambda (c stream)
-     (declare (ignore c))
-     (format stream "Truncated percent sequence."))))
+   (lambda (condition stream)
+     (declare (ignore condition))
+     (format stream "truncated percent sequence"))))
 
 (define-condition invalid-percent-sequence-hex-digit (percent-decoding-error)
   ((digit
      :type character
-     :initarg :digit))
+     :initarg :digit
+     :reader invalid-percent-sequence-hex-digit-digit))
   (:report
-   (lambda (c stream)
-     (format stream "Invalid hex digit ~S in percent sequence."
-             (slot-value c 'digit)))))
+   (lambda (condition stream)
+     (format stream "invalid hex digit ~S in percent sequence"
+             (invalid-percent-sequence-hex-digit-digit condition)))))
 
 (defun percent-decode (string &key (start 0) (end (length string))
                                    decode-plus)

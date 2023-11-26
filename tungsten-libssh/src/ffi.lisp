@@ -36,10 +36,11 @@
     :initform nil
     :reader libssh-error-description))
   (:report
-   (lambda (c stream)
-     (with-slots (function code description) c
-       (format stream "Libssh function ~S failed~@[ with error ~A~]: ~A."
-               function code description)))))
+   (lambda (condition stream)
+     (format stream "libssh function ~S failed~@[ with error ~A~]: ~A"
+             (libssh-error-function condition)
+             (libssh-error-code condition)
+             (libssh-error-description condition)))))
 
 (defun libssh-error (function-name error-source)
   (declare (type string function-name)

@@ -50,7 +50,7 @@ files it is build from."))
         (cond
           ((string= type "c") (push input c-source-files))
           ((string= type "h") (push input c-header-files))
-          (t (error "Unhandled shared library source type ~S." type)))))
+          (t (error "unhandled shared library source type ~S" type)))))
     (let ((command (append (list compiler)
                            (list "-shared" "-fPIC")
                            (shared-library-cflags library)

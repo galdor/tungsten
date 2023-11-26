@@ -21,7 +21,7 @@
                                       (eq encoding-id :unicode-bmp)))))
                          (cmap-table-encoding-records table))))
     (unless record
-      (error "No supported encoding record found."))
+      (error "no supported encoding record found"))
     (cmap-subtable-glyph-id (encoding-record-subtable record) code)))
 
 (defclass encoding-record ()

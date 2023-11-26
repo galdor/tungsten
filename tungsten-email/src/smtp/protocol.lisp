@@ -6,11 +6,12 @@
 (define-condition smtp-parse-error (smtp-error parse-error)
   ((description
     :type string
-    :initarg :description))
+    :initarg :description
+    :reader smtp-parse-error-description))
   (:report
    (lambda (condition stream)
-     (with-slots (description) condition
-       (format stream "SMTP parse error: ~A." description)))))
+     (format stream "SMTP parse error: ~A"
+             (smtp-parse-error-description condition)))))
 
 (defun smtp-parse-error (format &rest args)
   (let ((description (apply #'format nil format args)))

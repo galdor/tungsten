@@ -16,14 +16,14 @@
   ()
   (:report
    (lambda (condition stream)
-     (format stream "Timeout while reading stream ~S."
+     (format stream "timeout while reading stream ~S"
              (tcp-timeout-stream condition)))))
 
 (define-condition tcp-write-timeout (tcp-timeout)
   ()
   (:report
    (lambda (condition stream)
-     (format stream "Timeout while writing stream ~S."
+     (format stream "timeout while writing stream ~S"
              (tcp-timeout-stream condition)))))
 
 (defclass tcp-stream (network-stream)

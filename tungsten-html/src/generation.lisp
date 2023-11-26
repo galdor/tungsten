@@ -5,15 +5,17 @@
 (define-condition invalid-generation-data (error)
   ((format-control
     :type string
-    :initarg :format-control)
+    :initarg :format-control
+    :reader invalid-generation-data-format-control)
    (format-arguments
     :type list
-    :initarg :format-arguments))
+    :initarg :format-arguments
+    :reader invalid-generation-data-format-arguments))
   (:report
    (lambda (condition stream)
-     (with-slots (format-control format-arguments) condition
-       (format stream "Invalid HTML generation data: ~?."
-               format-control format-arguments)))))
+     (format stream "invalid HTML generation data: ~?"
+             (invalid-generation-data-format-control condition)
+             (invalid-generation-data-format-arguments condition)))))
 
 (defun invalid-generation-data (format &rest arguments)
   (error 'invalid-generation-data :format-control format

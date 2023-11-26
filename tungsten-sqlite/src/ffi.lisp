@@ -32,9 +32,10 @@
     :reader sqlite-error-description))
   (:report
    (lambda (condition stream)
-     (with-slots (function code description) condition
-       (format stream "SQLite function ~S failed with code ~A: ~A."
-               function code description)))))
+     (format stream "SQLite function ~S failed with code ~A: ~A"
+             (sqlite-error-function condition)
+             (sqlite-error-code condition)
+             (sqlite-error-description condition)))))
 
 (defun sqlite-error (function-name code)
   (let ((description

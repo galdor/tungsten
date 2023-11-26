@@ -7,8 +7,8 @@
     :reader invalid-hex-digit-character))
   (:report
    (lambda (condition stream)
-     (with-slots (character) condition
-       (format stream "Invalid hex digit ~S." character)))))
+     (format stream "invalid hex digit ~S"
+             (invalid-hex-digit-character condition)))))
 
 (define-condition invalid-hex-string (error)
   ((string
@@ -17,8 +17,8 @@
     :reader invalid-hex-string-string))
   (:report
    (lambda (condition stream)
-     (with-slots (string) condition
-       (format stream "Invalid hex-encoded string ~S." string)))))
+     (format stream "invalid hex-encoded string ~S"
+             (invalid-hex-string-string condition)))))
 
 (defun encode-hex-string (octets &key (start 0) (end (length octets)))
   (declare (type core:octet-vector octets)

@@ -14,8 +14,8 @@
     :reader unknown-router-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unknown HTTP router ~S." name)))))
+     (format stream "unknown HTTP router ~S"
+             (unknown-router-name condition)))))
 
 (defclass router ()
   ((name

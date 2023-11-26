@@ -6,27 +6,30 @@
 (define-condition truncated-host (uri-parse-error)
   ((host
     :type string
-    :initarg :host))
+    :initarg :host
+    :reader truncated-host-host))
   (:report
-   (lambda (c stream)
-     (format stream "Truncated host ~S." (slot-value c 'host)))))
+   (lambda (condition stream)
+     (format stream "truncated host ~S" (truncated-host-host condition)))))
 
 (define-condition invalid-host (uri-parse-error)
   ((host
     :type string
-    :initarg :host))
+    :initarg :host
+    :reader invalid-host-host))
   (:report
-   (lambda (c stream)
-     (format stream "Invalid host ~S." (slot-value c 'host)))))
+   (lambda (condition stream)
+     (format stream "invalid host ~S" (invalid-host-host condition)))))
 
 (define-condition invalid-port (uri-parse-error)
   ((port
     :type (or string number)
-    :initarg :port))
+    :initarg :port
+    :reader invalid-port-port))
   (:report
-   (lambda (c stream)
-     (with-slots (port) c
-       (format stream "Invalid port ~?."
+   (lambda (condition stream)
+     (let ((port (invalid-port-port condition)))
+       (format stream "invalid port ~?"
                (etypecase port
                  (string "~S")
                  (integer "~D"))

@@ -9,8 +9,8 @@
     :reader invalid-media-type-description))
   (:report
    (lambda (condition stream)
-     (with-slots (description) condition
-       (format stream "Invalid MIME media type: ~A." description)))))
+     (format stream "invalid MIME media type: ~A"
+             (invalid-media-type-description condition)))))
 
 (defun invalid-media-type (format &rest arguments)
   (error 'invalid-media-type

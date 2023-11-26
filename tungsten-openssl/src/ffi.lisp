@@ -84,21 +84,22 @@
     :initarg :errors
     :reader openssl-error-stack-errors))
   (:report
-   (lambda (c stream)
-     (with-slots (function errors) c
+   (lambda (condition stream)
+     (let ((function (openssl-error-stack-function condition))
+           (errors (openssl-error-stack-errors condition)))
        (case (length errors)
          (0
-          (format stream "OpenSSL function ~S failed." function))
+          (format stream "OpenSSL function ~S failed" function))
          (1
           (with-slots (value description) (car errors)
-            (format stream "OpenSSL function ~S failed with error ~D: ~A."
+            (format stream "OpenSSL function ~S failed with error ~D: ~A"
                     function value description)))
          (t
           (format stream "OpenSSL function ~S failed with multiple errors:~%"
                   function)
           (dolist (error errors)
             (with-slots (value description) error
-              (format stream "- Error ~D: ~A~%" value description)))))))))
+              (format stream "error ~D: ~A~%" value description)))))))))
 
 (defun err-error-string (value &aux (buffer-size 1024))
   (ffi:with-foreign-value (%buffer :char :count buffer-size)

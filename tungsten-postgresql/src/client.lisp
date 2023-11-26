@@ -7,14 +7,14 @@
 (define-condition missing-password (simple-error)
   ()
   (:default-initargs
-   :format-control "Missing password for authentication."))
+   :format-control "missing password for authentication"))
 
 (define-condition tls-not-supported (error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "PostgreSQL server does not support TLS connections."))))
+     (format stream "PostgreSQL server does not support TLS connections"))))
 
 (define-condition unsupported-authentication-scheme (error)
   ((name
@@ -23,9 +23,8 @@
     :reader unsupported-authentication-scheme-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unsupported PostgreSQL authentication scheme ~A."
-               name)))))
+     (format stream "unsupported PostgreSQL authentication scheme ~A"
+             (unsupported-authentication-scheme-name condition)))))
 
 (define-condition unexpected-message (error)
   ((message
@@ -33,15 +32,14 @@
     :reader unexpected-message-message))
   (:report
    (lambda (condition stream)
-     (with-slots (message) condition
-       (format stream "Unexpected PostgreSQL message:~%~%~S~%" message)))))
+     (format stream "Unexpected PostgreSQL message: ~S"
+             (unexpected-message-message condition)))))
 
 (define-condition no-available-connection (error)
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (message) condition
-       (format stream "No available PostgreSQL connection~%")))))
+     (format stream "no available PostgreSQL connection"))))
 
 (defclass client ()
   ((host

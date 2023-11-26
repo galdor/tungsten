@@ -10,10 +10,10 @@
     :initarg :description
     :reader float-parse-error-description))
   (:report
-   (lambda (c stream)
-     (with-slots (string description) c
-       (format stream "Invalid floating point number ~S: ~A."
-               string description)))))
+   (lambda (condition stream)
+     (format stream "invalid floating point number ~S: ~A"
+             (float-parse-error-string condition)
+             (float-parse-error-description condition)))))
 
 (defun float-parse-error (string format &rest args)
   (error (make-instance 'float-parse-error

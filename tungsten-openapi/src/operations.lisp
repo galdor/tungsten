@@ -5,18 +5,22 @@
 (define-condition invalid-path-template (error)
   ((template
     :type string
-    :initarg :template)
+    :initarg :template
+    :reader invalid-path-template-template)
    (format-control
     :type string
-    :initarg :format-control)
+    :initarg :format-control
+    :reader invalid-path-template-format-control)
    (format-arguments
     :type list
-    :initarg :format-arguments))
+    :initarg :format-arguments
+    :reader invalid-path-template-format-arguments))
   (:report
    (lambda (condition stream)
-     (with-slots (template format-control format-arguments) condition
-       (format stream "Invalid path template ~S: ~?."
-               template format-control format-arguments)))))
+     (format stream "invalid path template ~S: ~?"
+             (invalid-path-template-template condition)
+             (invalid-path-template-format-control condition)
+             (invalid-path-template-format-arguments condition)))))
 
 (defun invalid-path-template (template format &rest arguments)
   (error 'invalid-path-template :template template
@@ -26,21 +30,24 @@
 (define-condition missing-parameter-value (error)
   ((location
     :type parameter-location
-    :initarg :location)
+    :initarg :location
+    :reader missing-parameter-value-location)
    (name
     :type string
-    :initarg :name))
+    :initarg :name
+    :reader missing-parameter-value-name))
   (:report
    (lambda (condition stream)
-     (with-slots (location name) condition
-       (format stream "Missing value for ~A parameter ~S." location name)))))
+     (format stream "missing value for ~A parameter ~S"
+             (missing-parameter-value-location condition)
+             (missing-parameter-value-name condition)))))
 
 (define-condition missing-request-body (error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "Missing request body."))))
+     (format stream "missing request body"))))
 
 (define-condition unexpected-response-status (error)
   ((response
@@ -49,9 +56,8 @@
     :reader unexpected-response-status-response))
   (:report
    (lambda (condition stream)
-     (with-slots (response) condition
-       (format stream "Response has unexpected status ~D."
-               (http:response-status response))))))
+     (format stream "response has unexpected status ~D"
+             (http:response-status (unexpected-response-status-response))))))
 
 (define-condition unexpected-response-content-type (error)
   ((response
@@ -64,9 +70,8 @@
     :reader unexpected-response-content-type-content-type))
   (:report
    (lambda (condition stream)
-     (with-slots (content-type) condition
-       (format stream "Response has unexpected content type ~W."
-               content-type)))))
+     (format stream "response has unexpected content type ~S"
+             (unexpected-response-content-type-content-type condition)))))
 
 (defun execute-operation (document name &key parameters body header)
   (declare (type document document)

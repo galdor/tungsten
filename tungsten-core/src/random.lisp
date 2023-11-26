@@ -5,7 +5,7 @@
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
-     (format stream "Random data currently unavailable."))))
+     (format stream "random data currently unavailable"))))
 
 (defun random-octets (nb-octets)
   (let ((data (make-octet-vector nb-octets)))

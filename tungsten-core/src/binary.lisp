@@ -12,11 +12,12 @@
 
 (define-condition unknown-binary-type (error)
   ((type
-    :initarg :type))
+    :initarg :type
+    :reader :unknown-binary-type-type))
   (:report
    (lambda (condition stream)
-     (with-slots (type) condition
-       (format stream "Unknown binary type ~S." type)))))
+     (format stream "unknown binary type ~S"
+             (unknown-binary-type-type condition)))))
 
 (defmacro define-binref-integer-functions (type-size signed-p endianness)
   (let* ((nb-octets type-size)
@@ -262,4 +263,3 @@
                 (,offset-var ,offset))
            (,(binref-write-function type) ,value ,octets-var ,offset-var)))
       `(funcall (binref-write-function ,type) ,value ,octets ,offset)))
-

@@ -20,8 +20,7 @@
     :reader unknown-program-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unknown program ~A." name)))))
+     (format stream "unknown program ~A" (unknown-program-name condition)))))
 
 (defmacro defprogram ((name) &body body)
   (let ((function (gensym "FUNCTION-"))

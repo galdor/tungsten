@@ -4,8 +4,9 @@
   ()
   (:report
    (lambda (condition stream)
-     (with-slots (format-control format-arguments) condition
-       (format stream "SCRAM error: ~?." format-control format-arguments)))))
+     (format stream "SCRAM error: ~?"
+             (simple-condition-format-control condition)
+             (simple-condition-format-arguments condition)))))
 
 (defun scram-error (format &rest arguments)
   (error 'scram-error :format-control format :format-arguments arguments))

@@ -5,11 +5,12 @@
 (define-condition unknown-mapping-class (error)
   ((name
     :type symbol
-    :initarg :name))
+    :initarg :name
+    :reader unknown-mapping-class-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unknown JSON mapping class ~S." name)))))
+     (format stream "unknown JSON mapping class ~S"
+             (unknown-mapping-class-name condition)))))
 
 (defun register-mapping-class (name class)
   (setf (gethash name *mapping-classes*) class))

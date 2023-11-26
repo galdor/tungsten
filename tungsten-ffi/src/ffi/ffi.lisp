@@ -244,11 +244,12 @@ zero."
 (define-condition unknown-callback (error)
   ((name
     :type symbol
-    :initarg :name))
+    :initarg :name
+    :reader unknown-callback-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name) condition
-       (format stream "Unknown callback ~S." name)))))
+     (format stream "unknown callback ~S"
+             (unknown-callback-name condition)))))
 
 (defmacro defcallback ((name ((&rest arg-types) return-type) &rest arg-names)
                        &body body)

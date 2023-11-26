@@ -39,17 +39,17 @@
              (let* ((range-name (cdr name))
                     (line-2 (read-line stream nil nil)))
                (unless line-2
-                 (error "Missing end of range ~S starting at code point ~
-                         U+~4,'0X." range-name code-point))
+                 (error "missing end of range ~S starting at code point ~
+                         U+~4,'0X" range-name code-point))
                (destructuring-bind (code-point-2 name-2 &rest properties-2)
                    (parse-unicode-data-fields line-2)
                  (declare (ignore properties-2))
                  (unless (and (consp name-2) (eq (car name-2) 'end))
-                   (error "Invalid line ~S as end of range ~S starting at ~
-                           code point U+~4,'0X." line-2 range-name code-point))
+                   (error "invalid line ~S as end of range ~S starting at ~
+                           code point U+~4,'0X" line-2 range-name code-point))
                  (unless (>= code-point-2 code-point)
-                   (error "Invalid end code point U+~4,'0X for range ~S ~
-                           starting at code point U+~4,'0X."
+                   (error "invalid end code point U+~4,'0X for range ~S ~
+                           starting at code point U+~4,'0X"
                           code-point-2 range-name code-point))
                  (do ((cp code-point (1+ cp)))
                      ((> cp code-point-2)
@@ -152,7 +152,7 @@
            (type (integer 0) start end))
   (let ((code-point (parse-integer string :start start :end end :radix 16)))
     (unless (<= 0 code-point unicode:highest-code-point)
-      (error "Invalid code point ~D." code-point))
+      (error "invalid code point ~D" code-point))
     code-point))
 
 (defun parse-code-point-or-range (string)
@@ -161,7 +161,7 @@
     (cond
       (full-stop
        (unless (char= (char string (1+ full-stop)) #\.)
-         (error "Invalid code point range ~S." string))
+         (error "invalid code point range ~S" string))
        (cons (parse-code-point string :end full-stop)
              (parse-code-point string :start (+ full-stop 2))))
       (t
@@ -175,4 +175,4 @@
     ((string= string "N")
      nil)
     (t
-     (error "Invalid boolean ~S." string))))
+     (error "invalid boolean ~" string))))

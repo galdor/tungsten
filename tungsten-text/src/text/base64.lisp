@@ -7,8 +7,8 @@
     :reader invalid-base64-character-character))
   (:report
    (lambda (condition stream)
-     (with-slots (character) condition
-       (format stream "Invalid Base64 character ~S." character)))))
+     (format stream "invalid base64 character ~S"
+             (invalid-base64-character-character condition)))))
 
 (defun encode-base64 (octets &key (start 0) (end (length octets)))
   (declare (type core:octet-vector octets)

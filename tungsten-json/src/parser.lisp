@@ -9,21 +9,27 @@
 (define-condition json-parse-error (parse-error)
   ((row
     :type (integer 1)
-    :initarg :row)
+    :initarg :row
+    :reader json-parse-error-row)
    (column
     :type (integer 1)
-    :initarg :column)
+    :initarg :column
+    :reader json-parse-error-column)
    (format-control
     :type string
-    :initarg :format-control)
+    :initarg :format-control
+    :reader json-parse-error-format-control)
    (format-arguments
     :type list
-    :initarg :format-arguments))
+    :initarg :format-arguments
+    :reader json-parse-error-format-arguments))
   (:report
    (lambda (condition stream)
-     (with-slots (row column format-control format-arguments) condition
-       (format stream "Invalid JSON string: ~D:~D: ~?."
-               row column format-control format-arguments)))))
+     (format stream "invalid JSON string: ~D:~D: ~?"
+             (json-parse-error-row condition)
+             (json-parse-error-column condition)
+             (json-parse-error-format-control condition)
+             (json-parse-error-format-arguments condition)))))
 
 (defstruct (parser
             (:copier nil)
@@ -96,7 +102,7 @@
           (restart-case
               (validate value mapping)
             (continue ()
-              :report "Ignore the validation error and return the value."
+              :report "ignore the validation error and return the value"
               value))
           value))))
 
@@ -275,7 +281,6 @@
             (:error
              (when (member key members :key #'car :test #'string=)
                (parser-error parser "duplicate object key ~S" key))))
-          ;; TODO duplicate-key handling
           (setf (car member) key))
         ;; Colon
         (parser-skip-whitespaces parser)

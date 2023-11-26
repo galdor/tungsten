@@ -7,11 +7,12 @@
 
 (define-condition unserializable-value (error)
   ((value
-    :initarg :value))
+    :initarg :value
+    :reader unserializable-value-value))
   (:report
    (lambda (condition stream)
-     (with-slots (value) condition
-       (format stream "Value ~S cannot be represented in JSON." value)))))
+     (format stream "value ~S cannot be represented in JSON"
+             (unserializable-value-value condition)))))
 
 (defun serialize (value &key stream mapping)
   (declare (type (or stream null) stream))

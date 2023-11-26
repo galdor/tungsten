@@ -28,15 +28,17 @@
 (define-condition unknown-foreign-structure-member (error)
   ((foreign-structure
     :type foreign-structure
-    :initarg :foreign-structure)
+    :initarg :foreign-structure
+    :reader unknown-foreign-structure-member-foreign-structure)
    (name
     :type symbol
-    :initarg :name))
+    :initarg :name
+    :reader unknown-foreign-structure-member-name))
   (:report
    (lambda (condition stream)
-     (with-slots (name foreign-structure) condition
-       (format stream "Unknown foreign structure member ~S in ~A."
-               name foreign-structure)))))
+     (format stream "unknown foreign structure member ~S in ~A"
+             (unknown-foreign-structure-member-name condition)
+             (unknown-foreign-structure-member-foreign-structure condition)))))
 
 (defmethod print-object ((member foreign-structure-member) stream)
   (print-unreadable-object (member stream :type t)
