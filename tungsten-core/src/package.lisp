@@ -27,6 +27,7 @@
    #:hash-table-entries
 
    #:string-case
+   #:string-starts-with
    #:split-string
 
    #:octet

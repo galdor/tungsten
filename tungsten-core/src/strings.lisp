@@ -21,6 +21,17 @@
                             ,@forms)))))
                    clauses)))))
 
+(defun string-starts-with (string prefix
+                           &key (start1 0) (end1 (length string))
+                                (start2 0) (end2 (length prefix)))
+  (declare (type string string prefix)
+           (type (integer 0) start1 end1 start2 end2))
+  (let ((string-length (- end1 start1))
+        (prefix-length (- end2 start2)))
+    (and (<= prefix-length string-length)
+         (string= string prefix :start1 start1 :end1 (+ start1 prefix-length)
+                                :start2 start2 :end2 end2))))
+
 (defun split-string (string separator &key (start 0) (end (length string)))
   (declare (type string string)
            (type (or string character) separator)
