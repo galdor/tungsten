@@ -175,4 +175,4 @@
     ((string= string "N")
      nil)
     (t
-     (error "invalid boolean ~" string))))
+     (error "invalid boolean ~S" string))))

@@ -4,7 +4,7 @@
   ((format
     :type symbol
     :initarg :format
-    :reader :unknown-datetime-format-format))
+    :reader unknown-datetime-format-format))
   (:report
    (lambda (condition stream)
      (format stream "unknown datetime format ~S"
