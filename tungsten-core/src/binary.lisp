@@ -13,7 +13,7 @@
 (define-condition unknown-binary-type (error)
   ((type
     :initarg :type
-    :reader :unknown-binary-type-type))
+    :reader unknown-binary-type-type))
   (:report
    (lambda (condition stream)
      (format stream "unknown binary type ~S"
