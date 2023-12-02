@@ -72,10 +72,12 @@
         (write-char #\= stream)
         (write-string (cdr parameter) stream)))))
 
-(defun parse-media-type (string &key (start 0) (end (length string)))
+(defun parse-media-type (string &key (start 0) end)
   (declare (type string string)
-           (type (integer 0) start end))
-  (let* ((media-type (make-instance 'media-type))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let* ((end (or end (length string)))
+         (media-type (make-instance 'media-type))
          (slash (position #\/ string :start start :end end))
          (hspace #.(format nil "~C~C" #\Space #\Tab)))
     ;; Type

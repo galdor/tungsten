@@ -35,10 +35,12 @@
                  (integer "~D"))
                (list port))))))
 
-(defun parse (string &key (start 0) (end (length string)))
+(defun parse (string &key (start 0) end)
   (declare (type string string)
-           (type integer start end))
-  (let ((uri (make-uri))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let ((end (or end (length string)))
+        (uri (make-uri))
         (i start))
     ;; Scheme
     (when (and (< i end) (char/= (char string i) #\/))
@@ -82,10 +84,12 @@
             (percent-decode string :start i :end end)))
     uri))
 
-(defun parse-authority (string uri &key (start 0) (end (length string)))
+(defun parse-authority (string uri &key (start 0) end)
   (declare (type string string)
-           (type integer start end))
-  (let ((at (position #\@ string :start start :end end)))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let* ((end (or end (length string)))
+         (at (position #\@ string :start start :end end)))
     (cond
       (at
        ;; User info
@@ -101,48 +105,60 @@
        ;; Host and port only
        (parse-host-and-port string uri :start start :end end)))))
 
-(defun parse-host-and-port (string uri &key (start 0) (end (length string)))
-  (cond
-    ((and (< start end)
-          (char= (char string start) #\[))
-     ;; IPv6 address
-     (let ((closing-bracket (position #\] string :start (1+ start) :end end)))
-       (unless closing-bracket
-         (error 'truncated-host :host (subseq string start end)))
-       (setf (uri-host uri) (subseq string (1+ start) closing-bracket))
-       (when (< closing-bracket (1- end))
-         (unless (char= (char string (1+ closing-bracket)) #\:)
-           (error 'invalid-host :host (subseq string start end)))
-         (setf (uri-port uri)
-               (parse-port string :start (+ closing-bracket 2)
-                                  :end end)))))
-    (t
-     ;; Hostname or IPv4 address
-     (let ((colon (position #\: string :start start :end end)))
-       (cond
-         (colon
-          (setf (uri-host uri) (subseq string start colon))
-          (setf (uri-port uri) (parse-port string :start (1+ colon) :end end)))
-         (t
-          (setf (uri-host uri) (subseq string start end))))))))
-
-(defun parse-port (string &key (start 0) (end (length string)))
-  (cond
-    ((= start end)
-     nil)
-    (t
-     (let ((port (handler-case
-                     (parse-integer string :start start :end end)
-                   (parse-error ()
-                     (error 'invalid-port :port (subseq string start end))))))
-       (unless (< 0 port 65536)
-         (error 'invalid-port :port port))
-       port))))
-
-(defun parse-query (string &key (start 0) (end (length string)))
+(defun parse-host-and-port (string uri &key (start 0) end)
   (declare (type string string)
-           (type integer start end))
-  (do ((query nil)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let ((end (or end (length string))))
+    (cond
+      ((and (< start end)
+            (char= (char string start) #\[))
+       ;; IPv6 address
+       (let ((closing-bracket
+               (position #\] string :start (1+ start) :end end)))
+         (unless closing-bracket
+           (error 'truncated-host :host (subseq string start end)))
+         (setf (uri-host uri) (subseq string (1+ start) closing-bracket))
+         (when (< closing-bracket (1- end))
+           (unless (char= (char string (1+ closing-bracket)) #\:)
+             (error 'invalid-host :host (subseq string start end)))
+           (setf (uri-port uri)
+                 (parse-port string :start (+ closing-bracket 2)
+                                    :end end)))))
+      (t
+       ;; Hostname or IPv4 address
+       (let ((colon (position #\: string :start start :end end)))
+         (cond
+           (colon
+            (setf (uri-host uri) (subseq string start colon))
+            (setf (uri-port uri) (parse-port string :start (1+ colon) :end end)))
+           (t
+            (setf (uri-host uri) (subseq string start end)))))))))
+
+(defun parse-port (string &key (start 0) end)
+  (declare (type string string)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let ((end (or end (length string))))
+    (cond
+      ((= start end)
+       nil)
+      (t
+       (let ((port
+               (handler-case
+                   (parse-integer string :start start :end end)
+                 (parse-error ()
+                   (error 'invalid-port :port (subseq string start end))))))
+         (unless (< 0 port 65536)
+           (error 'invalid-port :port port))
+         port)))))
+
+(defun parse-query (string &key (start 0) end)
+  (declare (type string string)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (do ((end (or end (length string)))
+       (query nil)
        (i (or start 0)))
       ((>= i end)
        (nreverse query))
@@ -150,10 +166,12 @@
       (push (parse-query-parameter string :start i :end ampersand) query)
       (setf i (1+ ampersand)))))
 
-(defun parse-query-parameter (string &key (start 0) (end (length string)))
+(defun parse-query-parameter (string &key (start 0) end)
   (declare (type string string)
-           (type integer start end))
-  (let* ((equal (or (position #\= string :start start :end end) end))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let* ((end (or end (length string)))
+         (equal (or (position #\= string :start start :end end) end))
          (name (percent-decode string :start start :end equal
                                       :decode-plus t))
          (value (percent-decode string :start (1+ equal) :end end

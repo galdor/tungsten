@@ -39,6 +39,7 @@
   ()
   (:report
    (lambda (condition stream)
+     (declare (ignore condition))
      (format stream "no available PostgreSQL connection"))))
 
 (defclass client ()

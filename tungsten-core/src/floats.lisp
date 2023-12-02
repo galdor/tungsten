@@ -20,14 +20,15 @@
                         :string string
                         :description (apply #'format nil format args))))
 
-(defun parse-float (string &key (start 0) (end (length string))
-                                (type 'double-float))
+(defun parse-float (string &key (start 0) end (type 'double-float))
   "Parse a floating point number.
 
 Return both the floating point value and the number of characters read."
   (declare (type string string)
-           (type (integer 0) start end))
-  (let ((i start)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let ((end (or end (length string)))
+        (i start)
         (sign 1)
         (integer-part 0)
         (fractional-part 0)

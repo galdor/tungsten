@@ -90,9 +90,14 @@
            (setf i j)
            (return-from parser-skip-whitespaces)))))))
 
-(defun parse (string &key (start 0) (end (length string)) mapping)
-  (let ((parser (make-parser :string string
-                             :start start :end end :i start)))
+(defun parse (string &key (start 0) end mapping)
+  (declare (type string string)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (let* ((end (or end (length string)))
+         (parser (make-parser :string string
+                              :start start :end end
+                              :i start)))
     (let ((value (parse-value parser)))
       (parser-skip-whitespaces parser)
       (with-slots (i end) parser

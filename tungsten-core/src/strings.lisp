@@ -32,22 +32,24 @@
          (string= string prefix :start1 start1 :end1 (+ start1 prefix-length)
                                 :start2 start2 :end2 end2))))
 
-(defun split-string (string separator &key (start 0) (end (length string)))
+(defun split-string (string separator &key (start 0) end)
   (declare (type string string)
            (type (or string character) separator)
-           (type (integer 0) start end))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   (etypecase separator
     (character
      (split-string/character string separator :start start :end end))
     (string
      (split-string/string string separator :start start :end end))))
 
-(defun split-string/character (string separator
-                               &key (start 0) (end (length string)))
+(defun split-string/character (string separator &key (start 0) end)
   (declare (type string string)
            (type character separator)
-           (type (integer 0) start end))
-  (do ((parts nil)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (do ((end (or end (length string)))
+       (parts nil)
        (i start))
       ((> i end)
        (nreverse parts))
@@ -56,12 +58,13 @@
       (push (subseq string i part-end) parts)
       (setf i (1+ part-end)))))
 
-(defun split-string/string (string separator
-                            &key (start 0) (end (length string)))
+(defun split-string/string (string separator &key (start 0) end)
   (declare (type string string)
            (type string separator)
-           (type (integer 0) start end))
-  (do ((parts nil)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (do ((end (or end (length string)))
+       (parts nil)
        (i start))
       ((> i end)
        (nreverse parts))

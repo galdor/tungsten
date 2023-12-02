@@ -22,9 +22,10 @@
 ;; Quick and dirty parsing for the most common format (RFC 3339). In the
 ;; future we want something similar to strptime().
 
-(defun parse-rfc3339-datetime (string &key (start 0) (end (length string)))
+(defun parse-rfc3339-datetime (string &key (start 0) end)
   (declare (type string string)
-           (type integer start end))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   (labels ((date-time-separator-p (c)
              (declare (type character c))
              (or (char= c #\t) (char= c #\T)))
@@ -34,7 +35,7 @@
            (split (string c start end)
              (declare (type string string)
                       (type character c)
-                      (type integer start end))
+                      (type (integer 0) start end))
              (do ((parts nil)
                   (i start))
                  ((>= i end)
@@ -68,8 +69,9 @@
                              1.0d-9))))
                  (t
                   (values (parse-integer-part string "seconds") 0))))))
-    (let ((timezone-start (position-if #'timezone-separator-p string
-                                       :start start :end end :from-end t)))
+    (let* ((end (or end (length string)))
+           (timezone-start (position-if #'timezone-separator-p string
+                                        :start start :end end :from-end t)))
       (unless timezone-start
         (datetime-parse-error "missing timezone indicator"))
       (unless (or (string= string "Z" :start1 timezone-start :end1 end)

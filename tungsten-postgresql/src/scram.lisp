@@ -11,10 +11,13 @@
 (defun scram-error (format &rest arguments)
   (error 'scram-error :format-control format :format-arguments arguments))
 
-(defun parse-scram-attributes (string &key (start 0) (end (length string)))
-  (declare (type string string))
+(defun parse-scram-attributes (string &key (start 0) end)
+  (declare (type string string)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   ;; RFC 5802 7. Formal Syntax
-  (do ((attributes nil)
+  (do ((end (or end (length string)))
+       (attributes nil)
        (i start))
       ((>= i end)
        (nreverse attributes))

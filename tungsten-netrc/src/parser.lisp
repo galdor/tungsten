@@ -44,21 +44,23 @@
                      \"machine\" block"
              (orphaned-token-token condition)))))
 
-(defun parse-entries (string &key (start 0) (end (length string)))
+(defun parse-entries (string &key (start 0) end)
   (declare (type string string)
-           (type (integer 0) start end))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   (flet ((spacep (character)
            (or (char= character #\Space)
                (char= character #\Tab)
                (char= character #\Newline))))
-    (do ((start (or (position-if-not #'spacep string :start start :end end)
-                    end))
-         (entries nil)
-         (entry nil))
-        ((>= start end)
-         (when entry
-           (push entry entries))
-         (nreverse entries))
+    (do* ((end (or end (length string)))
+          (start (or (position-if-not #'spacep string :start start :end end)
+                     end))
+          (entries nil)
+          (entry nil))
+         ((>= start end)
+          (when entry
+            (push entry entries))
+          (nreverse entries))
       (labels ((read-token ()
                  (let* ((space (position-if #'spacep string
                                             :start start :end end))

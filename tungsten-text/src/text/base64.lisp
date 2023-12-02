@@ -10,15 +10,17 @@
      (format stream "invalid base64 character ~S"
              (invalid-base64-character-character condition)))))
 
-(defun encode-base64 (octets &key (start 0) (end (length octets)))
+(defun encode-base64 (octets &key (start 0) end)
   (declare (type core:octet-vector octets)
-           (type (integer 0) start end))
-  (do ((string (make-array (* (ceiling (- end start) 3) 4)
-                           :element-type 'standard-char))
-       (alphabet
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
-       (i start (+ i 3))
-       (j 0 (+ j 4)))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
+  (do* ((end (or end (length octets)))
+        (string (make-array (* (ceiling (- end start) 3) 4)
+                            :element-type 'standard-char))
+        (alphabet
+         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
+        (i start (+ i 3))
+        (j 0 (+ j 4)))
       ((>= i end)
        string)
     (let* ((group-size (the (integer 1 3) (min 3 (- end i))))
@@ -42,9 +44,10 @@
             (char string (+ j 3))
             (if (< group-size 3) #\= (char alphabet c4))))))
 
-(defun decode-base64 (string &key (start 0) (end (length string)))
+(defun decode-base64 (string &key (start 0) end)
   (declare (type string string)
-           (type (integer 0) start end))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   (flet ((base64-character-value (character)
            (cond
              ((char<= #\A character #\Z)
@@ -59,7 +62,8 @@
               63)
              (t
               (error 'invalid-base64-character :character character)))))
-    (let ((nb-octets (* (ceiling (- end start) 4) 3)))
+    (let* ((end (or end (length string)))
+           (nb-octets (* (ceiling (- end start) 4) 3)))
       (when (and (> end start) (char= (aref string (- end 1)) #\=))
         (decf end)
         (decf nb-octets)

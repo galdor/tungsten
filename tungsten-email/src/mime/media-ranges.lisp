@@ -84,11 +84,13 @@
         (write-char #\= stream)
         (write-string (cdr parameter) stream)))))
 
-(defun parse-media-range (string &key (start 0) (end (length string)))
+(defun parse-media-range (string &key (start 0) end)
   (declare (type string string)
-           (type (integer 0) start end))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end))
   (handler-case
-      (let ((media-type (parse-media-type string :start start :end end)))
+      (let* ((end (or end (length string)))
+             (media-type (parse-media-type string :start start :end end)))
         (with-slots (type subtype parameters) media-type
           (make-instance 'media-range
                          :type (if (string= type "*") '* type)
