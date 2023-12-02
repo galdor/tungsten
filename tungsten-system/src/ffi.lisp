@@ -44,8 +44,10 @@
 
 (defun getenv (name)
   (ffi:with-foreign-string (%name name)
-    (ffi:decode-foreign-string
-     (system-funcall ("getenv" ((:pointer) :pointer) %name)))))
+    (let ((%string (system-funcall ("getenv" ((:pointer) :pointer) %name)
+                                   :errorp nil)))
+      (unless (ffi:null-pointer-p %string)
+        (ffi:decode-foreign-string %string)))))
 
 #+bsd
 (defun kinfo-getfile (pid)
