@@ -57,13 +57,6 @@
       (system-funcall ("free" ((:pointer) :void) %info)))
     (ffi:foreign-value %count :int)))
 
-     ;; kvm_t *
-     ;; kvm_openfiles(const char *execfile, const char *corefile,
-     ;;     const char *swapfile, int flags, char *errbuf);
-
-     ;; int
-     ;; kvm_close(kvm_t *kd);
-
 
 #+freebsd
 (defmacro with-kvm-openfiles ((%kvm exec-file core-file swap-file flags)
