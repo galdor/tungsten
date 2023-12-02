@@ -42,7 +42,7 @@
    (lambda (condition stream)
      (format stream "invalid netrc token ~S out of a \"default\" or ~
                      \"machine\" block"
-             (orphaned-token-token token)))))
+             (orphaned-token-token condition)))))
 
 (defun parse-entries (string &key (start 0) (end (length string)))
   (declare (type string string)
