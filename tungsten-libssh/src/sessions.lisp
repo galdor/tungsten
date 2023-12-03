@@ -40,6 +40,7 @@
   ()
   (:report
    (lambda (condition stream)
+     (declare (ignore condition))
      (format stream "SSH public key authentication not supported"))))
 
 (define-condition public-key-authentication-failure
@@ -47,6 +48,7 @@
   ()
   (:report
    (lambda (condition stream)
+     (declare (ignore condition))
      (format stream "SSH public key authentication failed"))))
 
 (defun session-host-key (%session hash)
