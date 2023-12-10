@@ -16,8 +16,13 @@
    #:serialize-group
 
    #:header
+   #:header-field
+   #:header-fields
    #:body
    #:message
    #:message-header
    #:message-body
-   #:make-message))
+   #:message-header-field
+   #:message-header-fields
+   #:make-message
+   #:serialize-message))

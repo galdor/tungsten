@@ -20,7 +20,7 @@
              (text:encode-base64
               (text:encode-string credentials)))
            (message (concatenate 'string "PLAIN " encoded-credentials)))
-      (write-command "AUTH" message client))
+      (write-command client "AUTH" message))
     (do-response-lines (code text client)
       (235
        nil)

@@ -57,7 +57,7 @@
                                              :stream stream
                                              :credentials credentials)))
           (read-greeting-response client)
-          (send-ehlo-command local-host client)
+          (send-ehlo-command client local-host)
           (when credentials
             (authenticate-client client))
           client)
@@ -98,3 +98,22 @@
   (declare (type client client)
            (type symbol name))
   (cdr (assoc name (client-credentials client))))
+
+(defun send-message (client message &key reverse-path)
+  (declare (type client client)
+           (type imf:message message)
+           (type (or imf:mailbox string null) reverse-path))
+  (let ((reverse-path
+          (or reverse-path
+              (imf:message-header-field message "From")
+              (error "cannot identify reverse path without a \"From\" ~
+                      header field")))
+        (recipient
+          (or (imf:message-header-field message "To")
+              (error "missing \"To\" header field")))
+        (mail-parameters nil))
+    (send-mail-command client reverse-path mail-parameters)
+    (send-rcpt-command client recipient)
+    (send-data-command client)
+    (imf:serialize-message message :stream (client-stream client))
+    (send-message-end client)))

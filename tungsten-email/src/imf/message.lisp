@@ -3,6 +3,19 @@
 (deftype header ()
   'list)
 
+(defun header-field (header name)
+  (declare (type header header)
+           (type string name))
+  (cdr (assoc name header :test #'string=)))
+
+(defun header-fields (header name)
+  (declare (type header header)
+           (type string name))
+  (let ((values nil))
+    (dolist (field header (nreverse values))
+      (when (string= (car field) name)
+        (push (cdr field) values)))))
+
 (deftype body ()
   '(or string core:octet-vector))
 
@@ -23,6 +36,16 @@
            (type (or body null) body))
   (make-instance 'message :header header :body body))
 
+(defun message-header-field (message name)
+  (declare (type message message)
+           (type string name))
+  (header-field (message-header message) name))
+
+(defun message-header-fields (message name)
+  (declare (type message message)
+           (type string name))
+  (header-fields (message-header message) name))
+
 (defun serialize-message (message &key (stream *standard-output*))
   (declare (type message message)
            (type stream stream))
@@ -40,13 +63,9 @@
     (write-header-field-tokens (car field) (cdr field))))
 
 (defun write-header-field-tokens (name value)
-  (declare (type (or symbol string) name)
+  (declare (type string name)
            (type (or string address) value)) ; TODO address lists?
-  (etypecase name
-    (symbol
-     (write-token (capitalize-header-name (string-downcase name))))
-    (string
-     (write-token (capitalize-header-name name))))
+  (write-token (capitalize-header-name name))
   ;; In RFC 5322, all standard header fields are defined with the name of the
   ;; field and the colon character in the same token, so we must not split
   ;; lines between them.

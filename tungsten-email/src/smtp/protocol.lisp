@@ -28,14 +28,28 @@
     :reader unexpected-smtp-response-text))
   (:report
    (lambda (condition stream)
-     (with-slots (code) condition
-       (format stream "unexpected SMTP response ~D" code)))))
+     (format stream "unexpected SMTP response ~D: ~A"
+             (unexpected-smtp-response-code condition)
+             (unexpected-smtp-response-text condition)))))
 
-(defun write-command (command text client)
-  (declare (type client client))
+(defun write-command (client command &optional text)
+  (declare (type client client)
+           (type string command)
+           (type (or string null) text))
   (with-slots (stream) client
-    (let ((line (concatenate 'string command " " text)))
-      (write-line line stream))
+    (write-string command stream)
+    (when text
+      (write-char #\Space stream)
+      (write-string text stream))
+    (terpri stream)
+    (finish-output stream)))
+
+(defun format-command (client command format &rest args)
+  (declare (type client client)
+           (type string format)
+           (type list args))
+  (with-slots (stream) client
+    (format stream "~A ~?~%" command format args)
     (finish-output stream)))
 
 (defun parse-response-line (line)
@@ -99,11 +113,11 @@
            (smtp-parse-error "invalid greeting format ~S" text))
          (push (subseq text 0 space) server-domains))))))
 
-(defun send-ehlo-command (host client)
-  (declare (type system:host host)
-           (type client client))
+(defun send-ehlo-command (client host)
+  (declare (type client client)
+           (type system:host host))
   (with-slots (keywords) client
-    (write-command "EHLO" (format-host host) client)
+    (write-command client "EHLO" (format-host host))
     (let ((first-line t))
       (do-response-lines (code text client)
         (250
@@ -166,6 +180,36 @@
       (smtp-parse-error "invalid parameter ~S for SIZE EHLO keyword"))
     (list :size (parse-integer string))))
 
+(defun send-mail-command (client reverse-path mail-parameters)
+  (declare (type client client)
+           (type (or imf:mailbox string) reverse-path)
+           (type list mail-parameters)
+           (ignore mail-parameters))
+  ;; TODO MAIL-PARAMETERS
+  (format-command client "MAIL" "FROM:~A" (mailbox-address reverse-path))
+  (do-response-lines (code text client)
+    (250 nil)))
+
+(defun send-rcpt-command (client recipient)
+  (declare (type client client)
+           (type (or imf:mailbox string) recipient))
+  (format-command client "RCPT" "TO:~A" (mailbox-address recipient))
+  (do-response-lines (code text client)
+    (250 nil)))
+
+(defun send-data-command (client)
+  (declare (type client client))
+  (write-command client "DATA")
+  (do-response-lines (code text client)
+    (354 nil)))
+
+(defun send-message-end (client)
+  (declare (type client client))
+  ;; The message end is not really a command, but it behaves the same way.
+  (write-command client ".")
+  (do-response-lines (code text client)
+    (250 nil)))
+
 (defun format-host (host)
   (declare (type system:host host))
   (etypecase host
@@ -176,3 +220,18 @@
     (system:ipv6-address
      ;; RFC 5321 4.1.3. Address Literals
      (concatenate 'string "IPv6:" (system:format-ip-address host)))))
+
+(defun mailbox-address (mailbox)
+  (declare (type (or imf:mailbox string) mailbox))
+  ;; According to RFC 5321, for the MAIL command, the reverse path "contains
+  ;; the source mailbox (between "<" and ">" brackets)", so display names
+  ;; should never be included. Same thing for RCPT.
+  (etypecase mailbox
+    (imf:mailbox
+     (format nil "<~A>"
+             (imf:serialize-mailbox
+              (imf:make-mailbox
+               (imf:mailbox-local-part mailbox)
+               (imf:mailbox-domain mailbox)))))
+    (string
+     mailbox)))
