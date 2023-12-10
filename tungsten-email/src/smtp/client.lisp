@@ -84,8 +84,8 @@
   (let* ((username (cdr (assoc :username credentials)))
          (password (lookup-netrc-password host port username)))
     (unless (assoc :password credentials)
-      (cons (cons :password password)
-            credentials))))
+      (when password
+        (cons (cons :password password) credentials)))))
 
 (defun lookup-netrc-password (host port &optional username)
   (let ((entry (car (netrc:search-entries :machine host
