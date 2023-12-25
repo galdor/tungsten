@@ -48,7 +48,7 @@
 
 (defmethod write-tokens ((message message))
   (with-slots (header body) message
-    (with-slots (stream max-line-length) *line-writer*
+    (with-slots (stream max-line-length smtp) *line-writer*
       ;; Header
       (dolist (field header)
         (let ((name (car field))
@@ -72,7 +72,8 @@
         (etypecase body
           (string
            (mime:encode-quoted-printable body stream
-                                         :max-line-length max-line-length))
+                                         :max-line-length max-line-length
+                                         :smtp smtp))
           (core:octet-vector
            (do* ((text (text:encode-base64 body))
                  (i 0)

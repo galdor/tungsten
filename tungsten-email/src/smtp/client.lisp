@@ -115,6 +115,7 @@
     (send-mail-command client reverse-path mail-parameters)
     (send-rcpt-command client recipient)
     (send-data-command client)
-    (imf:with-line-writer ((client-stream client) :max-line-length 78)
+    (imf:with-line-writer ((client-stream client) :max-line-length 78
+                                                  :smtp t)
       (imf:write-tokens message))
     (send-message-end client)))

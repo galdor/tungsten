@@ -10,6 +10,10 @@
     :initarg :max-line-length
     :initform nil
     :reader line-writer-max-line-length)
+   (smtp
+    :type boolean
+    :initarg :smtp
+    :reader line-writer-smtp)
    (line
     :type string)
    (force-fold
@@ -27,10 +31,12 @@
       (setf line (make-array max-line-length :element-type 'character
                                              :adjustable t :fill-pointer 0)))))
 
-(defun make-line-writer (stream &key max-line-length)
+(defun make-line-writer (stream &key max-line-length smtp)
   (declare (type stream stream)
-           (type (or (integer 1) null) max-line-length))
+           (type (or (integer 1) null) max-line-length)
+           (type boolean smtp))
   (make-instance 'line-writer :max-line-length max-line-length
+                              :smtp smtp
                               :stream stream))
 
 (defmacro with-line-writer ((stream &rest args) &body body)
@@ -49,10 +55,10 @@
          (unless ,stream-var
            (close ,output-stream))))))
 
-(defun write-token (token &key (writer *line-writer*)
-                               no-folding)
+(defun write-token (token &key (writer *line-writer*) no-folding)
   (declare (type (or string character (member :space :eol)) token)
-           (type line-writer writer))
+           (type line-writer writer)
+           (type boolean no-folding))
   (with-slots (max-line-length line force-fold stream) writer
     (cond
       (max-line-length
@@ -104,8 +110,10 @@
 (defun line-writer-flush (writer)
   (declare (type line-writer writer))
   (when (slot-boundp writer 'line)
-    (with-slots (line stream) writer
+    (with-slots (line stream smtp) writer
       (unless (zerop (fill-pointer line))
+        (when (and smtp (char= (char line 0) #\.))
+          (write-char #\.))
         ;; If there was a trailing whitespace, we don't need it anymore since
         ;; we'll have one in the next line continuation.
         (when (char= (char line (1- (length line))) #\Space)

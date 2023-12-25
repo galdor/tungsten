@@ -18,12 +18,14 @@
 
 (defun encode-quoted-printable (string stream
                                 &key (start 0) end
-                                     (max-line-length 78))
+                                     (max-line-length 78)
+                                     smtp)
   (declare (type string string)
            (type stream stream)
            (type (integer 0) start)
            (type (or (integer 0) null) end)
-           (type (or (integer 4) null) max-line-length))
+           (type (or (integer 4) null) max-line-length)
+           (type boolean smtp))
   (let ((end (or end (length string)))
         (line-length 0))
     (labels ((whitespacep (c)
@@ -41,6 +43,9 @@
                           (> (+ line-length 1 1 2) max-line-length))
                  (write-char #\= stream)
                  (emit-eol))
+               (when (and (zerop line-length) smtp (char= c #\.))
+                 (write-char #\. stream)
+                 (incf line-length))
                (write-char c stream)
                (incf line-length))
              (emit-string (s)
