@@ -2,6 +2,8 @@
 
 (defvar *line-writer* nil)
 
+(defgeneric write-tokens (object))
+
 (defclass line-writer ()
   ((max-line-length
     :type (or (integer 1) null)
@@ -32,16 +34,20 @@
                               :stream stream))
 
 (defmacro with-line-writer ((stream &rest args) &body body)
-  `(let ((*line-writer* (make-line-writer ,stream ,@args)))
-     ,@body
-     (when (line-writer-max-line-length *line-writer*)
-       (line-writer-flush *line-writer*))))
-
-(defmacro with-line-writer/string ((&rest args) &body body)
-  (let ((stream (gensym "STREAM-")))
-    `(with-output-to-string (,stream)
-       (with-line-writer (,stream ,@args)
-         ,@body))))
+  (let ((stream-var (gensym "STREAM-"))
+        (output-stream (gensym "OUTPUT-STREAM-")))
+    `(let* ((,stream-var ,stream)
+            (,output-stream (if ,stream-var
+                                ,stream-var
+                                (make-string-output-stream))))
+       (unwind-protect
+            (let ((*line-writer* (make-line-writer ,output-stream ,@args)))
+              ,@body
+              (line-writer-flush *line-writer*)
+              (unless ,stream-var
+                (get-output-stream-string ,output-stream)))
+         (unless ,stream-var
+           (close ,output-stream))))))
 
 (defun write-token (token &key (writer *line-writer*)
                                no-folding)

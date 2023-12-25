@@ -17,13 +17,15 @@
 ;;; sequence in the output string.
 
 (defun encode-quoted-printable (string stream
-                                &key (start 0) (end (length string))
-                                     (max-line-length 76))
+                                &key (start 0) end
+                                     (max-line-length 78))
   (declare (type string string)
            (type stream stream)
-           (type (integer 0) start end)
-           (type (integer 4) max-line-length))
-  (let ((line-length 0))
+           (type (integer 0) start)
+           (type (or (integer 0) null) end)
+           (type (or (integer 4) null) max-line-length))
+  (let ((end (or end (length string)))
+        (line-length 0))
     (labels ((whitespacep (c)
                (declare (type character c))
                (or (char= c #\Tab) (char= c #\Space)))
@@ -35,14 +37,16 @@
                (setf line-length 0))
              (emit-char (c)
                (declare (type character c))
-               (when (> (1+ line-length) max-line-length)
+               (when (and max-line-length
+                          (> (+ line-length 1 1 2) max-line-length))
                  (write-char #\= stream)
                  (emit-eol))
                (write-char c stream)
                (incf line-length))
              (emit-string (s)
                (declare (type string s))
-               (when (> (+ line-length (length s) 1) max-line-length)
+               (when (and max-line-length
+                          (> (+ line-length (length s) 1 1 2) max-line-length))
                  (write-char #\= stream)
                  (emit-eol))
                (write-string s stream)

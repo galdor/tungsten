@@ -50,54 +50,41 @@
   (print-unreadable-object (group stream :type t)
     (write-string (group-display-name group) stream)))
 
-(defun serialize-address (address)
-  (declare (type address address))
-  (etypecase address
-    (mailbox
-     (serialize-mailbox address))
-    (group
-     (serialize-group address))))
-
-(defun serialize-mailbox (mailbox)
-  (declare (type mailbox mailbox))
-  (with-line-writer/string ()
-    (write-mailbox-tokens mailbox)))
-
-(defun write-mailbox-tokens (mailbox)
-  (declare (type mailbox mailbox))
+(defmethod write-tokens ((mailbox mailbox))
   (with-slots (display-name local-part domain) mailbox
-    (cond
-      (display-name
-       (write-token display-name)
-       (write-token :space)
-       (write-token #\<)
-       (write-address-specification-tokens local-part domain)
-       (write-token #\>))
-      (t
-       (write-address-specification-tokens local-part domain)))))
+    (flet ((write-address-specification-tokens ()
+             (write-token local-part)
+             (write-token #\@)
+             (write-token domain)))
+      (cond
+        (display-name
+         (write-token display-name)
+         (write-token :space)
+         (write-token #\<)
+         (write-address-specification-tokens)
+         (write-token #\>))
+        (t
+         (write-address-specification-tokens))))))
 
-(defun serialize-group (group)
-  (declare (type group group))
-  (with-line-writer/string ()
-    (write-group-tokens group)))
-
-(defun write-group-tokens (group)
-  (declare (type group group))
+(defmethod write-tokens ((group group))
   (with-slots (display-name mailboxes) group
     (write-token display-name)
     (write-token #\:)
     (write-token :space)
-    (dolist (mailbox mailboxes)
-      (write-mailbox-tokens mailbox))
+    (do ((mailboxes mailboxes (cdr mailboxes))
+         (i 0 (1+ i)))
+        ((null mailboxes))
+      (write-tokens (car mailboxes))
+      (unless (null (cdr mailboxes))
+        (write-token #\,)))
     (write-token #\;)))
 
-(defun serialize-address-specification (local-part domain)
-  (declare (type string local-part domain))
-  (with-line-writer/string ()
-    (write-address-specification-tokens local-part domain)))
+(defun serialize-address (address)
+  (declare (type address address))
+  (with-line-writer (nil)
+    (write-tokens address)))
 
-(defun write-address-specification-tokens (local-part domain)
-  (declare (type string local-part domain))
-  (write-token local-part)
-  (write-token #\@)
-  (write-token domain))
+(defun serialize-mailbox (mailbox)
+  (declare (type mailbox mailbox))
+  (with-line-writer (nil)
+    (write-tokens mailbox)))

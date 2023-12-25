@@ -46,40 +46,42 @@
            (type string name))
   (header-fields (message-header message) name))
 
-(defun serialize-message (message &key (stream *standard-output*))
-  (declare (type message message)
-           (type stream stream))
-  ;; See RFC 5322 2.1.1. Line Length Limits.
-  (with-line-writer (stream :max-line-length 78)
-    (with-slots (header body) message
-      (write-header-tokens header)
+(defmethod write-tokens ((message message))
+  (with-slots (header body) message
+    (with-slots (stream max-line-length) *line-writer*
+      ;; Header
+      (dolist (field header)
+        (let ((name (car field))
+              (value (cdr field)))
+          (write-token (capitalize-header-name name))
+          ;; In RFC 5322, all standard header fields are defined with the name
+          ;; of the field and the colon character in the same token, so we must
+          ;; not split lines between them.
+          (write-token #\: :no-folding t)
+          (write-token :space)
+          (etypecase value
+            (string
+             ;; TODO word splitting
+             (write-token value))
+            ((or mailbox group)
+             (write-tokens value)))
+          (write-token :eol)))
+      ;; Body
       (when body
         (write-token :eol)
-        (serialize-body body stream)))))
-
-(defun write-header-tokens (header)
-  (declare (type header header))
-  (dolist (field header)
-    (write-header-field-tokens (car field) (cdr field))))
-
-(defun write-header-field-tokens (name value)
-  (declare (type string name)
-           (type (or string address) value)) ; TODO address lists?
-  (write-token (capitalize-header-name name))
-  ;; In RFC 5322, all standard header fields are defined with the name of the
-  ;; field and the colon character in the same token, so we must not split
-  ;; lines between them.
-  (write-token #\: :no-folding t)
-  (write-token :space)
-  (etypecase value
-    (string
-     ;; TODO Word splitting
-     (write-token value))
-    (mailbox
-     (write-mailbox-tokens value))
-    (group
-     (write-group-tokens value)))
-  (write-token :eol))
+        (etypecase body
+          (string
+           (mime:encode-quoted-printable body stream
+                                         :max-line-length max-line-length))
+          (core:octet-vector
+           (do* ((text (text:encode-base64 body))
+                 (i 0)
+                 (end (length text)))
+                ((>= i end))
+             (let ((line-end (min (+ i max-line-length -2) end)))
+               (write-string text stream :start i :end line-end)
+               (write-string (text:eol-string :crlf) stream)
+               (setf i line-end)))))))))
 
 (defun capitalize-header-name (name)
   (declare (type string name))
@@ -92,12 +94,3 @@
        capitalized-name)
     (setf (char capitalized-name i) (char-upcase (char name i)))
     (incf i)))
-
-(defun serialize-body (body stream)
-  (declare (type body body)
-           (type stream stream))
-  (etypecase body
-    (string
-     (mime:encode-quoted-printable body stream))
-    (core:octet-vector
-     (write-string (text:encode-base64 body) stream))))
