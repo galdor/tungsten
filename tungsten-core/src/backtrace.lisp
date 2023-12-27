@@ -63,7 +63,7 @@
                  frames)
            (incf number)))
        :start-frame-number start :count count)
-      (nreverse frames))))
+      frames)))
 
 #+sbcl
 (progn
@@ -85,7 +85,7 @@
                                        :source-file source-file)
                  frames)))
        :from :current-frame :start start :count count)
-      (nreverse frames))))
+      frames)))
 
 (defun backtrace (&key (start 0) (depth *backtrace-depth*))
   (declare (type (integer 0) start depth))
