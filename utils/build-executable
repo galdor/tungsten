@@ -22,6 +22,7 @@ program              the name of the program as an unquoted Common Lisp symbol
 OPTIONS
 
 -a                   the directory containing ASDF systems (default: $asdf_path)
+-c                   enable core compression if the implementation supports it
 -h                   print help and exit
 -i <implementation>  the implementation to use (default: $implementation)
 EOF
@@ -32,12 +33,14 @@ EOF
 root=$(realpath $(dirname $0)/..)
 
 asdf_path="."
+compression=0
 implementation="sbcl"
 
 OPTIND=1
-while getopts "a:hi:" arg; do
+while getopts "a:chi:" arg; do
     case "$arg" in
         a) asdf_path=$OPTARG ;;
+        c) compression=1 ;;
         h) __usage 0 ;;
         i) implementation=$OPTARG ;;
         ?) __die "Unknown option '-$arg'" ;;
@@ -55,6 +58,11 @@ program=$2
 script=$(mktemp)
 trap "rm $script" EXIT
 
+compression_arg=
+if [ $compression -eq 1 ]; then
+    compression_arg=":compression t"
+fi
+
 cat >$script <<EOF
 (setf *compile-verbose* nil)
 (setf *load-verbose* nil)
@@ -70,7 +78,7 @@ cat >$script <<EOF
 
 (asdf:load-system "$system")
 
-(program:build-executable '$program)
+(program:build-executable '$program $compression_arg)
 EOF
 
 $root/utils/run -i $implementation $script

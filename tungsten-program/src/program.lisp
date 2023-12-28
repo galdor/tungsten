@@ -38,16 +38,18 @@
   (or (gethash name *programs*)
       (error 'unknown-program :name 'name)))
 
-(defun build-executable (program-name &key path)
+(defun build-executable (program-name &key path compression)
   (declare (type symbol program-name)
-           (type (or pathname string null) path))
+           (type (or pathname string null) path)
+           (type boolean compression))
   (let ((path (or path (string-downcase (symbol-name program-name))))
         (program (program program-name)))
     #+sbcl
     (let ((args (append
                  (list :executable t)
-                 (list :toplevel (program-function program))
-                 (when (member :sb-core-compression *features*)
+                 (list :toplevel (top-level-function program))
+                 (when (and (member :sb-core-compression *features*)
+                            compression)
                    (list :compression t)))))
       (apply 'sb-ext:save-lisp-and-die path args))
     #+ccl
