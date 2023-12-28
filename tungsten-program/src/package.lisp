@@ -12,4 +12,6 @@
    #:unknown-program
    #:unknown-program-name
    #:defprogram
-   #:build-executable))
+   #:build-executable
+   #:option-value
+   #:argument-value))

@@ -190,3 +190,18 @@
       (let ((*program* program)
             (*command* command))
         (funcall (command-function *command*))))))
+
+(defun option (name)
+  (declare (type string name))
+  (or (gethash name (command-options *command*))
+      (error 'unknown-option :name name)))
+
+(defun option-value (name)
+  (declare (type string name))
+  (let ((option (option name)))
+    (or (gethash name (program-option-values *program*))
+        (option-default-value option))))
+
+(defun argument-value (name)
+  (declare (type string name))
+  (gethash name (program-argument-values *program*)))
