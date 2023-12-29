@@ -1,6 +1,9 @@
 (in-package :program)
 
-(define-condition invalid-option-format (error)
+(define-condition command-line-error (error)
+  ())
+
+(define-condition invalid-option-format (command-line-error)
   ((argument
     :type string
     :initarg :argument
@@ -10,7 +13,7 @@
      (format stream "invalid option format ~S"
              (invalid-option-format-argument condition)))))
 
-(define-condition unknown-option (error)
+(define-condition unknown-option (command-line-error)
   ((name
     :type string
     :initarg :name
@@ -22,7 +25,7 @@
                (concatenate
                 'string (if (= (length name) 1) "-" "--") name))))))
 
-(define-condition missing-option-value (error)
+(define-condition missing-option-value (command-line-error)
   ((name
     :type string
     :initarg :name
@@ -34,28 +37,28 @@
                (concatenate
                 'string (if (= (length name) 1) "-" "--") name))))))
 
-(define-condition missing-arguments (error)
+(define-condition missing-arguments (command-line-error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
      (format stream "missing argument(s)"))))
 
-(define-condition too-many-arguments (error)
+(define-condition too-many-arguments (command-line-error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
      (format stream "too many arguments"))))
 
-(define-condition missing-command (error)
+(define-condition missing-command (command-line-error)
   ()
   (:report
    (lambda (condition stream)
      (declare (ignore condition))
      (write-string "missing command" stream))))
 
-(define-condition unknown-command (error)
+(define-condition unknown-command (command-line-error)
   ((name
     :type string
     :initarg :name

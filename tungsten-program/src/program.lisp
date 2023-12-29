@@ -153,9 +153,7 @@
         (let ((core:*interactive* nil))
           (run-program program
                        (command-line-program-name) (command-line-arguments)))
-      ((or unknown-option missing-option-value
-           missing-arguments too-many-arguments)
-          (condition)
+      (command-line-error (condition)
         (format *error-output* "error: ~A~%" condition))
       (condition (condition)
         ;; Yes, conditions are not necessarily errors, but an unhandled
