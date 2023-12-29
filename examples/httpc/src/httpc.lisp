@@ -5,22 +5,25 @@
   (("m" "method" "method" "the HTTP method of the request"
         :default-value "GET"))
   :arguments
-  (("uri" "the uri to send the request to"))
+  (("uri" "the URI to send the request to"))
   :function 'main)
 
 (program:defprogram (test)
   :options
-  (("a" nil "value" "a option")
+  (("a" "a-option" "value" "a option")
    ("b" nil nil "b flag"))
   :commands
   (("foo"
+    "do foo"
     :options
-    (("c" nil "value" "c option")
-     ("d" nil nil "d flag"))
+    (("c" "c-flag" "value" "c option")
+     (nil "d-flag" nil "d flag"))
     :arguments
-    (("arg" "blabla" :trailing t))
+    (("arg-1" "blabla 1")
+     ("arg-2" "blabla 2" :trailing t))
     :function 'main)
    ("bar"
+    "do bar"
     :options
     ()
     :arguments

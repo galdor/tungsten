@@ -34,38 +34,54 @@
   (print-unreadable-object (program stream :type t)
     (format stream "~A" (program-name program))))
 
+(defun program-command (program name)
+  (declare (type program program)
+           (type (or string null) name))
+  (gethash name (program-commands program)))
+
+(defun program-top-level-command (program)
+  (declare (type program program))
+  (program-command program nil))
+
 (defmacro defprogram ((name) &key commands options arguments function)
   (let ((program (gensym "PROGRAM-")))
     `(let* ((,program (make-instance 'program :name ',name)))
        (let ((*program* ,program))
-         (register-command nil :options ',options
-                               :arguments ',arguments
-                               :function ,function)
-         ,@(mapcar (lambda (command)
-                     (destructuring-bind (name &key options arguments function)
-                         command
-                       `(register-command ,name :options ',options
-                                                :arguments ',arguments
-                                                :function ,function)))
+         (register-command nil nil :options ',options
+                                   :arguments ',arguments
+                                   :function ,function)
+         ,@(mapcar
+            (lambda (command)
+              (destructuring-bind (name description
+                                   &key options arguments function)
+                  command
+                `(register-command ,name ,description
+                                   :options ',options
+                                   :arguments ',arguments
+                                   :function ,function)))
                    commands))
        (setf (gethash ',name *programs*) ,program))))
 
-(defun register-command (name &key options arguments function)
-  (declare (type (or string null) name)
+(defun register-command (name description &key options arguments function)
+  (declare (type (or string null) name description)
            (type list options arguments)
            (type (or symbol function) function))
   (when name
-    (let ((top-level-command (gethash nil (program-commands *program*))))
+    (let ((top-level-command (program-top-level-command *program*)))
       (when (command-arguments top-level-command)
         (error "cannot use commands with top-level command arguments"))
       (when (command-function top-level-command)
         (error "cannot use commands with a top-level command function"))))
-  (let ((command (make-instance 'command :name name :function function)))
+  (let ((command (make-instance 'command :name name
+                                         :description description
+                                         :function function)))
     (let ((*command* command))
       (dolist (option options)
         (register-option option))
       (dolist (argument arguments)
-        (register-argument argument)))
+        (register-argument argument))
+      (setf (command-arguments command)
+            (nreverse (command-arguments command))))
     (setf (gethash name (program-commands *program*)) command)))
 
 (defun register-option (option-data)
@@ -77,8 +93,8 @@
                                  :short-name short-name
                                  :long-name long-name
                                  :value-name value-name
-                                 :description description
-                                 :default-value (or default-value ""))))
+                                 :default-value default-value
+                                 :description description)))
       (flet ((register (slot)
                (let ((name (slot-value option slot)))
                  (when name
@@ -130,35 +146,6 @@
     #-(or sbcl ccl)
     (core:unsupported-feature "executable creation")))
 
-(defun add-option (short-name long-name value-name description
-                   &key default-value)
-  (declare (type (or string null) short-name)
-           (type (or string null) long-name default-value)
-           (type string value-name description))
-  (let ((option (make-instance 'option :short-name short-name
-                                       :long-name long-name
-                                       :value-name value-name
-                                       :default-value (or default-value "")
-                                       :description description)))
-    (flet ((register (name)
-             (declare (type (or string string) name))
-             (with-slots (options) *command*
-               (when (gethash name options)
-                 (error "duplicate option ~S" (string name)))
-               (setf (gethash name options) option))))
-      (when short-name
-        (register short-name))
-      (when long-name
-        (register long-name)))))
-
-(defun add-argument (name description &key trailing)
-  (declare (type string name description)
-           (type boolean trailing))
-  (let ((argument (make-instance 'argument :name name
-                                           :description description
-                                           :trailing trailing)))
-    (push argument (command-arguments *command*))))
-
 (defun top-level-function (program)
   (declare (type program program))
   (lambda ()
@@ -205,3 +192,120 @@
 (defun argument-value (name)
   (declare (type string name))
   (gethash name (program-argument-values *program*)))
+
+(defun print-usage (program program-name command stream)
+  (declare (type program program)
+           (type string program-name)
+           (type command command)
+           (type stream stream))
+  (let* ((commands (program-commands program))
+         (top-level-command-p (null (command-name command)))
+         (top-level-command (program-top-level-command program))
+         (has-subcommands (> (hash-table-count commands) 1))
+         (arguments (command-arguments (if top-level-command-p
+                                           top-level-command
+                                           command)))
+         (max-width (usage-first-column-width program command)))
+    ;; Usage line
+    (cond
+      ((and top-level-command-p has-subcommands)
+       (format stream "Usage: ~A OPTIONS <command>~%" program-name))
+      ((> (length arguments) 0)
+       (format stream "Usage: ~A~@[ ~A~] OPTIONS"
+               program-name (command-name command))
+       (dolist (argument arguments)
+         (cond
+           ((argument-trailing argument)
+            (format stream " <~A>..." (argument-name argument)))
+           (t
+            (format stream " <~A>" (argument-name argument)))))
+       (terpri stream))
+      (t
+       (format stream "Usage: ~A OPTIONS~%" program-name)))
+    ;; Commands or arguments
+    (cond
+      ((and top-level-command-p has-subcommands)
+       (format stream "~%COMMANDS~%~%")
+       (let ((names (sort (delete nil (core:hash-table-keys commands))
+                          #'string<=)))
+         (dolist (name names)
+           (let ((command (gethash name commands)))
+             (format stream "~vA  ~A~%"
+                     max-width name (command-description command))))))
+      ((> (length arguments) 0)
+       (format stream "~%ARGUMENTS~%~%")
+       (dolist (argument (command-arguments command))
+         (format stream "~vA  ~A~%"
+                 max-width (argument-name argument)
+                 (argument-description argument)))))
+    ;; Options
+    (labels ((format-option-string (option)
+               (declare (type option option))
+               (with-slots (short-name long-name value-name default-value
+                            description)
+                   option
+                 (format nil "~:[~*    ~;-~A~]~@[~*, ~]~@[--~A~]~
+                              ~@[ <~A>~]"
+                         short-name short-name
+                         (and short-name long-name) long-name value-name)))
+             (format-option (option)
+               (declare (type option option))
+               (with-slots (description default-value) option
+                 (format stream "~vA  ~A~@[ (default: ~S)~]~%" max-width
+                         (format-option-string option) description
+                         default-value)))
+             (format-options (label options)
+               (declare (type string label)
+                        (type hash-table options))
+               (format stream "~%~A~%~%" label)
+               (let ((names (sort (core:hash-table-keys options) #'string<=))
+                     (printed-options nil))
+                 (dolist (name names)
+                   (let ((option (gethash name options)))
+                     (unless (member option printed-options)
+                       (format-option option)
+                       (push option printed-options)))))))
+      (when (> (hash-table-count (command-options top-level-command)) 0)
+        (format-options (if has-subcommands
+                            "GLOBAL OPTIONS"
+                            "OPTIONS")
+                        (command-options top-level-command)))
+      (when (and (not top-level-command-p)
+                 (> (hash-table-count (command-options command)) 0))
+        (format-options "COMMAND OPTIONS" (command-options command))))))
+
+(defun usage-first-column-width (program command)
+  (declare (type program program)
+           (type command command))
+  (let* ((commands (core:hash-table-values (program-commands program)))
+         (top-level-command-p (null (command-name command)))
+         (top-level-command (program-top-level-command program))
+         (arguments (command-arguments (if top-level-command-p
+                                           top-level-command
+                                           command)))
+         (options (append
+                   (core:hash-table-values (command-options top-level-command))
+                   (unless top-level-command-p
+                     (core:hash-table-values (command-options command))))))
+    (flet ((command-length (command)
+             (with-slots (name) command
+               (if name (length name) 0)))
+           (argument-length (argument)
+             (length (argument-name argument)))
+           (option-length (option)
+             (with-slots (long-name value-name) option
+               (+ 2                     ; short option or padding
+                  2                     ; ", "
+                  (if long-name
+                      (+ 2              ; "--"
+                         (length long-name))
+                      0)
+                  (if value-name
+                      (+ 2              ; " <"
+                         (length value-name)
+                         1)             ; ">"
+                      0)))))
+      (let ((lengths (append (mapcar #'command-length commands)
+                             (mapcar #'argument-length arguments)
+                             (mapcar #'option-length options))))
+        (reduce #'max lengths)))))

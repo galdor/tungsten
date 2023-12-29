@@ -85,6 +85,10 @@
     :initarg :name
     :initform nil
     :reader command-name)
+   (description
+    :type (or string null)
+    :initarg :description
+    :reader command-description)
    (options
     :type hash-table
     :initform (make-hash-table :test #'equal)
@@ -119,9 +123,9 @@
     :initform nil
     :reader option-value-name)
    (default-value
-    :type string
+    :type (or string null)
     :initarg :default-value
-    :initform ""
+    :initform nil
     :reader option-default-value)
    (description
     :type string
@@ -137,9 +141,7 @@
   (print-unreadable-object (option stream :type t)
     (with-slots (short-name long-name) option
       (when short-name
-        (write-char #\- stream)
-        (write-char short-name stream)
-        (write-char #\Space stream))
+        (format stream "-~A" short-name))
       (when long-name
         (format stream "--~A" long-name)))))
 
