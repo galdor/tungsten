@@ -1,10 +1,10 @@
-ASDF_PATH = ../..
+ROOT = ../..
 SYSTEM = httpc
 PROGRAM = httpc:httpc
 
 all: build
 
 build:
-	../../utils/build-executable -a $(ASDF_PATH) $(SYSTEM) $(PROGRAM)
+	$(ROOT)/utils/build-executable -a $(ROOT) $(SYSTEM) $(PROGRAM)
 
 .PHONY: all build
