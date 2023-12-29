@@ -206,7 +206,7 @@
                            (error 'missing-option-value :name name))
                          (set-option-value option (pop arguments)))
                         (t
-                         (setf (gethash name option-values) t)))))
+                         (set-option-value option t)))))
                    (t
                     (return)))))
              (parse-arguments ()
