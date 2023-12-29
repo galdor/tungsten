@@ -13,5 +13,6 @@
    #:unknown-program-name
    #:defprogram
    #:build-executable
+   #:option-set-p
    #:option-value
    #:argument-value))
