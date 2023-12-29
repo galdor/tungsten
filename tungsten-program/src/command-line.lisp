@@ -146,6 +146,8 @@
       (when short-name
         (format stream "-~A" short-name))
       (when long-name
+        (when short-name
+          (write-char #\Space stream))
         (format stream "--~A" long-name)))))
 
 (defclass argument ()
