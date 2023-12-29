@@ -199,6 +199,10 @@
         (argument-values (make-hash-table :test #'equal))
         (has-subcommands (> (hash-table-count commands) 1))
         (command (gethash nil commands)))
+    (when (and has-subcommands (null (gethash "help" commands)))
+      (setf (gethash "help" commands)
+            (make-instance 'command :name "help"
+                                    :description "print help and exit")))
     (labels ((set-option-value (option value)
                (with-slots (short-name long-name) option
                  (when short-name
@@ -255,13 +259,23 @@
                       (pop arguments)
                       (pop program-arguments))))))
              (maybe-print-usage ()
-               (when (gethash "help" option-values)
-                 (print-usage commands command program-name *standard-output*)
-                 (signal 'usage-printed))))
+               (cond
+                 ((gethash "help" option-values)
+                  (print-usage commands command program-name
+                               *standard-output*)
+                  (signal 'usage-printed))
+                 ((string= (command-name command) "help")
+                  ;; "./program help" must print the top-level usage string,
+                  ;; not the usage string of the "help" command.
+                  (print-usage commands (gethash nil commands) program-name
+                               *standard-output*)
+                  (signal 'usage-printed)))))
       (parse-options)
       (cond
         (has-subcommands
-         (when (zerop (length arguments))
+         ;; "./program -h" without a command is not an error
+         (when (and (zerop (length arguments))
+                    (null (gethash "help" option-values)))
            (error 'missing-command))
          (let ((name (pop arguments)))
            (setf command (or (gethash name commands)
