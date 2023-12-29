@@ -151,13 +151,15 @@
           (run-program program
                        (command-line-program-name) (command-line-arguments)))
       (command-line-error (condition)
-        (format *error-output* "error: ~A~%" condition))
+        (format *error-output* "error: ~A~%" condition)
+        (core:halt 1))
       (condition (condition)
         ;; Yes, conditions are not necessarily errors, but an unhandled
         ;; condition at top-level is definitely an error.
         (format *error-output* "error: ~A~%~%" condition)
         (core:format-backtrace (core:backtrace :start 1) *error-output*
-                               :include-source-file t)))))
+                               :include-source-file t)
+        (core:halt 1)))))
 
 (defun run-program (program program-name program-arguments)
   (declare (type (or symbol program) program)
