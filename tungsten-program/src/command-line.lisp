@@ -304,18 +304,17 @@
     (cond
       ((and top-level-command-p has-subcommands)
        (format stream "Usage: ~A OPTIONS <command>~%" program-name))
-      ((> (length arguments) 0)
+      (t
        (format stream "Usage: ~A~@[ ~A~] OPTIONS"
                program-name (command-name command))
-       (dolist (argument arguments)
-         (cond
-           ((argument-trailing argument)
-            (format stream " <~A>..." (argument-name argument)))
-           (t
-            (format stream " <~A>" (argument-name argument)))))
-       (terpri stream))
-      (t
-       (format stream "Usage: ~A OPTIONS~%" program-name)))
+       (when (> (length arguments) 0)
+         (dolist (argument arguments)
+           (cond
+             ((argument-trailing argument)
+              (format stream " <~A>..." (argument-name argument)))
+             (t
+              (format stream " <~A>" (argument-name argument)))))
+         (terpri stream))))
     ;; Commands or arguments
     (cond
       ((and top-level-command-p has-subcommands)
