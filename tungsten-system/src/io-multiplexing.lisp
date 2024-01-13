@@ -43,6 +43,13 @@
                  #-(or bsd linux)
                  (core:unsupported-feature "io multiplexing")))
 
+(defmacro with-io-base ((base) &body body)
+  `(let ((,base (make-io-base)))
+     (unwind-protect
+          (progn
+            ,@body)
+       (close-io-base ,base))))
+
 (defun watch-fd (base fd events handler)
   (declare (type io-base base)
            (type (integer 0) fd)

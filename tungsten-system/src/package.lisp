@@ -44,6 +44,7 @@
    #:io-watcher-handler
    #:close-io-base
    #:make-io-base
+   #:with-io-base
    #:watch-fd
    #:unwatch-fd
 
