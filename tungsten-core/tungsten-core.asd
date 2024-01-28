@@ -12,6 +12,7 @@
    (:file "maths")
    (:file "sequences")
    (:file "hash-tables")
+   (:file "binary-heaps")
    (:file "strings")
    (:file "octets")
    (:file "binary")
