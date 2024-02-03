@@ -26,6 +26,15 @@
    #:hash-table-values
    #:hash-table-entries
 
+   #:binary-heap
+   #:make-binary-heap
+   #:binary-heap-size
+   #:binary-heap-add
+   #:binary-heap-remove
+   #:binary-heap-peek
+   #:binary-heap-pop
+   #:binary-heap-contains
+
    #:string-case
    #:string-starts-with
    #:split-string
