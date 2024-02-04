@@ -44,14 +44,14 @@
   (declare (type binary-heap heap))
   (with-slots (elements key test) heap
     (let ((nb-elements (length elements))
-          (i (position element elements :key key :test test)))
+          (i (position element elements :test test)))
       (cond
         ((null i)
          nil)
         ((zerop i)
          (binary-heap-pop heap)
          t)
-        (t
+        ((> i 0)
          (when (< i (1- nb-elements))
            (setf (aref elements i) (aref elements (1- nb-elements))))
          (let ((parent-i (floor (1- i) 2)))
@@ -87,7 +87,7 @@
 (defun binary-heap-contains (heap element)
   (declare (type binary-heap heap))
   (with-slots (elements key test) heap
-    (member element elements :key key :test test)))
+    (member element elements :test test)))
 
 (defun binary-heap-element (heap i)
   (declare (type binary-heap heap)
