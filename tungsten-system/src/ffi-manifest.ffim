@@ -133,6 +133,10 @@
  ((:tv-sec 'time-t "tv_sec")
   (:tv-nsec :long "tv_nsec")))
 
+(enum
+ (clock-type 'clockid-t)
+ ((:clock-monotonic "CLOCK_MONOTONIC")))
+
 ;;;
 ;;; Environment
 ;;;
@@ -237,6 +241,36 @@
  (epoll-event "struct epoll_event")
  ((:events 'epoll-events "events")
   (:data 'epoll-data "data")))
+
+#+linux
+(include "sys/timerfd.h")
+
+#+linux
+(enum
+ (clock-type :int)
+ ((:clock-boottime "CLOCK_BOOTTIME")
+  (:clock-boottime-alarm "CLOCK_BOOTTIME_ALARM")
+  (:clock-monotonic "CLOCK_MONOTONIC")
+  (:clock-realtime "CLOCK_REALTIME")
+  (:clock-realtime-alarm "CLOCK_REALTIME_ALARM")))
+
+#+linux
+(bitset
+ (timerfd-create-flags :int)
+ ((:tfd-nonblock "TFD_NONBLOCK")
+  (:tfd-cloexec "TFD_CLOEXEC")))
+
+#+linux
+(bitset
+ (timerfd-settime-flags :int)
+ ((:tfd-timer-abstime "TFD_TIMER_ABSTIME")
+  (:tfd-timer-cancel-on-set "TFD_TIMER_CANCEL_ON_SET")))
+
+#+linux
+(struct
+ (itimerspec "struct itimerspec")
+ ((:it-interval 'timespec "it_interval")
+  (:it-value 'timespec "it_value")))
 
 ;;;
 ;;; IO multiplexing (BSD)

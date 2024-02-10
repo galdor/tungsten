@@ -39,14 +39,17 @@
    #:io-base
    #:io-watcher
    #:io-watcher-fd
-   #:io-watcher-registeredp
+   #:io-watcher-registered
    #:io-watcher-events
    #:io-watcher-handler
    #:close-io-base
    #:make-io-base
    #:with-io-base
+   #:run-io-base
    #:watch-fd
    #:unwatch-fd
+   #:start-timer
+   #:stop-timer
 
    #:directory-path
    #:read-file

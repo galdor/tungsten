@@ -146,6 +146,31 @@
                                  (* ,i (ffi:foreign-type-size 'epoll-event)))))
              ,@body))))))
 
+#+linux
+(defun timerfd-create (clock-id flags)
+  (system-funcall ("timerfd_create" ((clock-type timerfd-create-flags) :int)
+                                    clock-id flags)))
+
+#+linux
+(defun timerfd-settime (fd flags interval value)
+  (declare (type integer interval value)) ; microseconds
+  (flet ((init-timespec (%spec value)
+           (multiple-value-bind (seconds microseconds) (floor value 1000000)
+             (setf (ffi:foreign-structure-member %spec 'timespec :tv-sec)
+                   seconds)
+             (setf (ffi:foreign-structure-member %spec 'timespec :tv-nsec)
+                   (* microseconds 1000)))))
+    (ffi:with-foreign-value (%spec 'itimerspec)
+      (init-timespec
+       (ffi:foreign-structure-member-pointer %spec 'itimerspec :it-interval)
+       interval)
+      (init-timespec
+       (ffi:foreign-structure-member-pointer %spec 'itimerspec :it-value)
+       value)
+      (system-funcall
+       ("timerfd_settime" ((:int timerfd-settime-flags :pointer :pointer) :int)
+                          fd flags %spec (ffi:null-pointer))))))
+
 ;;;
 ;;; IO multiplexing (BSD)
 ;;;

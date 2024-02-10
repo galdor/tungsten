@@ -1,3 +1,6 @@
 (include "sys/resource.h")
+(include "time.h")
+
+(type clockid-t "clockid_t")
 
 (type rlim-t "rlim_t")

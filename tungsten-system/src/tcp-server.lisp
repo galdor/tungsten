@@ -68,10 +68,10 @@
 (defun run-tcp-server (server)
   (declare (type tcp-server server))
   (unwind-protect
-       (do ((io-base (tcp-server-io-base server)))
+       (do ((base (tcp-server-io-base server)))
            ((tcp-server-closingp server)
             nil)
-         (read-and-dispatch-io-events io-base :timeout 1000))
+         (run-io-base base :timeout 1.0))
     (close-tcp-server server)))
 
 (defun tcp-server-closingp (server)

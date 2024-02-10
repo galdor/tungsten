@@ -1,17 +1,17 @@
 (in-package :system)
 
-(defclass kqueue-io-base (io-base)
+(defclass bsd-io-base (io-base)
   ((fd
     :type (or (integer 0) null)
     :initarg :fd
-    :reader kqueue-io-base-fd)))
+    :reader bsd-io-base-fd)))
 
-(defmethod initialize-instance :after ((base kqueue-io-base)
+(defmethod initialize-instance :after ((base bsd-io-base)
                                        &key &allow-other-keys)
   (with-slots (fd) base
     (setf fd (kqueue))))
 
-(defmethod close-io-base ((base kqueue-io-base))
+(defmethod close-io-base ((base bsd-io-base))
   (with-slots (fd) base
     (when fd
       (close-fd fd)
@@ -33,7 +33,7 @@
   (setf (ffi:foreign-structure-member %kevent 'kevent :filter) filter)
   (setf (ffi:foreign-structure-member %kevent 'kevent :flags) flags))
 
-(defmethod add-io-watcher ((base kqueue-io-base) (watcher io-watcher))
+(defmethod add-io-watcher ((base bsd-io-base) (watcher io-watcher))
   (with-slots (fd events) watcher
     (assert (<= (length events) 2))     ; (:read :write)
     (with-kevents (%kevents 2)
@@ -44,10 +44,10 @@
                        fd (io-event-to-kqueue-filter event)
                        '(:ev-add))
           (incf idx))
-        (kevent (kqueue-io-base-fd base)
+        (kevent (bsd-io-base-fd base)
                 %kevents idx (ffi:null-pointer) 0 (ffi:null-pointer))))))
 
-(defmethod update-io-watcher ((base kqueue-io-base) (watcher io-watcher)
+(defmethod update-io-watcher ((base bsd-io-base) (watcher io-watcher)
                               events)
   (let ((read-flag (if (member :read events) :ev-add :ev-delete))
         (write-flag (if (member :write events) :ev-add :ev-delete)))
@@ -60,18 +60,18 @@
                    (io-watcher-fd watcher)
                    (io-event-to-kqueue-filter :evfilt-write)
                    (list write-flag))
-      (kevent (kqueue-io-base-fd base)
+      (kevent (bsd-io-base-fd base)
               %kevents 2 (ffi:null-pointer) 0 (ffi:null-pointer)))))
 
-(defmethod remove-io-watcher ((base kqueue-io-base) (watcher io-watcher))
+(defmethod remove-io-watcher ((base bsd-io-base) (watcher io-watcher))
   (with-kevents (%kevents 2)
     (init-kevent %kevents (io-watcher-fd watcher) :evfilt-read '(:ev-delete))
     (init-kevent (ffi:pointer+ %kevents (ffi:foreign-type-size 'kevent))
                  (io-watcher-fd watcher) :evfilt-write '(:ev-delete))
-    (kevent (kqueue-io-base-fd base)
+    (kevent (bsd-io-base-fd base)
             %kevents 2 (ffi:null-pointer) 0 (ffi:null-pointer))))
 
-(defmethod read-and-dispatch-io-events ((base kqueue-io-base) &key timeout)
+(defmethod read-and-dispatch-io-events ((base bsd-io-base) &key timeout)
   (declare (type (or (integer 0) null) timeout))
   (with-kevents (%kevents 32)
     (ffi:with-foreign-value (%timeout 'timespec)
@@ -81,7 +81,7 @@
                 seconds)
           (setf (ffi:foreign-structure-member %timeout 'timespec :tv-nsec)
                 (* milliseconds 1000000))))
-      (let ((nb-events (kevent (kqueue-io-base-fd base)
+      (let ((nb-events (kevent (bsd-io-base-fd base)
                                (ffi:null-pointer) 0 %kevents 32
                                (if timeout %timeout (ffi:null-pointer)))))
         (dotimes (i nb-events)
@@ -93,7 +93,7 @@
                    (ffi:foreign-structure-member %kevent 'kevent :filter))
                  (event (kqueue-filter-to-io-event filter)))
             (when event
-              (dispatch-fd-event base fd (list event)))))))))
+              (process-fd-event base fd (list event)))))))))
 
 (defun kqueue-filter-to-io-event (filter)
   (case filter
@@ -105,3 +105,12 @@
   (ecase event
     (:read :evfilt-read)
     (:write :evfilt-write)))
+
+(defmethod set-timer ((base bsd-io-base) next-tick)
+  (declare (type integer next-tick)
+           (ignore base next-tick))
+  (core:unsupported-feature "timers"))
+
+(defmethod cancel-timer ((base bsd-io-base))
+  (declare (ignore base))
+  (core:unsupported-feature "timers"))
