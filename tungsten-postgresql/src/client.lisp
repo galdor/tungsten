@@ -142,7 +142,7 @@
       client
     (system:with-mutex (mutex)
       (print-unreadable-object (client stream :type t)
-        (system:format-host-and-port host port stream)
+        (system:format-address host port stream)
         (format stream " ~D/~D"
                 (+ (length used-connections) (length idle-connections))
                 max-connections)))))

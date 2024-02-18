@@ -51,7 +51,7 @@
 (defmethod print-object ((server server) stream)
   (print-unreadable-object (server stream :type t)
     (with-slots (host port) server
-      (system:format-host-and-port host port stream))))
+      (system:format-address host port stream))))
 
 (defun start-server (host port request-handler &key (nb-threads 1))
   (declare (type system:host host)

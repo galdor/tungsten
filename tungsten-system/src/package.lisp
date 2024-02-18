@@ -61,7 +61,7 @@
 
    #:host
    #:port-number
-   #:format-host-and-port
+   #:format-address
    #:socket-address
    #:ip-socket-address
    #:ip-socket-address-port
@@ -70,6 +70,7 @@
    #:ipv6-socket-address
    #:ipv6-socket-address-address
    #:ipv6-socket-address-scope-id
+   #:format-address
    #:format-socket-address
    #:socket-address-equal
 

@@ -30,10 +30,9 @@
   (let ((io-base nil)
         (server nil))
     (core:abort-protect
-        (let ((addresses (resolve-net-service host port)))
+        (let ((addresses (resolve-address host port)))
           (unless addresses
-            (error "no socket address found for ~S"
-                   (format-host-and-port host port)))
+            (error "no socket address found for ~S" (format-address host port)))
           (setf io-base (make-io-base))
           (setf server (make-instance 'tcp-server
                                       :io-base io-base

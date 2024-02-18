@@ -19,8 +19,7 @@
   (:report
    (lambda (condition stream)
      (with-slots (host port address-errors) condition
-       (format stream "Cannot connect to ~A.~%"
-               (format-host-and-port host port))
+       (format stream "Cannot connect to ~A.~%" (format-address host port))
        (dolist (address-error address-errors)
          (terpri stream)
          (destructuring-bind (address . error) address-error
@@ -72,7 +71,7 @@ associated with the connection and the socket address used."
            (type port-number port))
   (etypecase host
     (string
-     (let ((addresses (resolve-net-service host port))
+     (let ((addresses (resolve-address host port))
            (errors nil))
        (dolist (address (core:nshuffle addresses))
          (handler-case

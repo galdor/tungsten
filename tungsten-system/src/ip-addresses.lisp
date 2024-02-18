@@ -10,8 +10,7 @@
   `(or ipv4-address ipv6-address))
 
 (defun ip-address (value)
-  "Create a new IP address. If VALUE is an IP address, return a copy of it. If
-VALUE is a simple vector, create a new IP address based on its content."
+  (declare (type (or ip-address (simple-vector 4) (simple-vector 8)) value))
   (etypecase value
     (ipv4-address
      (copy-seq value))
@@ -25,7 +24,7 @@ VALUE is a simple vector, create a new IP address based on its content."
                    :initial-contents value))))
 
 (defun format-ip-address (address)
-  "Return the textual representation of an IP address."
+  (declare (type ip-address address))
   (etypecase address
     (ipv4-address
      (format nil "~D.~D.~D.~D"

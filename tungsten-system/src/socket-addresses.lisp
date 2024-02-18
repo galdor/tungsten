@@ -6,13 +6,6 @@
 (deftype port-number ()
   '(unsigned-byte 16))
 
-(defun format-host-and-port (host port &optional stream)
-  (declare (type host host)
-           (type port-number port))
-  (if (position #\: host)
-      (format stream "[~A]:~D" host port)
-      (format stream "~A:~D" host port)))
-
 (defclass socket-address ()
   ())
 
@@ -45,13 +38,14 @@
     (princ (format-socket-address address) stream)))
 
 (defun make-ip-socket-address (ip-address port)
+  (declare (type ip-address ip-address)
+           (type port-number port))
   (let ((class (etypecase ip-address
                  (ipv4-address 'ipv4-socket-address)
                  (ipv6-address 'ipv6-socket-address))))
     (make-instance class :address ip-address :port port)))
 
 (defgeneric format-socket-address (address &optional stream)
-  (:documentation "Return the textual representation of an IP address.")
   (:method ((address ipv4-socket-address) &optional stream)
     (with-slots (address port) address
       (format stream "~A:~D" (format-ip-address address) port)))
@@ -158,21 +152,18 @@
             (or scope-id 0)))
     %addr))
 
-(defun resolve-net-service (host service-or-port)
-  "Resolve a host and service and return a list of matching socket addresses.
+(defun format-address (host port &optional stream)
+  (declare (type host host)
+           (type port-number port)
+           (type (or stream null) stream))
+  (if (position #\: host)
+      (format stream "[~A]:~D" host port)
+      (format stream "~A:~D" host port)))
 
-HOST is a string containing either a hostname or a numeric address.
-SERVICE-OR-PORT is either a service name as defined by RFC 6335 or a port
-number.
-
-This function is used to obtain socket addresses which can then be used for
-network clients and servers. It is not a generic DNS client and should not
-be used as such."
+(defun resolve-address (host port)
   (declare (type string host)
-           (type (or string port-number) service-or-port))
-  (let ((service (if (stringp service-or-port)
-                     service-or-port
-                     (princ-to-string service-or-port)))
+           (type port-number port))
+  (let ((service (princ-to-string port))
         (addresses nil))
     (ffi:with-foreign-value (%hints 'addrinfo)
       (ffi:clear-foreign-memory
@@ -192,9 +183,7 @@ be used as such."
                 (pushnew address addresses :test 'socket-address-equal)))))))
     (nreverse addresses)))
 
-(defun socket-address-net-service (address &key numeric-host
-                                                numeric-service)
-  "Return the name and service associated with a socket address."
+(defun resolve-socket-address (address &key numeric-host)
   (declare (type socket-address address))
   (let* ((sockaddr-type (etypecase address
                           (ipv4-socket-address 'sockaddr-in)
@@ -203,9 +192,10 @@ be used as such."
          (flags nil))
     (when numeric-host
       (push :ni-numerichost flags))
-    (when numeric-service
-      (push :ni-numericserv flags))
+    (push :ni-numericserv flags)
     (ffi:with-foreign-value (%addr sockaddr-type)
       (ffi:clear-foreign-memory %addr sockaddr-length)
       (initialize-sockaddr-from-socket-address %addr address)
-      (getnameinfo %addr sockaddr-length flags))))
+      (multiple-value-bind (host port-string)
+          (getnameinfo %addr sockaddr-length flags)
+        (values host (parse-integer port-string))))))
