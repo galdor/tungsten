@@ -7,7 +7,9 @@
    "tungsten-netrc"
    "tungsten-openssl"
    "tungsten-system"
-   "tungsten-text")
+   "tungsten-text"
+   "tungsten-time"
+   "tungsten-uuid")
   :pathname "src"
   :serial t
   :components
@@ -25,10 +27,11 @@
     :serial t
     :components
     ((:file "package")
-     (:file "line-writer")
-     (:file "coding")
+     (:file "syntax")
+     (:file "encoder")
      (:file "addresses")
-     (:file "message")))
+     (:file "message-ids")
+     (:file "messages")))
    (:module
     "smtp"
     :serial t

@@ -229,7 +229,7 @@
   (etypecase mailbox
     (imf:mailbox
      (format nil "<~A>"
-             (imf:serialize-mailbox
+             (imf:serialize-address
               (imf:make-mailbox
                (imf:mailbox-local-part mailbox)
                (imf:mailbox-domain mailbox)))))

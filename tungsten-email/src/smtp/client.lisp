@@ -105,17 +105,16 @@
            (type (or imf:mailbox string null) reverse-path))
   (let ((reverse-path
           (or reverse-path
-              (imf:message-header-field message "From")
+              (imf:message-field message "From")
               (error "cannot identify reverse path without a \"From\" ~
                       header field")))
         (recipient
-          (or (imf:message-header-field message "To")
+          (or (imf:message-field message "To")
               (error "missing \"To\" header field")))
         (mail-parameters nil))
     (send-mail-command client reverse-path mail-parameters)
     (send-rcpt-command client recipient)
     (send-data-command client)
-    (imf:with-line-writer ((client-stream client) :max-line-length 78
-                                                  :smtp t)
-      (imf:write-tokens message))
+    (imf:write-message message (client-stream client)
+                       :max-line-length 78 :smtp t)
     (send-message-end client)))

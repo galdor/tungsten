@@ -1,9 +1,6 @@
 (defpackage :imf
   (:use :cl)
   (:export
-   #:with-line-writer
-   #:write-tokens
-
    #:mailbox
    #:mailbox-display-name
    #:mailbox-local-part
@@ -24,6 +21,7 @@
    #:message
    #:message-header
    #:message-body
-   #:message-header-field
-   #:message-header-fields
-   #:make-message))
+   #:message-field
+   #:message-fields
+   #:make-message
+   #:write-message))

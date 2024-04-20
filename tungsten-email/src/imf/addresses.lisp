@@ -44,47 +44,74 @@
 
 (defmethod print-object ((mailbox mailbox) stream)
   (print-unreadable-object (mailbox stream :type t)
-    (write-string (serialize-mailbox mailbox) stream)))
+    (write-string (serialize-address mailbox) stream)))
 
 (defmethod print-object ((group group) stream)
   (print-unreadable-object (group stream :type t)
-    (write-string (group-display-name group) stream)))
-
-(defmethod write-tokens ((mailbox mailbox))
-  (with-slots (display-name local-part domain) mailbox
-    (flet ((write-address-specification-tokens ()
-             (write-token local-part)
-             (write-token #\@)
-             (write-token domain)))
-      (cond
-        (display-name
-         (write-token display-name)
-         (write-token :space)
-         (write-token #\<)
-         (write-address-specification-tokens)
-         (write-token #\>))
-        (t
-         (write-address-specification-tokens))))))
-
-(defmethod write-tokens ((group group))
-  (with-slots (display-name mailboxes) group
-    (write-token display-name)
-    (write-token #\:)
-    (write-token :space)
-    (do ((mailboxes mailboxes (cdr mailboxes))
-         (i 0 (1+ i)))
-        ((null mailboxes))
-      (write-tokens (car mailboxes))
-      (unless (null (cdr mailboxes))
-        (write-token #\,)))
-    (write-token #\;)))
+    (prin1 (group-display-name group) stream)))
 
 (defun serialize-address (address)
   (declare (type address address))
-  (with-line-writer (nil)
-    (write-tokens address)))
+  (with-encoder-to-string ()
+    (encode-address address)))
 
-(defun serialize-mailbox (mailbox)
+(defun encode-domain-literal (domain)
+  (declare (type string domain))
+  (encode-string domain))
+
+(defun encode-domain (domain)
+  (declare (type string domain))
+  (cond
+    ((dot-atom-p domain)
+     (encode-dot-atom domain))
+    (t
+     (encode-domain-literal domain))))
+
+(defun encode-specific-address (local-part domain)
+  (declare (type string local-part domain))
+  (encode-dot-atom-or-quoted-string local-part)
+  (encode-character #\@)
+  (encode-domain domain))
+
+(defun encode-mailbox (mailbox)
   (declare (type mailbox mailbox))
-  (with-line-writer (nil)
-    (write-tokens mailbox)))
+  (with-slots (display-name local-part domain) mailbox
+    (cond
+      (display-name
+       (encode-quoted-string display-name)
+       (encode-character #\Space)
+       (encode-character #\<)
+       (encode-specific-address local-part domain)
+       (encode-character #\>))
+      (t
+       (encode-specific-address local-part domain)))))
+
+(defun encode-group (group)
+  (declare (type group group))
+  (with-slots (display-name mailboxes) group
+    (encode-phrase display-name)
+    (encode-string ": ")
+    (do ((mailboxes mailboxes (cdr mailboxes)))
+        ((null mailboxes)
+         nil)
+      (encode-mailbox (car mailboxes))
+      (unless (null (cdr mailboxes))
+        (encode-string ", ")))
+    (encode-character #\;)))
+
+(defun encode-address (address)
+  (declare (type address address))
+  (etypecase address
+    (mailbox
+     (encode-mailbox address))
+    (group
+     (encode-group address))))
+
+(defun encode-addresses (addresses)
+  (declare (type list addresses))
+  (do ((addresses addresses (cdr addresses)))
+      ((null addresses)
+       nil)
+    (encode-address (car addresses))
+    (unless (null (cdr addresses))
+      (encode-string ", "))))
