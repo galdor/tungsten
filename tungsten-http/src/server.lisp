@@ -53,11 +53,11 @@
     (with-slots (host port) server
       (system:format-address host port stream))))
 
-(defun start-server (host port request-handler &key (nb-threads 1))
+(defun start-server (host port request-handler &key (nb-connection-handlers 1))
   (declare (type system:host host)
            (type system:port-number port)
            (type (or symbol function) request-handler)
-           (type (integer 1) nb-threads))
+           (type (integer 1) nb-connection-handlers))
   (let ((server (make-instance 'server :host host :port port
                                        :request-handler request-handler))
         (connection-handlers nil))
@@ -65,7 +65,7 @@
         (flet ((handle-connection (stream)
                  (let ((connection (make-instance 'connection :stream stream)))
                    (server-handle-new-connection server connection))))
-          (dotimes (i nb-threads)
+          (dotimes (i nb-connection-handlers)
             (push (system:make-thread "http-connection-handler"
                                       (lambda ()
                                         (server-connection-handler server)))
