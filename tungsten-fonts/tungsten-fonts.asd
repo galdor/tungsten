@@ -4,14 +4,13 @@
   :pathname "src"
   :depends-on
   ("tungsten-core"
-   "tungsten-system")
+   "tungsten-streams"
+   "tungsten-system"
+   "tungsten-text")
   :serial t
   :components
   ((:file "package")
-   (:file "opentype")
-   (:file "opentype-hhea")
-   (:file "opentype-name")
-   (:file "opentype-cmap")
+   (:file "sfnt")
    (:file "font"))
   :in-order-to ((test-op (test-op "tungsten-fonts/test"))))
 
