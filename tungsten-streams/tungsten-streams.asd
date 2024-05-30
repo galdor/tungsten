@@ -10,6 +10,7 @@
   ((:file "package")
    (:file "fundamental-stream-definitions")
    (:file "fundamental-streams")
+   (:file "octet-input-stream")
    (:file "octet-output-stream"))
   :in-order-to ((test-op (test-op "tungsten-streams/test"))))
 

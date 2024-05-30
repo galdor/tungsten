@@ -34,6 +34,10 @@
    #:stream-write-sequence
    #:stream-file-position
 
+   #:octet-input-stream
+   #:make-octet-input-stream
+   #:with-input-from-octet-vector
+
    #:octet-output-stream
    #:make-octet-output-stream
    #:with-output-to-octet-vector))
