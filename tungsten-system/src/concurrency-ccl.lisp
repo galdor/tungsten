@@ -54,10 +54,10 @@
 ;;
 ;; Condition variables are implemented with semaphores as described in
 ;; "Implementing Condition Variables with Semaphores" by Andrew D. Birrell. We
-;; use the simple but inefficient implementations based on two semaphores
-;; because the queue-based implementation requires wrapping threads to assign
-;; a semaphore to each one of them, something we would like to avoid
-;; (especially since it would be only for CCL).
+;; use the simple but inefficient implementation based on two semaphores because
+;; the queue-based implementation requires wrapping threads to assign a
+;; semaphore to each one of them, something we would like to avoid (especially
+;; since it would be only for CCL).
 
 (defstruct (%condition-variable
             (:constructor %make-condition-variable)
