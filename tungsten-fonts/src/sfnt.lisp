@@ -1,79 +1,42 @@
 (in-package :fonts)
 
-;;; Reference: https://learn.microsoft.com/en-us/typography/opentype/spec/
-;;;
-;;; As TrueType, OpenType derives from SFNT so we can use it as reference.
+;;; References:
+;;; - https://learn.microsoft.com/en-us/typography/opentype/spec/
+;;; - https://developer.apple.com/fonts/TrueType-Reference-Manual/
 
-(defvar *field-stream* nil)
+(deftype tag ()
+  '(string 4))
 
-(defmacro with-field-stream ((data &key (start 0) end) &body body)
-  `(streams:with-input-from-octet-vector
-       (*field-stream* ,data :start ,start :end ,end
-                       :external-format :ascii)
-     ,@body))
+(defclass decoder ()
+  ((data
+    :type core:octet-vector
+    :initarg :data
+    :reader decoder-data)
+   (start
+    :type (integer 0)
+    :initarg :start
+    :accessor decoder-start)
+   (end
+    :type (integer 0)
+    :initarg :end
+    :accessor decoder-end)
+   (context
+    :type (or string null)
+    :initarg :context
+    :initform nil
+    :reader decoder-context)))
 
-(defclass table-directory ()
-  ((sfnt-version
-    :type (string 4)
-    :initarg :sfnt-version
-    :reader table-directory-sfnt-version)
-   (tables
-    :type hash-table
-    :initarg :tables
-    :initform (make-hash-table :test #'equal)
-    :reader table-directory-tables)))
+(defvar *decoder* nil)
 
-(defun decode-table-directory (data &key (start 0))
-  (declare (type core:octet-vector data)
-           (type (integer 0) start))
-  (with-field-stream (data :start start :end (min (+ start 12) (length data)))
-    (let* ((version (read-field/tag "sfntVersion"))
-           (directory (make-instance 'table-directory :sfnt-version version))
-           (nb-tables (read-field/uint16 "numTables")))
-      (read-field/uint16 "searchRange")
-      (read-field/uint16 "entrySelector")
-      (read-field/uint16 "rangeShift")
-      (incf start 12)
-      (dotimes (i nb-tables)
-        (let ((record (decode-table-record data :start start)))
-          (setf (gethash (table-record-tag record)
-                         (table-directory-tables directory))
-                record)
-          (incf start 16)))
-      directory)))
-
-(defclass table-record ()
-  ((tag
-    :type (string 4)
-    :initarg :tag
-    :accessor table-record-tag)
-   (checksum
-    :type (unsigned-byte 32)
-    :initarg :checksum
-    :accessor table-record-checksum)
-   (offset
-    :type (unsigned-byte 32)
-    :initarg :offset
-    :accessor table-record-offset)
-   (length
-    :type (unsigned-byte 32)
-    :initarg :length
-    :accessor table-record-length)))
-
-(defmethod print-object ((record table-record) stream)
-  (print-unreadable-object (record stream :type t)
-    (write-string (table-record-tag record) stream)))
-
-(defun decode-table-record (data &key (start 0))
-  (declare (type core:octet-vector data)
-           (type (integer 0) start))
-  (with-field-stream (data :start start :end (min (+ start 16) (length data)))
-    (let ((record (make-instance 'table-record)))
-      (setf (table-record-tag record) (read-field/tag "tableTag"))
-      (setf (table-record-checksum record) (read-field/uint32 "checksum"))
-      (setf (table-record-offset record) (read-field/offset32 "offset"))
-      (setf (table-record-length record) (read-field/uint32 "length"))
-      record)))
+(defmacro with-decoder ((data &key (start 0) end context) &body body)
+  (let ((data-var (gensym "DATA-")))
+    `(let* ((,data-var ,data)
+            (*decoder*
+              (make-instance 'decoder :data ,data-var
+                                      :start ,start
+                                      :end (or ,end (length ,data-var))
+                                      :context ,context)))
+       ,@body)))
 
 (define-condition truncated-field (error)
   ((name
@@ -83,33 +46,167 @@
    (size
     :type (integer 0)
     :initarg :size
-    :reader truncated-field-size))
+    :reader truncated-field-size)
+   (context
+    :type (or string null)
+    :initarg :context
+    :initform nil
+    :reader truncated-field-context))
   (:report
    (lambda (condition stream)
      (format stream "truncated field ~S (~D octets)"
              (truncated-field-name condition)
-             (truncated-field-size condition)))))
+             (truncated-field-size condition))
+     (let ((context (truncated-field-context condition)))
+       (when context
+         (format stream " in ~A" context))))))
 
-(defmacro define-field-reader ((type-name type-size) (data) &body body)
+(defmacro define-field-reader ((type-name type-size) (data start)
+                               &body body)
   (let ((function-name
-          (concatenate 'string "READ-FIELD/" (symbol-name type-name)))
-        (nb-read (gensym "NB-READ-")))
+          (concatenate 'string "READ-FIELD/" (symbol-name type-name))))
     `(defun ,(intern function-name) (name)
        (declare (type string name))
-       (let* ((,data (core:make-octet-vector ,type-size))
-              (,nb-read (read-sequence ,data *field-stream*)))
-         (when (< ,nb-read ,type-size)
-           (error 'truncated-field :name name :size ,type-size))
-         ,@body))))
+       (when (> (+ (decoder-start *decoder*) ,type-size)
+                (decoder-end *decoder*))
+         (error 'truncated-field :name name :size ,type-size
+                                 :context (decoder-context *decoder*)))
+       (with-slots ((,data data) (,start start)) *decoder*
+         (prog1
+             (progn
+               ,@body)
+           (incf ,start ,type-size))))))
 
-(define-field-reader (#:uint16 2) (data)
-  (core:binref :uint16be data))
+(define-field-reader (#:uint16 2) (data start)
+  (core:binref :uint16be data start))
 
-(define-field-reader (#:uint32 4) (data)
-  (core:binref :uint32be data))
+(define-field-reader (#:uint32 4) (data start)
+  (core:binref :uint32be data start))
 
-(define-field-reader (#:offset32 4) (data)
-  (core:binref :uint32be data))
+(define-field-reader (#:offset16 2) (data start)
+  (core:binref :uint16be data start))
 
-(define-field-reader (#:tag 4) (data)
-  (text:decode-string data))
+(define-field-reader (#:offset32 4) (data start)
+  (core:binref :uint32be data start))
+
+(define-field-reader (#:tag 4) (data start)
+  (text:decode-string data :start start :end (+ start 4)))
+
+(defun decode-platform-id (id)
+  (declare (type (unsigned-byte 16) id))
+  (case id
+    (0 :unicode)
+    (1 :macintosh)
+    (3 :windows)
+    (t id)))
+
+(defun decode-encoding-id (id platform-id)
+  (declare (type (unsigned-byte 16) id)
+           (type (or symbol (unsigned-byte 16)) platform-id))
+  (case platform-id
+    (:unicode
+     (case id
+       (0 :unicode-1-0)
+       (1 :unicode-1-1)
+       (2 :iso-10646)
+       (3 :unicode-2-0-bmp)
+       (4 :unicode-2-0)
+       (t id)))
+    (:macintosh
+     (case id
+       ( 0 :roman)
+       ( 1 :japanese)
+       ( 2 :traditional-chinese)
+       ( 3 :korean)
+       ( 4 :arabic)
+       ( 5 :hebrew)
+       ( 6 :greek)
+       ( 7 :russian)
+       ( 8 :rsymbol)
+       ( 9 :devanagari)
+       (10 :gurmukhi)
+       (11 :gujarati)
+       (12 :oriya)
+       (13 :bengali)
+       (14 :tamil)
+       (15 :telugu)
+       (16 :kannada)
+       (17 :malayalam)
+       (18 :sinhalese)
+       (19 :burmese)
+       (20 :khmer)
+       (21 :thai)
+       (22 :laotian)
+       (23 :georgian)
+       (24 :armenian)
+       (25 :simplified-chinese)
+       (26 :tibetan)
+       (27 :mongolian)
+       (28 :geez)
+       (29 :slavic)
+       (30 :vietnamese)
+       (31 :sindhi)
+       (32 :uninterpreted)
+       (t id)))
+    (:windows
+     (case id
+       ( 0 :symbol)
+       ( 1 :unicode-bmp)
+       ( 2 :shift-jis)
+       ( 3 :prc)
+       ( 4 :big5)
+       ( 5 :wansung)
+       ( 6 :johab)
+       ( 7 :reserved)
+       ( 8 :reserved)
+       ( 9 :reserved)
+       (10 :unicode)
+       (t
+        id)))
+    (t
+     id)))
+
+(defun decode-name-id (id)
+  (declare (type (unsigned-byte 16) id))
+  (case id
+    ( 0 :copyright-notice)
+    ( 1 :font-family-name)
+    ( 2 :font-subfamily-name)
+    ( 3 :unique-font-identifier)
+    ( 4 :full-font-name)
+    ( 5 :version-string)
+    ( 6 :postscript-name)
+    ( 7 :trademark)
+    ( 8 :manufacturer-name)
+    ( 9 :designer)
+    (10 :description)
+    (11 :url-vendor)
+    (12 :url-designer)
+    (13 :license-description)
+    (14 :license-info)
+    (16 :typographic-family-name)
+    (17 :typographic-subfamily-name)
+    (18 :compatible-full)
+    (19 :sample-text)
+    (20 :postscript-cid-findfont-name)
+    (21 :wws-family-name)
+    (22 :wws-subfamily-name)
+    (23 :light-background-palette)
+    (24 :dark-background-palette)
+    (25 :variations-postscript-name-prefix)
+    (t id)))
+
+(defun decode-string (octets platform-id encoding-id &key (start 0) end)
+  (declare (type core:octet-vector octets)
+           (type (integer 0) start)
+           (type (or (integer 0) null) end)
+           (type (or symbol (unsigned-byte 16)) platform-id encoding-id))
+  (let ((encoding (case platform-id
+                    ((:unicode :windows)
+                     :utf-16be)
+                    (:macintosh
+                     (case encoding-id
+                       (:roman :macintosh))))))
+    (if encoding
+        (text:decode-string octets :start start :end end :encoding encoding)
+        (subseq octets start end))))

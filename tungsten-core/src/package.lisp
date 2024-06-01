@@ -75,6 +75,7 @@
    #:prompt-eval
 
    #:abort-protect
+   #:restart-condition-handler
 
    #:*backtrace-depth*
    #:*include-backtrace-source-files*
