@@ -77,6 +77,9 @@
                ,@body)
            (incf ,start ,type-size))))))
 
+(define-field-reader (#:int16 2) (data start)
+  (core:binref :int16be data start))
+
 (define-field-reader (#:uint16 2) (data start)
   (core:binref :uint16be data start))
 
@@ -91,6 +94,17 @@
 
 (define-field-reader (#:tag 4) (data start)
   (text:decode-string data :start start :end (+ start 4)))
+
+(define-field-reader (#:fixed 4) (data start)
+  (let* ((i (core:binref :int16be data start))
+         (f (/ (core:binref :uint16be data (+ start 2)) #xffff))
+         (n (if (>= i 0) (+ i f) (- i f))))
+    (float n 1.0s0)))
+
+(define-field-reader (#:long-datetime 8) (data start)
+  (let ((seconds (core:binref :int64be data start)))
+    ;; Reference is 1904-01-01T00:00:00Z, i.e. UNIX timestamp -2082844800
+    (time:make-datetime-from-unix-timestamp (- seconds 2082844800))))
 
 (defun decode-platform-id (id)
   (declare (type (unsigned-byte 16) id))
